@@ -1,0 +1,16 @@
+### Paths (dont forget the "")
+### For safety, a subfolder will be created on the indicated output folder
+### A file called "compiled.csv" with all the reads per sample will be created at the end.
+
+Path to the folder with all the .gz sequencing files: "C:\Users\afonso\Documents\CRISPRi-Seq"
+Path to the .csv file with the guideRNAs: "\\nas.unil.ch\FBM\DMF\GROUPS\gr_Veening\Shared Materials and Data\Scripts\CRISPRi_reads_getter_executable_files\D39V_guides_input.csv"
+Path to the output folder: "C:\Users\afonso\Documents\CRISPRi-Seq\MiniSeq_2"
+
+### Parameters (default)
+
+missmatches: "1"
+Phred-score: "30"
+guideRNA read start position: "0"
+guideRNA length: "20"
+
+###
