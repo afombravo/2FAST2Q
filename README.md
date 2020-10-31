@@ -15,11 +15,13 @@ All the inputs to the program are given via the "inputs.txt" file.
 This file MUST be located in the same folder the program is running on.
 
 To run the program, three input absolute paths are required:
-A path to the folder with all the fastq.gz (at the moment, the program unzips fastq.gz files only)
+A path to the folder with all the sequencing files (at the moment, the program unzips .gz files only. However, any uncompressed fastq file can be read)
 
 A path to the .csv file with the sgRNAs. See example file for layout.
 
 A path to the output folder (a constant named subfolder will always be created on this directory)
+
+The file extension type (default = fastq.gz) (change to the appropriate extension if uncompressed) 
 
 If required, several parameters can also be adjusted :
 
@@ -30,8 +32,6 @@ The minimal sequencing phred-score for each nucleotide (default = 30)
 The start position of the sgRNA within the read (default = 0, meaning the sequenced sgRNA is located at the first position of the read sequence)
 
 The lenght of the sgRNA (default = 20)
-
-[to be implemented] The file extenction type (default = fastq.gz)
 
 
 # Before running:
