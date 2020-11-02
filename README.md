@@ -1,7 +1,7 @@
 # Welcome to Crispy
 A Python3.7 based program that counts guideRNA occurences in fastq files
 
- There are 3 program versions:
+ There are 4 program versions:
 
  A windows executable file (Crispy.exe);
  
