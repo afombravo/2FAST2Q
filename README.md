@@ -7,7 +7,9 @@ A Python3.7 based program that counts guideRNA occurences in fastq files
  
  A Linux ELF binary file (Crispy);
  
- As a standalone Python code (Crispy.py)
+ A MacOS executable (Crispy); 
+ 
+ As standalone Python code (Crispy.py)
 
 # Inputs
 All the inputs to the program are given via the "inputs.txt" file.
