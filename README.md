@@ -20,7 +20,6 @@ crispy requires absolutly no instalation whatsoever, and can work with any CRISP
 Obtain a .csv file (this format can be changed using the "save as" option in excel) with the nucleotide sequences of all used guideRNAs, and their respective names. See the provided "D39V_guides.csv" sample file.
 
 | sgRNA0001 | AATAGCATAGAAATCATACA |
-| --------- | -------------------- |
 | sgRNA0002 | AGTGTTGATTTACCAACGTT |
 
 
@@ -101,15 +100,9 @@ However, there is a safe mechanism in place to prevent 2 or more guideRNAs with 
 | Error Message | Probable Cause/Fix |
 | ------------- | ------------------ |
 | Check the 'inputs.txt' file. Some parameters are missing. | Check if no lines were added or deleted by mistake in the “inputs.txt” file. Check that all the inputs are delimited by “”. |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | No "inputs.txt" file found. Please copy the correct file to the following directory: |The program is not running on the same directory "inputs.txt" is located. Please move the "inputs.txt" file to the directory indicated in the error message. |
-| --------- | -------------------- |
 | Warning!! X and Y share the same sequence. Only X will be considered valid. |X and Y correspond to guideRNA names. The indicated entries have the same sequence, and only the first will be considered valid. |
-| --------- | -------------------- |
 | Check the path to the sgRNA file. No file found in the following path: X | Confirm the indicated path (X) to the guideRNA .csv file is correct |
-| --------- | -------------------- |
 | Check the path to the X files folder. No files of this type found. | Confirm the indicated path to the folder with the sequencing (X) files is correct. |
-| --------- | -------------------- |
 | Program doesn’t initialize | Confirm the downloaded program is the appropriate one for the current operating system. Contact the Crispy developer if the issue persists. |
-| --------- | -------------------- |
 | Program crashes, or behaves unexpectedly. | Check if the program behaves as expected with the provided sample data. Contact the Crispy developer if the issue persists. |
