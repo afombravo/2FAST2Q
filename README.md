@@ -36,9 +36,13 @@ All the inputs to the program are given via the "inputs.txt" file.
 This file MUST be located in the same folder the program is running on.
 
 To run the program, three input absolute paths are required:
-A path to the folder with all the sequencing files (at the moment, the program unzips .gz files only. However, any uncompressed fastq file can be read)
+A path to the folder with either:
 
-A path to the .csv file with the sgRNAs. See example file for layout.
+1. all the compressed sequencing files (at the moment, the program unzips .gz files only)
+or
+2. all the umcompressed .fastq files
+
+A path to the .csv file with the sgRNAs. See example file for layout (remove any headers).
 
 A path to the output folder (for safety, a subfolder will then always be created on this directory)
 
