@@ -11,6 +11,7 @@ A Python3.7 based program that counts guideRNA occurences in fastq files
  
  As standalone Python code (Crispy.py)
 
+
 crispy requires absolutly no instalation whatsoever, and can work with any CRISPRi experimental setup.
 
 # How to use it
@@ -65,9 +66,13 @@ A completion message will be given at the end
 # Output
 
 Upon completion, several files should be seen in the indicated output folder: 
+
 a.	The uncompressed “*.fastq” files; 
+
 b. “*_reads.csv” files corresponding to the read counts per guideRNA per inputted sequencing file; 
+
 c.	A “compiled_stats.txt” containing all the relevant input/output information about the Crispy analysis; 
+
 d.	A “compiled.csv” file with the compilation of all the read counts per guideRNA in all the inputted files. Use this latter in the next steps of the data analysis pipeline. 
 
 # Short Explanation
