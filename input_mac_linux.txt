@@ -1,0 +1,17 @@
+### Paths (dont forget the "")
+### For safety, a subfolder will be created on the indicated output folder
+### A file called "compiled.csv" with all the reads per sample will be created at the end.
+
+Path to the folder with all the sequencing files: "/Users/example directory/example folder with the raw illumina files"
+Path to the .csv file with the guideRNAs: "/Users/example directory/D39V_guides.csv"
+Path to the output folder: "/Users/example directory/output folder"
+Input sequencing file extension: ".fastq.gz"
+
+### Parameters (default)
+
+Missmatches: "1"
+Phred-score: "30"
+guideRNA read start position: "0"
+guideRNA length: "20"
+
+###
