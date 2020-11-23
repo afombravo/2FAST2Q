@@ -36,6 +36,7 @@ All the inputs to the program are given via the "inputs.txt" file.
 This file MUST be located in the same folder the program is running on.
 
 To run the program, three input absolute paths are required:
+
 A path to the folder with either:
 
 1. all the compressed sequencing files (at the moment, the program unzips .gz files only)
