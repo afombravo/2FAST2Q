@@ -40,7 +40,7 @@ A path to the folder with either:
 
 1. all the compressed sequencing files (at the moment, the program unzips .gz files only)
 
-or
+   or
 
 2. all the umcompressed .fastq files
 
