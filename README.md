@@ -99,9 +99,9 @@ However, there is a safe mechanism in place to prevent 2 or more guideRNAs with 
 
 
 | Error Message | Probable Cause/Fix |
-| --------- | -------------------- |
+| ------------- | ------------------ |
 | Check the 'inputs.txt' file. Some parameters are missing. | Check if no lines were added or deleted by mistake in the “inputs.txt” file. Check that all the inputs are delimited by “”. |
-| --------- | -------------------- |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | No "inputs.txt" file found. Please copy the correct file to the following directory: |The program is not running on the same directory "inputs.txt" is located. Please move the "inputs.txt" file to the directory indicated in the error message. |
 | --------- | -------------------- |
 | Warning!! X and Y share the same sequence. Only X will be considered valid. |X and Y correspond to guideRNA names. The indicated entries have the same sequence, and only the first will be considered valid. |
