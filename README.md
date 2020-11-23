@@ -5,11 +5,11 @@ crispy requires absolutly no instalation whatsoever, and can work with any CRISP
 
  There are 4 program versions:
 
- A windows executable file (Crispy.exe);
+ A windows executable file (Crispy_windows.exe);
  
- A Linux ELF binary file (Crispy);
+ A Linux ELF binary file (Crispy_linux);
  
- A MacOS executable (Crispy); 
+ A MacOS executable (Crispy_macOS); 
  
  As standalone Python code (Crispy.py)
 
