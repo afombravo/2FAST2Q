@@ -20,6 +20,7 @@ crispy requires absolutly no instalation whatsoever, and can work with any CRISP
 Obtain a .csv file (this format can be changed using the "save as" option in excel) with the nucleotide sequences of all used guideRNAs, and their respective names. See the provided "D39V_guides.csv" sample file.
 
 | sgRNA0001 | AATAGCATAGAAATCATACA |
+|-----------|----------------------|
 | sgRNA0002 | AGTGTTGATTTACCAACGTT |
 
 
