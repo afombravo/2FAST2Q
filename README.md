@@ -39,7 +39,9 @@ To run the program, three input absolute paths are required:
 A path to the folder with either:
 
 1. all the compressed sequencing files (at the moment, the program unzips .gz files only)
+
 or
+
 2. all the umcompressed .fastq files
 
 A path to the .csv file with the sgRNAs. See example file for layout (remove any headers).
