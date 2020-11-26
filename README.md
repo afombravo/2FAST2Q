@@ -70,18 +70,24 @@ Overwrite the template "inputs.txt" with the appropriate information.
 
 # Running 
 
+
 On MSWindows and MacOS:
 
 Double click the program icon. 
+
 
 On Linux:
 
 Using the terminal, navigate into the folder where Crispy is located and type the following commands:
 
+
  i.	chmod +x ./Crispy
+ 
  ii.	./Crispy -h
 
+
 A completion message will be given at the end
+
 
 # Output
 
