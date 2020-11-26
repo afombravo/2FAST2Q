@@ -66,7 +66,21 @@ The lenght of the sgRNA in bp (default = 20)
 
 Remove any "Undetermined" or unwanted fastq.gz files from the input folder as the program will atempt to align all the fastq files in the input folder.
 
-Overwrite the template "inputs.txt" with the appropriate information, and start the program. 
+Overwrite the template "inputs.txt" with the appropriate information.
+
+# Running 
+
+On MSWindows and MacOS:
+
+Double click the program icon. 
+
+On Linux:
+
+Using the terminal, navigate into the folder where Crispy is located and type the following commands:
+
+ i.	chmod +x ./Crispy
+ ii.	./Crispy -h
+
 A completion message will be given at the end
 
 # Output
