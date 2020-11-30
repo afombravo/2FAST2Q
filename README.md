@@ -1,17 +1,17 @@
-# Welcome to Crispy
+# Welcome to Crispery
 A Python3.7 based program that counts guideRNA occurences in fastq files
 
-crispy requires absolutly no instalation whatsoever, and can work with any CRISPRi experimental setup.
+Crispery requires absolutly no instalation whatsoever, and can work with any CRISPRi experimental setup.
 
  There are 4 program versions:
 
- A windows executable file (Crispy_windows.exe);
+ A windows executable file (Crispery_windows.exe);
  
- A Linux ELF binary file (Crispy_linux);
+ A Linux ELF binary file (Crispery_linux);
  
- A MacOS executable (Crispy_macOS); 
+ A MacOS executable (Crispery_macOS); 
  
- As standalone Python code (Crispy.py)
+ As standalone Python code (Crispery.py)
 
 # How to use it
 
@@ -24,7 +24,7 @@ Obtain a .csv file (this format can be obtained using the "save as" option in ex
 
 
 # 2.	
-Download the Crispy software version appropriate to the intended operating system, as well as the provided template “inputs.txt” file, into the same folder.
+Download the Crispery software version appropriate to the intended operating system, as well as the provided template “inputs.txt” file, into the same folder.
 
 # 3.
 Open the “inputs.txt” file.
@@ -78,12 +78,12 @@ Double click the program icon.
 
 On Linux:
 
-Using the terminal, navigate into the folder where Crispy is located and type the following commands:
+Using the terminal, navigate into the folder where Crispery is located and type the following commands:
 
 
- i.	chmod +x ./Crispy
+ i.	chmod +x ./Crispery
  
- ii.	./Crispy -h
+ ii.	./Crispery -h
 
 
 A completion message will be given at the end
@@ -97,13 +97,13 @@ a.	The uncompressed “*.fastq” files;
 
 b. “*_reads.csv” files corresponding to the read counts per guideRNA per inputted sequencing file; 
 
-c.	A “compiled_stats.txt” containing all the relevant input/output information about the Crispy analysis; 
+c.	A “compiled_stats.txt” containing all the relevant input/output information about the Crispery analysis; 
 
 d.	A “compiled.csv” file with the compilation of all the read counts per guideRNA in all the inputted files. Use this latter in the next steps of the data analysis pipeline. 
 
 # Short Explanation
 
-Crispy will return the read counts for all the guideRNAs present in the input file. 
+Crispery will return the read counts for all the guideRNAs present in the input file. 
 A read will be aligned to its guideRNAs if the minimum quality score in each nucleotide is >= the indicated phred-score,
 and if there is less than the indicated allowed missmatches. 
 Like said before, these parameters can be modified by the user.
@@ -131,5 +131,5 @@ However, there is a safe mechanism in place to prevent 2 or more guideRNAs with 
 | Warning!! X and Y share the same sequence. Only X will be considered valid. |X and Y correspond to guideRNA names. The indicated entries have the same sequence, and only the first will be considered valid. |
 | Check the path to the sgRNA file. No file found in the following path: X | Confirm the indicated path (X) to the guideRNA .csv file is correct |
 | Check the path to the X files folder. No files of this type found. | Confirm the indicated path to the folder with the sequencing (X) files is correct. |
-| Program doesn’t initialize | Confirm the downloaded program is the appropriate one for the current operating system. Contact the Crispy developer if the issue persists. |
-| Program crashes, or behaves unexpectedly. | Check if the program behaves as expected with the provided sample data. Contact the Crispy developer if the issue persists. |
+| Program doesn’t initialize | Confirm the downloaded program is the appropriate one for the current operating system. Contact the Crispery developer if the issue persists. |
+| Program crashes, or behaves unexpectedly. | Check if the program behaves as expected with the provided sample data. Contact the Crispery developer if the issue persists. |
