@@ -124,6 +124,20 @@ However, there is a safe mechanism in place to prevent 2 or more guideRNAs with 
 # Troubleshooting
 
 
+Running Crispery with example data:
+
+1. Download the "D39V_guides.csv" file
+2. Download the "example.fastq.gz"
+3. Modify the "inputs.txt" to match your system´s apropriate paths and file names.
+4. Run crispery
+
+The expected example output file is given: "compiled.csv"
+
+
+
+Common Errors:
+
+
 | Error Message | Probable Cause/Fix |
 | ------------- | ------------------ |
 | Check the 'inputs.txt' file. Some parameters are missing. | Check if no lines were added or deleted by mistake in the “inputs.txt” file. Check that all the inputs are delimited by “”. |
