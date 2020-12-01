@@ -76,6 +76,7 @@ On MSWindows and MacOS:
 Double click the program icon. 
 
 
+
 On Linux:
 
 Using the terminal, navigate into the folder where Crispery is located and type the following commands:
@@ -84,6 +85,7 @@ Using the terminal, navigate into the folder where Crispery is located and type 
  i.	chmod +x ./Crispery
  
  ii.	./Crispery -h
+
 
 
 A completion message will be given at the end
