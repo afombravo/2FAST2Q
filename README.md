@@ -75,7 +75,7 @@ On MSWindows and MacOS:
 
 Double click the program icon. 
 
-
+=================================
 
 On Linux:
 
@@ -87,6 +87,7 @@ Using the terminal, navigate into the folder where Crispery is located and type 
  ii.	./Crispery -h
 
 
+=================================
 
 Crispery is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavilly use the computer while crispery is running to avoid constraining the processor.
 
@@ -95,6 +96,7 @@ Depending on the used computer, crispery might take a few minutes to run. If no 
 
 If for some reason crispery is closed before completing. please delete the output folder in its entirity as the outputed uncompressed .fastq files might have become corrupted. 
 
+=================================
 
 A completion message will be given at the end
 
