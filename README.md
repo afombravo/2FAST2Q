@@ -88,6 +88,14 @@ Using the terminal, navigate into the folder where Crispery is located and type 
 
 
 
+Crispery is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavilly use the computer while crispery is running to avoid constraining the processor.
+
+
+Depending on the used computer, crispery might take a few minutes to run. If no errors are shown, crispery is still running. GIVE IT TIME!
+
+If for some reason crispery is closed before completing. please delete the output folder in its entirity as the outputed uncompressed .fastq files might have become corrupted. 
+
+
 A completion message will be given at the end
 
 
