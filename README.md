@@ -18,8 +18,6 @@ Crispery requires absolutly no instalation whatsoever, and can work with any CRI
 
 Remove any "Undetermined" or unwanted fastq.gz files from the input folder as the program will atempt to align all the fastq files in the input folder.
 
-Overwrite the template "inputs.txt" with the appropriate information.
-
 
 # How to use it
 
