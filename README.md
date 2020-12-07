@@ -50,7 +50,7 @@ The program will initialize as ask, in turn, for directories and file paths. See
 # On linux (Ubuntu)
 
 # 1.	
-Obtain the .csv file with the sgRNAs like in setp 1 of MSwindows/macOS instructions.
+Obtain the .csv file with the sgRNAs like in step 1 of MSwindows/macOS instructions.
 
 # 2.	
 Download the Crispery software version appropriate to the intended operating system, as well as the provided template “inputs.txt” file, into the same folder.
@@ -79,7 +79,7 @@ A path to the folder with either:
 
    or
 
-2. all the umcompressed .fastq files
+2. all the uncompressed .fastq files
 
 # 2 (the path to the sgRNA .csv file)
 
