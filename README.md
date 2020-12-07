@@ -3,28 +3,29 @@ A Python3.7 based program that counts guideRNA occurences in fastq files
 
 Crispery requires absolutly no instalation whatsoever, and can work with any CRISPRi experimental setup.
 
- There are 4 program versions:
+The program works on MSwindows, MacOS, and Linux (Ubuntu), and can be downloaded from Zenodo by acessing the folowing link:
 
- A windows executable file (Crispery_windows.exe);
- 
- A Linux ELF binary file (Crispery_linux);
- 
- A MacOS executable (Crispery_macOS); 
- 
- As standalone Python code (Crispery.py)
+In here we share the original Python3 source code, Crispery.py;
+The instructions on how to use crispery;
+And some test data to run the program.
 
 
 # Before running:
 
 Remove any "Undetermined" or unwanted fastq.gz files from the input folder as the program will atempt to align all the fastq files in the input folder.
 
-Overwrite the template "inputs.txt" with the appropriate information.
-
 
 # How to use it
 
+There are two versions of the program, with and without a basic user interface. 
 
-# On MSWindows and MacOS:
+
+The windows version only uses the user interface. 
+For macOS there are both versions, as the graphical interface does not work in some macOS. If one fails, please try the other one.
+For Linux there is only the non graphical interface. 
+
+
+# On MSWindows and MacOS Catalina (graphical interface):
 
 
 # 1.	
@@ -42,15 +43,15 @@ Download the Crispery software version appropriate to the intended operating sys
 Double click the program icon. 
 
 # 4.
-The program will initialize as ask, in turn, for directories and file paths. See the "inputs" section below for an explanation of these inputs.
+The program will initialize and ask, in turn, for directories and file paths. See the "inputs" section below for an explanation of these inputs.
 
 
 
 
-# On linux (Ubuntu)
+# On MacOS and linux (Ubuntu) (non graphical interface)
 
 # 1.	
-Obtain the .csv file with the sgRNAs like in step 1 of MSwindows/macOS instructions.
+Obtain the .csv file with the sgRNAs like in step 1 of the graphical interface instructions.
 
 # 2.	
 Download the Crispery software version appropriate to the intended operating system, as well as the provided template “inputs.txt” file, into the same folder.
@@ -58,7 +59,11 @@ Download the Crispery software version appropriate to the intended operating sys
 # 3.
 Open the “inputs.txt” file. All the inputs to the program are given via the "inputs.txt" file (see below for an explanation). This file MUST be located in the same folder the program is running on.
 
-# 4.
+
+# 4. (for MacOS)
+Double click the program icon. 
+
+# 4. (for Linux)
 Using the terminal, navigate into the folder where Crispery is located and type the following commands:
 
 
@@ -69,7 +74,7 @@ Using the terminal, navigate into the folder where Crispery is located and type 
 
 # Inputs
 
-To run the program, three input absolute paths are required:
+To run the program, three input paths are required:
 
 # 1 (directory containing the sequencing files)
 
@@ -83,17 +88,15 @@ A path to the folder with either:
 
 # 2 (the path to the sgRNA .csv file)
 
-A path to the .csv file with the sgRNAs. See example file for layout (remove any headers).
+A path to the .csv file with the sgRNAs. See example "D39V_guides.csv" for layout (remove any headers).
 
 # 3 (the output directory)
 
-A path to the output folder (for safety, a subfolder will then always be created on this directory)
+A path to the output folder (for safety, a subfolder will always be created on this directory)
 
 # 4 (Parameters)
 
 The file extension type (default = fastq.gz) (change to the appropriate extension if uncompressed, for example ".fastq") 
-
-If required, several parameters can also be adjusted :
 
 The number of allowed missmatches per sgRNA (default = 1)
 
@@ -103,7 +106,7 @@ The start position of the sgRNA within the read (default = 0, meaning the sequen
 
 The lenght of the sgRNA in bp (default = 20)
 
-# Warnings
+# While Running
 
 =================================
 
@@ -130,6 +133,7 @@ b. “*_reads.csv” files corresponding to the read counts per guideRNA per inp
 c.	A “compiled_stats.txt” containing all the relevant input/output information about the Crispery analysis; 
 
 d.	A “compiled.csv” file with the compilation of all the read counts per guideRNA in all the inputted files. Use this latter in the next steps of the data analysis pipeline. 
+
 
 # Short Explanation
 

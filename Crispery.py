@@ -12,7 +12,7 @@ from time import time
 #### multiprocessing doesnt run on spyder. use terminal for debugging
 
 #####################
-    
+
 class SgRNA:
     def __init__(self, name, sequence, counts):
         
@@ -222,8 +222,58 @@ def csv_writer(path, outfile):
         
     return
 
-def input_getter():
+def input_getter_graphical():
     
+    import easygui as ezi
+    
+    input_parameters = []
+    msgs = ["Select the directory containing the sequencing files",
+            "Select the sgRNA .csv file",
+            "Select the output directory",
+            "Running Parameters"]
+    
+    ### asking for directory with the fastq.gz files
+    print(msgs[0])
+    ezi.msgbox(msg=msgs[0])
+    input_parameters.append(ezi.diropenbox(msg = msgs[0]))
+    
+    ### asking for directory with the sgRNA files
+    print(msgs[1])
+    ezi.msgbox(msg=msgs[1])
+    input_parameters.append(ezi.fileopenbox(msg=msgs[1]))
+    
+    ### asking for the output directory
+    print(msgs[2])
+    ezi.msgbox(msg=msgs[2])
+    input_parameters.append(ezi.diropenbox(msg=msgs[2]))
+    
+    ### updating the parameters
+    title = "Enter the appropriate running parameters (default)"
+    
+    fieldNames = ["Sequencing file extension",\
+                  "Allowed Missmatches",\
+                "Minimal sgRNA Phred-score",\
+                "sgRNA start position in the read",\
+                "sgRNA length"]
+        
+    default = [".fastq.gz",1,30,0,20]  
+    input_parameters.append(ezi.multenterbox(msgs[3],title, fieldNames, default))
+    
+    ## error messages
+    for entry, msg in zip(input_parameters, msgs):
+        if (entry == None) & (msg != msgs[3]):
+            input(f"Please enter a valid directory for the folowing request: '{msg}'\nThe program will now close")
+            
+        elif (entry == None) & (msg == msgs[3]):
+            input("Please do not cancel the parameters box. Click OK next time.\nThe program will now close")
+            
+        elif (entry != None) & (msg == msgs[3]) & (len(input_parameters [-1]) != 5):
+            input("The wrong parameter format was entered\nPlease restart the program and re-introduce the parameters (or leave at default)\nThe program will now close")
+    
+    return input_parameters
+
+def input_getter_txt():
+
     inputs = os.path.join(os.getcwd(), "inputs.txt")
     
     if not os.path.isfile(inputs): 
@@ -243,11 +293,22 @@ def input_getter():
 
 def initializer():
     
-    version = "1.3.1"
+    version = "1.3.2"
     
     print("\nVersion: {}".format(version))
     
-    folder_path, guides, out, extension, missmatch, phred, start, lenght = input_getter()
+    if system() == 'Windows':
+        separator = "\\"
+        folder_path, guides, out, (extension, missmatch, phred, start, lenght) = input_getter_graphical()
+        
+    else:
+        separator = "/"
+        
+        if system() == 'Darwin':
+            folder_path, guides, out, (extension, missmatch, phred, start, lenght) = input_getter_graphical()
+            
+        else:
+            folder_path, guides, out, extension, missmatch, phred, start, lenght = input_getter_txt()
     
     extension = f'*{extension}'
     
@@ -261,12 +322,8 @@ def initializer():
     
     print("\nRunning with parameters:\n{} Missmatch allowed\nMinimal Phred Score per bp >= {}\n".format(missmatch, phred))
     print("All data will be saved into {}".format(directory))
-    
-    if system() == 'Windows':
-        separator = "\\"
-    else:
-        separator = "/"
-    
+
+
     return folder_path, guides, int(missmatch), quality_set, directory, \
         version, int(phred), separator, int(start), int(lenght), extension 
 
@@ -354,6 +411,7 @@ def input_file_type(ordered, extension, directory):
     return files, write_path_save
 
 def main():
+    
     
     folder_path, guides,missmatch, quality_set,directory, \
     version,phred,separator,start, lenght, extension = initializer()
