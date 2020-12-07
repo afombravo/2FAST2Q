@@ -13,10 +13,22 @@ Crispery requires absolutly no instalation whatsoever, and can work with any CRI
  
  As standalone Python code (Crispery.py)
 
+
+# Before running:
+
+Remove any "Undetermined" or unwanted fastq.gz files from the input folder as the program will atempt to align all the fastq files in the input folder.
+
+Overwrite the template "inputs.txt" with the appropriate information.
+
+
 # How to use it
 
+
+# On MSWindows and MacOS:
+
+
 # 1.	
-Obtain a .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used guideRNAs, and their respective names (any name can be given, as long as it doesnt repeat). See the provided "D39V_guides.csv" sample file.
+Obtain a .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used sgRNAs, and their respective names (any name can be given, as long as it doesnt repeat). See the provided "D39V_guides.csv" sample file.
 
 | sgRNA0001 | AATAGCATAGAAATCATACA |
 |-----------|----------------------|
@@ -24,20 +36,35 @@ Obtain a .csv file (this format can be obtained using the "save as" option in ex
 
 
 # 2.	
+Download the Crispery software version appropriate to the intended operating system.
+
+# 3. 
+Double click the program icon. 
+
+# 4.
+The program will initialize as ask, in turn, for directories and file paths. See the "inputs" section below for an explanation of these inputs.
+
+=================================
+
+# On linux (Ubuntu)
+
+# 1.	
+Obtain the .csv file with the sgRNAs like in setp 1 of MSwindows/macOS instructions.
+
+# 2.	
 Download the Crispery software version appropriate to the intended operating system, as well as the provided template “inputs.txt” file, into the same folder.
 
 # 3.
-Open the “inputs.txt” file.
+Open the “inputs.txt” file. All the inputs to the program are given via the "inputs.txt" file. This file MUST be located in the same folder the program is running on.
 
 
 # Inputs
-All the inputs to the program are given via the "inputs.txt" file.
-
-This file MUST be located in the same folder the program is running on.
 
 To run the program, three input absolute paths are required:
 
 A path to the folder with either:
+
+# 1 (directory containing the sequencing files)
 
 1. all the compressed sequencing files (at the moment, the program unzips .gz files only)
 
@@ -45,9 +72,15 @@ A path to the folder with either:
 
 2. all the umcompressed .fastq files
 
+# 2 (the path to the sgRNA .csv file)
+
 A path to the .csv file with the sgRNAs. See example file for layout (remove any headers).
 
+# 3 (the output directory)
+
 A path to the output folder (for safety, a subfolder will then always be created on this directory)
+
+# 4 (Parameters)
 
 The file extension type (default = fastq.gz) (change to the appropriate extension if uncompressed, for example ".fastq") 
 
@@ -61,12 +94,6 @@ The start position of the sgRNA within the read (default = 0, meaning the sequen
 
 The lenght of the sgRNA in bp (default = 20)
 
-
-# Before running:
-
-Remove any "Undetermined" or unwanted fastq.gz files from the input folder as the program will atempt to align all the fastq files in the input folder.
-
-Overwrite the template "inputs.txt" with the appropriate information.
 
 # Running 
 
