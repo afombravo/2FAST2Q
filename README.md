@@ -44,7 +44,7 @@ Double click the program icon.
 # 4.
 The program will initialize as ask, in turn, for directories and file paths. See the "inputs" section below for an explanation of these inputs.
 
-=================================
+
 
 # On linux (Ubuntu)
 
@@ -55,7 +55,15 @@ Obtain the .csv file with the sgRNAs like in setp 1 of MSwindows/macOS instructi
 Download the Crispery software version appropriate to the intended operating system, as well as the provided template “inputs.txt” file, into the same folder.
 
 # 3.
-Open the “inputs.txt” file. All the inputs to the program are given via the "inputs.txt" file. This file MUST be located in the same folder the program is running on.
+Open the “inputs.txt” file. All the inputs to the program are given via the "inputs.txt" file (see below for an explanation). This file MUST be located in the same folder the program is running on.
+
+# 4.
+Using the terminal, navigate into the folder where Crispery is located and type the following commands:
+
+
+ i.	chmod +x ./Crispery
+ 
+ ii.	./Crispery -h
 
 
 # Inputs
@@ -94,25 +102,7 @@ The start position of the sgRNA within the read (default = 0, meaning the sequen
 
 The lenght of the sgRNA in bp (default = 20)
 
-
-# Running 
-
-
-On MSWindows and MacOS:
-
-Double click the program icon. 
-
-=================================
-
-On Linux:
-
-Using the terminal, navigate into the folder where Crispery is located and type the following commands:
-
-
- i.	chmod +x ./Crispery
- 
- ii.	./Crispery -h
-
+# Warnings
 
 =================================
 
