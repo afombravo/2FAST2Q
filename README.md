@@ -48,13 +48,14 @@ The program will initialize and ask, in turn, for directories and file paths. Se
 # On MacOS and linux (Ubuntu)
 
 # 1.	
-Obtain the .csv file with the sgRNAs like in step 1 of MSwindows/macOS instructions.
+Obtain the .csv file with the sgRNAs like in step 1 of MSwindows instructions.
 
 # 2.	
 Download the Crispery software version appropriate to the intended operating system, as well as the provided template “inputs.txt” file, into the same folder.
 
 # 3.
 Open the “inputs.txt” file. All the inputs to the program are given via the "inputs.txt" file (see below for an explanation). This file MUST be located in the same folder the program is running on.
+
 
 # 4. (for MacOS)
 Double click the program icon. 
