@@ -46,6 +46,7 @@ The program will initialize as ask, in turn, for directories and file paths. See
 
 
 
+
 # On linux (Ubuntu)
 
 # 1.	
@@ -70,9 +71,9 @@ Using the terminal, navigate into the folder where Crispery is located and type 
 
 To run the program, three input absolute paths are required:
 
-A path to the folder with either:
-
 # 1 (directory containing the sequencing files)
+
+A path to the folder with either:
 
 1. all the compressed sequencing files (at the moment, the program unzips .gz files only)
 
