@@ -11,7 +11,7 @@ Input sequencing file extension: ".fastq.gz"
 
 Missmatches: "1"
 Phred-score: "30"
-guideRNA read start position: "0"
-guideRNA length: "20"
+sgRNA read start position: "0"
+sgRNA length: "20"
 
 ###
