@@ -112,7 +112,7 @@ Crispery is coded to maximize any computer's processing power (it runs multiproc
 
 Depending on the used computer, crispery might take a few minutes to run. If no errors are shown, crispery is still running. GIVE IT TIME!
 
-If for some reason crispery is closed before completing. please delete the output folder in its entirity as the outputed uncompressed .fastq files might have become corrupted. 
+If for some reason crispery is closed before completing. please delete the output folder in its entirety as the outputed uncompressed .fastq files might have become corrupted. 
 
 =================================
 
