@@ -22,7 +22,7 @@ Remove any "Undetermined" or unwanted fastq.gz files from the input folder as th
 # How to use it
 
 
-# On MSWindows and MacOS:
+# On MSWindows:
 
 
 # 1.	
@@ -45,7 +45,7 @@ The program will initialize and ask, in turn, for directories and file paths. Se
 
 
 
-# On linux (Ubuntu)
+# On MacOS and linux (Ubuntu)
 
 # 1.	
 Obtain the .csv file with the sgRNAs like in step 1 of MSwindows/macOS instructions.
@@ -56,7 +56,10 @@ Download the Crispery software version appropriate to the intended operating sys
 # 3.
 Open the “inputs.txt” file. All the inputs to the program are given via the "inputs.txt" file (see below for an explanation). This file MUST be located in the same folder the program is running on.
 
-# 4.
+# 4. (for MacOS)
+Double click the program icon. 
+
+# 4. (for Linux)
 Using the terminal, navigate into the folder where Crispery is located and type the following commands:
 
 
