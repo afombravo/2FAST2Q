@@ -5,7 +5,9 @@ Crispery requires absolutly no instalation whatsoever, and can work with any CRI
 
 The program works on MSwindows, MacOS, and Linux (Ubuntu), and can be downloaded from Zenodo by acessing the folowing link:
 
-In here we share the original Python3 source code, Crispery.py
+In here we share the original Python3 source code, Crispery.py;
+The instructions on how to use crispery;
+And some test data to run the program.
 
 
 # Before running:
