@@ -3,7 +3,7 @@ A Python3.7 based program that counts guideRNA occurences in fastq files
 
 Crispery requires absolutly no instalation whatsoever, and can work with any CRISPRi experimental setup.
 
-The program works on MSwindows, MacOS, and Linux (Ubuntu), and can be downloaded from Zenodo by acessing the folowing link:
+The program is available as a standalone executable on MSwindows, MacOS, and Linux (Ubuntu), and can be downloaded from Zenodo by acessing the folowing link:
 
 In here we share the original Python3 source code, Crispery.py;
 The instructions on how to use crispery;
@@ -164,6 +164,8 @@ Running Crispery with example data:
 2. Download the "example.fastq.gz"
 3. Modify the "inputs.txt" to match your system´s apropriate paths and file names.
 4. Run crispery
+
+In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appear as a warning message.
 
 The expected example output file is given: "compiled.csv"
 
