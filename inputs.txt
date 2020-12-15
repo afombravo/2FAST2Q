@@ -9,7 +9,7 @@ Input sequencing file extension: ".fastq.gz"
 
 ### Parameters (default)
 
-Missmatches: "1"
+Mismatches: "1"
 Phred-score: "30"
 sgRNA read start position: "0"
 sgRNA length: "20"
