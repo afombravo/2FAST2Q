@@ -25,7 +25,7 @@ def path_finder_seq(folder_path, extension, separator):
     
     pathing = []
     for filename in glob.glob(os.path.join(folder_path, extension)):
-        stop = filename[::-1].find(separator) + 1 # / for linux, use \\ for windows
+        stop = filename[::-1].find(separator) + 1 
         pathing.append([filename[-stop:]] + [filename] + [os.path.getsize(filename)]) 
 
     if extension != '*reads.csv':
@@ -91,10 +91,9 @@ def guides_loader(guides):
 
 def reads_counter(raw, quality_set, start, lenght, sgrna, mismatch):
     
-    reads = {}
     n = set("N")
     reading = []
-    perfect_counter, imperfect_counter = 0, 0
+    perfect_counter, imperfect_counter, reads = 0,0,0
     guide_len = start + lenght
     
     with open(raw) as current:
@@ -107,19 +106,19 @@ def reads_counter(raw, quality_set, start, lenght, sgrna, mismatch):
                 quality = reading[3][start:guide_len]
                 
                 reading = []
-                perfect_counter += 1
+                reads += 1
                 
                 if (len(quality_set.intersection(quality)) == 0) & \
                     (len(n.intersection(seq)) == 0):
                         
                     if seq in sgrna:
                         sgrna[seq].counts += 1
+                        perfect_counter += 1
                     
                     elif mismatch != 0:
-                    
                         sgrna, imperfect_counter = imperfect_alignment(seq, sgrna, mismatch, imperfect_counter)
                     
-    return reads, perfect_counter, imperfect_counter
+    return reads, perfect_counter, imperfect_counter, sgrna
   
 
 def imperfect_find(seq,guide,diffnumber):
@@ -143,7 +142,7 @@ def imperfect_alignment(sequence, sgrna, mismatch, counter):
             if found >=2:
                 break           
 
-    if found == 1: #only appends sequences that align to the gRNA set 
+    if found == 1:
         sgrna[found_guide].counts += 1
         counter += 1
 
@@ -154,39 +153,29 @@ def aligner(raw, guides, out, quality_set,mismatch,i,o,sgrna,version,separator, 
 
     tempo = time()
        
-    print("Processing file {} out of {}".format(i+1,o))
+    print(f"Processing file {i+1} out of {o}")
 
-    reads, perfect_counter, imperfect_counter = reads_counter(raw, quality_set, start, lenght, sgrna, mismatch)
+    reads, perfect_counter, imperfect_counter, sgrna = reads_counter(raw, quality_set, start, lenght, sgrna, mismatch)
 
     master_list = [["#sgRNA"] + ["Reads"]]
-    total_reads = 0
-    
     for guide in sgrna:
         master_list.append([sgrna[guide].name] + [sgrna[guide].counts])
-        total_reads += sgrna[guide].counts
 
-    master_list.sort(key = lambda master_list: master_list[0]) #alphabetical sorting
-    
     tempo = time() - tempo
-
     if tempo > 60:
-        timing = str(round(tempo / 60, 2)) + " minutes"
-        
+        timing = str(round(tempo / 60, 2)) + " minutes"   
     else:
         timing = str(round(tempo, 2)) + " seconds"
 
     name = raw[-raw[::-1].find(separator):-len(".fastq")]
+    stats_condition = f"#script ran in {timing} for file {name}. {perfect_counter+imperfect_counter} reads out of {reads} were considered valid. {perfect_counter} were perfectly aligned. {imperfect_counter} were aligned with mismatch"
     
-    stats_condition = "#script ran in {} for file {}. {} reads out of {} were considered valid. {} were perfectly aligned. {} were aligned with mismatch".format(timing,name,total_reads,perfect_counter,total_reads-imperfect_counter,imperfect_counter)
-
+    master_list.sort(key = lambda master_list: master_list[0]) #alphabetical sorting
     master_list.insert(0,[stats_condition])
-    
     csvfile = out[:-out[::-1].find(".")-1] + "_reads.csv"
-                          
     csv_writer(csvfile, master_list)
-        
+    
     print(stats_condition[1:]) # quality control
-
 
 
 def csv_writer(path, outfile):
@@ -331,12 +320,11 @@ def compiling(directory,phred,mismatch,version,separator):
                         
                 elif "#sgRNA" not in line[0]:
                     headers.append(line[0][1:]+"\n")
-    
+  
     path = ordered_csv[0][1]
     out_file = path[:-path[::-1].find(separator)-1]
     
     text_file = out_file + separator + "compiled_stats.txt"
-    
     with open(text_file, "w") as text_file:
         for item in headers:
             text_file.write(item)

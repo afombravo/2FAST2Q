@@ -176,7 +176,7 @@ Common Errors:
 
 | Error Message | Probable Cause/Fix |
 | ------------- | ------------------ |
-|Please enter a valid directory for the folowing request: (see printed requests). Please close the program and start again | You have entered an invalid file or folder location. Check that the correct folder/file was selected. When choosing a file click on the file. When selecting a folder, select the folder (dont double click).|
+|Please enter a valid directory for the folowing request: (see printed requests). Please close the program and start again | You have entered an invalid file or folder location. Check that the correct folder/file was selected. When choosing a file click on the file. When selecting a folder, double click (go into the folder, no files will be visible. Its normal).|
 |Please do not cancel the parameters box. Click OK next time. Please close the program and start again | Click OK on the pop up parameter box |
 |The wrong parameter format was entered. Please restart the program and re-introduce the parameters (or leave at default). Please close the program and start again | Introduce parameters that respect the default format (text and integers, when appropriate). |
 | Check the 'inputs.txt' file. Some parameters are missing. | Check if no lines were added or deleted by mistake in the “inputs.txt” file. Check that all the inputs are delimited by “”. |
