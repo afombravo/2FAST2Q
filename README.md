@@ -185,4 +185,4 @@ Common Errors:
 | Check the path to the sgRNA file. No file found in the following path: X | Confirm the indicated path (X) to the guideRNA .csv file is correct |
 | Check the path to the X files folder. No files of this type found. | Confirm the indicated path to the folder with the sequencing (X) files is correct. |
 | Program doesn’t initialize | Confirm the downloaded program is the appropriate one for the current operating system. Contact the Crispery developer if the issue persists. |
-| Program crashes, or behaves unexpectedly. | Check if the program behaves as expected with the provided sample data. Contact the Crispery developer if the issue persists. |
+| Program crashes, or behaves unexpectedly. | Restart the program and carefully indicate the appropriate required input paths. Check if the program behaves as expected with the provided sample data. Contact the Crispery developer if the issue persists. |
