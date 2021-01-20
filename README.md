@@ -76,7 +76,7 @@ Using the terminal, navigate into the folder where Crispery is located and type 
 
 To run the program, three input paths are required:
 
-# 1 (directory containing the sequencing files)
+# 1 directory containing the sequencing files
 
 A path to the folder with either:
 
@@ -86,15 +86,15 @@ A path to the folder with either:
 
 2. all the uncompressed .fastq files
 
-# 2 (the path to the sgRNA .csv file)
+# 2 the path to the sgRNA .csv file
 
 A path to the .csv file with the sgRNAs. See example "D39V_guides.csv" for layout (remove any headers).
 
-# 3 (the output directory)
+# 3 the output directory
 
 A path to the output folder (for safety, a subfolder will always be created on this directory)
 
-# 4 (Parameters)
+# 4 Parameters
 
 The file extension type (default = fastq.gz) (change to the appropriate extension if uncompressed, for example ".fastq") 
 
@@ -162,7 +162,7 @@ Running Crispery with example data:
 
 1. Download the "D39V_guides.csv" file
 2. Download the "example.fastq.gz"
-3. Modify the "inputs.txt" to match your system´s apropriate paths and file names.
+3. Modify the "inputs.txt" to match your system´s apropriate paths and file names. (ignore this step if using the graphical interface option)
 4. Run crispery
 
 In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appear as a warning message.
@@ -176,6 +176,9 @@ Common Errors:
 
 | Error Message | Probable Cause/Fix |
 | ------------- | ------------------ |
+|Please enter a valid directory for the folowing request: (see printed requests). Please close the program and start again | You have entered an invalid file or folder location. Check that the correct folder/file was selected. When choosing a file click on the file. When selecting a folder, select the folder (dont double click).|
+|Please do not cancel the parameters box. Click OK next time. Please close the program and start again | Click OK on the pop up parameter box |
+|The wrong parameter format was entered. Please restart the program and re-introduce the parameters (or leave at default). Please close the program and start again | Introduce parameters that respect the default format (text and integers, when appropriate). |
 | Check the 'inputs.txt' file. Some parameters are missing. | Check if no lines were added or deleted by mistake in the “inputs.txt” file. Check that all the inputs are delimited by “”. |
 | No "inputs.txt" file found. Please copy the correct file to the following directory: |The program is not running on the same directory "inputs.txt" is located. Please move the "inputs.txt" file to the directory indicated in the error message. |
 | Warning!! X and Y share the same sequence. Only X will be considered valid. |X and Y correspond to guideRNA names. The indicated entries have the same sequence, and only the first will be considered valid. |
