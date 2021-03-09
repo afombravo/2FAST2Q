@@ -9,6 +9,8 @@ from platform import system
 from regex import match
 from time import time
 import easygui as ezi
+import matplotlib.pyplot as plt
+import numpy as np
 
 #####################
 
@@ -29,8 +31,9 @@ def path_finder_seq(folder_path, extension, separator):
         pathing.append([filename[-stop:]] + [filename] + [os.path.getsize(filename)]) 
 
     if extension != '*reads.csv':
-        #sorting by size makes multiprocessing more efficient 
-        #as the bigger files will be ran first
+        
+        """sorting by size makes multiprocessing more efficient 
+            as the bigger files will be ran first """
         
         ordered = [path[:2] for path in sorted(pathing, key=lambda e: e[-1])][::-1]
      
@@ -262,7 +265,7 @@ def input_getter_txt():
 
 def initializer():
     
-    version = "1.4"
+    version = "1.4.1"
     
     print("\nVersion: {}".format(version))
     
@@ -301,19 +304,19 @@ def compiling(directory,phred,mismatch,version,separator):
     
     ordered_csv = path_finder_seq(directory, '*reads.csv',separator)
     
-    headers = [f"Parameters:\n\nVersion: {version}\n"] + \
-            [f"mismatch: {mismatch}\n"] + \
-            [f"Phred Score: {phred}\n\n"]
+    headers = [f"#Crispery version: {version}"] + \
+            [f"#Mismatch: {mismatch}"] + \
+            [f"#Phred Score: {phred}"]
             
-    compiled = {}
-    head = ["#sgRNA"]
+    compiled = {} #dictionary with all the reads per sgRNA
+    head = ["#sgRNA"] #name of the samples
     for name, file in ordered_csv:
         head.append(name[name.find(separator)+len(separator):name.find(".csv")])
         with open(file) as current:
             for line in current:
                 line = line[:-1].split(",")
                 if "#" not in line[0]:
-                    if line[0] in compiled.keys():
+                    if line[0] in compiled:
                         compiled[line[0]] = compiled[line[0]] + [int(line[1])]
                     else:
                         compiled[line[0]] = [int(line[1])]
@@ -324,10 +327,7 @@ def compiling(directory,phred,mismatch,version,separator):
     path = ordered_csv[0][1]
     out_file = path[:-path[::-1].find(separator)-1]
     
-    text_file = out_file + separator + "compiled_stats.txt"
-    with open(text_file, "w") as text_file:
-        for item in headers:
-            text_file.write(item)
+    run_stats(headers,out_file,separator)
                         
     final = []
     for sgrna in compiled:
@@ -336,11 +336,50 @@ def compiling(directory,phred,mismatch,version,separator):
     final.insert(0, head)
     
     csvfile = out_file + separator + "compiled.csv"
-    
     csv_writer(csvfile, final)
         
     input("\nAnalysis successfully completed\nAll the reads have been compiled into the compiled.csv file.\nPress any key to exit")
 
+
+def run_stats(headers, out_file,separator):
+    
+    ### parsing the stats from the read files
+    global_stat = [["#Sample name", "Running Time", "Running Time unit", \
+                   "Total number of reads in sample", "Total number of reads that passed quality control parameters", \
+                    "Number of reads that were aligned without mismatches", "Number of reads that were aligned with mismatches"]]
+        
+    for run in headers:
+        if "script ran" in run:
+            parsed = run.split()
+            global_stat.append([parsed[7][:-1]] + [parsed[3]] + [parsed[4]] + [parsed[12]] + [parsed[8]] + [parsed[16]] + [parsed[20]])
+        else:
+            global_stat.insert(0,[run])
+    
+    csvfile = out_file + separator + "compiled_stats.csv"
+    csv_writer(csvfile, global_stat)
+    
+    ### plotting
+    header_ofset = 4
+    fig, ax = plt.subplots()
+    width = 0.4
+    for i, (a,b,c,d,e,f,g) in enumerate(global_stat[header_ofset:]):   
+
+        plt.bar(i+width/2, int(d), width,  capsize=5, color = "darkorange", hatch="//")
+        plt.bar(i-width/2, int(e), width, capsize=5, color = "slateblue", hatch="\\\\\\")
+
+    ax.set_xticks(np.arange(len([n[0] for n in global_stat[header_ofset:]])))
+    ax.set_xticklabels([n[0] for n in global_stat[header_ofset:]])
+    plt.xlabel('Sample')
+    plt.ylabel('Number of reads')
+    plt.xticks(rotation=45)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.legend(["Total number of reads in sample", "Total number of reads that passed quality control parameters"], loc='upper center',\
+              bbox_to_anchor=(0.5, -0.4),ncol=1,prop={'size': 8})
+        
+    plt.gcf().subplots_adjust(bottom=0.4)
+    
+    plt.savefig(f"{out_file}{separator}reads_plot.png", dpi=300)
 
 
 def multi(files,guides, write_path_save, quality_set,mismatch,sgrna,version,separator, start, lenght):
