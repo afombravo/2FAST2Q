@@ -154,7 +154,7 @@ def reads_counter(raw, quality_set, start, lenght, sgrna, mismatch):
 
 def imperfect_find(seq,guide,diffnumber):
 
-     """ regex function to compare if the inputed sequences are similar to
+    """ regex function to compare if the inputed sequences are similar to
      the indicated mismatch degree. returns True if they are similar enough"""
     
     if match("(%s" % seq + "){s<=%s" % diffnumber + "}", guide):
