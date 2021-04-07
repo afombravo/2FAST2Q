@@ -184,8 +184,8 @@ Common Errors:
 | Error Message | Probable Cause/Fix |
 | ------------- | ------------------ |
 |Please enter a valid directory for the folowing request: (see printed requests). Please close the program and start again | You have entered an invalid file or folder location. Check that the correct folder/file was selected. When choosing a file click on the file. When selecting a folder, double click (go into the folder, no files will be visible. Its normal).|
-|Please confirm that all the input boxes are filled. Some parameters are missing. Press any key to exit | Click OK on the pop up parameter box |
-|The wrong parameter format was entered. Please restart the program and re-introduce ALL the required paths (you must use the btowse buttons for this), and parameters (or leave at default). Please close the program and start again | Introduce parameters that respect the default format (text and integers, when appropriate). |
+|Please confirm that all the input boxes are filled. Some parameters are missing. Press any key to exit | Click OK on the pop up parameter box. The wrong parameter format was entered. Please restart the program and re-introduce ALL the required paths (you must use the btowse buttons for this), and parameters (or leave at default). Please close the program and start again |
+| Only numeric values are accepted in the folowing fields: ... | Introduce parameters that respect the default format (text and integers, when appropriate). |
 | Check the 'inputs.txt' file. Some parameters are missing. | Check if no lines were added or deleted by mistake in the “inputs.txt” file. Check that all the inputs are delimited by “”. |
 | No "inputs.txt" file found. Please copy the correct file to the following directory: |The program is not running on the same directory "inputs.txt" is located. Please move the "inputs.txt" file to the directory indicated in the error message. |
 | Warning!! X and Y share the same sequence. Only X will be considered valid. |X and Y correspond to guideRNA names. The indicated entries have the same sequence, and only the first will be considered valid. |
