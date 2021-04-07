@@ -13,5 +13,6 @@ Mismatches: "1"
 Phred-score: "30"
 sgRNA read start position: "0"
 sgRNA length: "20"
+ram saving mode[y/n]: "n"
 
 ###
