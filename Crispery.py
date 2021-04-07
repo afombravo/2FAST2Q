@@ -8,9 +8,11 @@ import multiprocessing
 from platform import system
 from regex import match
 from time import time
-import easygui as ezi
 import matplotlib.pyplot as plt
 import numpy as np
+from functools import lru_cache
+import psutil
+#also needs tkinter (imported inside inputs_initializer())
 
 #####################
 
@@ -45,6 +47,7 @@ def path_finder_seq(folder_path, extension, separator):
      
         if ordered == []:
             input(f"Check the path to the {extension[1:]} files folder. No files of this type found.\n Press any key to exit")
+            raise Exception
 
     else:
         ordered = [path[:2] for path in sorted(pathing, reverse = False)]
@@ -73,7 +76,7 @@ def unpack(ordered,directory):
     for name, filename in ordered: 
         filing.append(filename)
         write_path_save.append(directory + name[:-len(".gz")])
-    
+
     with ThreadPoolExecutor() as executor: # multihreaded for unzipping files
         executor.map(unzip,filing,write_path_save)
 
@@ -90,6 +93,7 @@ def guides_loader(guides):
     
     if not os.path.isfile(guides):
         input("\nCheck the path to the sgRNA file.\nNo file found in the following path: {}\nPress any key to exit".format(guides))
+        raise Exception
     
     sgrna = {}
     
@@ -107,7 +111,7 @@ def guides_loader(guides):
 
     return sgrna
 
-def reads_counter(raw, quality_set, start, lenght, sgrna, mismatch):
+def reads_counter(raw, quality_set, start, lenght, sgrna, mismatch, ram):
     
     """ Reads the fastq file on the fly to avoid RAM issues. 
     Each read is assumed to be composed of 4 lines, with the sequense being 
@@ -121,7 +125,7 @@ def reads_counter(raw, quality_set, start, lenght, sgrna, mismatch):
     If the read doesnt have a perfect match, it is sent for mismatch comparison
     via the "imperfect_alignment" function.
     """
-    
+
     n = set("N")
     reading = []
     perfect_counter, imperfect_counter, reads = 0,0,0
@@ -147,21 +151,33 @@ def reads_counter(raw, quality_set, start, lenght, sgrna, mismatch):
                         perfect_counter += 1
                     
                     elif mismatch != 0:
-                        sgrna, imperfect_counter = imperfect_alignment(seq, sgrna, mismatch, imperfect_counter)
-                    
+                        sgrna, imperfect_counter = imperfect_alignment(seq, sgrna, mismatch, imperfect_counter,ram)
+
+    # clears the cache RAM from each individual file/process when using the imperfect_find_ram_horder function
+    imperfect_find_ram_horder.cache_clear() 
+    
     return reads, perfect_counter, imperfect_counter, sgrna
   
+@lru_cache(maxsize=None)
+def imperfect_find_ram_horder(seq,guide,diffnumber):
+
+    """ regex function to compare if the inputed sequences are similar to
+     the indicated mismatch degree. returns True if they are similar enough.
+     Keeps the inputs in cache for faster checking as a lot of the times
+     the same seq results in the same kind of sequencing errors."""
+     
+    if match("(%s" % seq + "){s<=%s" % diffnumber + "}", guide):
+        return True
 
 def imperfect_find(seq,guide,diffnumber):
 
     """ regex function to compare if the inputed sequences are similar to
      the indicated mismatch degree. returns True if they are similar enough"""
-    
+     
     if match("(%s" % seq + "){s<=%s" % diffnumber + "}", guide):
-        return True
-            
+        return True        
 
-def imperfect_alignment(sequence, sgrna, mismatch, counter):
+def imperfect_alignment(sequence, sgrna, mismatch, counter,ram):
     
     """ for the inputed read sequence, this compares if there is a sgRNA 
     with a sequence that is similar to it, to the indicated mismatch degree
@@ -169,11 +185,14 @@ def imperfect_alignment(sequence, sgrna, mismatch, counter):
     if the read can be atributed to more than 1 sgRNA, the read is discarded.
     If all conditions are meet, the read goes into the respective sgRNA count 
     score"""
-    
+
     found = 0
     for guide in sgrna:
         
-        finder = imperfect_find(sequence, guide, mismatch)
+        if not ram:
+            finder = imperfect_find_ram_horder(sequence, guide, mismatch)
+        else:
+            finder = imperfect_find(sequence, guide, mismatch)
 
         if finder:
 
@@ -186,11 +205,11 @@ def imperfect_alignment(sequence, sgrna, mismatch, counter):
     if found == 1:
         sgrna[found_guide].counts += 1
         counter += 1
-
+        
     return sgrna, counter
 
 
-def aligner(raw, guides, out, quality_set,mismatch,i,o,sgrna,version,separator, start, lenght):
+def aligner(raw, guides, out, quality_set,mismatch,i,o,sgrna,version,separator, start, lenght, ram):
 
     """ Runs the main read to sgRNA associating function "reads_counter".
     Creates some visual prompts to alert the user that the samples are being
@@ -198,11 +217,12 @@ def aligner(raw, guides, out, quality_set,mismatch,i,o,sgrna,version,separator, 
     the total number of samples is correct, getting an estimate of the total
     number of reads per sample, and checking total running time"""
     
+    ram_lock()
     tempo = time()
        
     print(f"Processing file {i+1} out of {o}")
 
-    reads, perfect_counter, imperfect_counter, sgrna = reads_counter(raw, quality_set, start, lenght, sgrna, mismatch)
+    reads, perfect_counter, imperfect_counter, sgrna = reads_counter(raw, quality_set, start, lenght, sgrna, mismatch, ram)
 
     master_list = [["#sgRNA"] + ["Reads"]]
     for guide in sgrna:
@@ -233,66 +253,132 @@ def csv_writer(path, outfile):
         writer = csv.writer(output)
         writer.writerows(outfile)
 
-def inputs_asker(msgs, input_parameters, directr):
+def inputs_handler(separator):
     
-    """ Opens the user interface file browsing dialog boxes"""
+    """ assertains the correct parsing of the input parameters"""
     
-    print(msgs)
-    ezi.msgbox(msg=msgs)
+    parameters=inputs_initializer(separator)
     
-    if directr:
-        input_parameters.append(ezi.diropenbox(msg = msgs))
+    if len(parameters) != 9:
+        input("Please confirm that all the input boxes are filled. Some parameters are missing.\nPress any key to exit")
+        raise Exception
+        
+    try:
+        int(parameters["start"])
+        int(parameters["length"])
+        int(parameters["miss"])
+        int(parameters["phred"])
+    except Exception:
+        input("\nOnly numeric values are accepted in the folowing fields:\nsgRNA read starting place;\nsgRNA length;\nmismatch;\nPhred score.\n\nPlease try again. Press any key to exit")
+        raise Exception    
+    
+    # parsing the RAM saving choice as a bolean
+    if parameters['ram'] == "n":
+        parameters['ram'] = False
     else:
-        input_parameters.append(ezi.fileopenbox(msg=msgs))
-        
-    return input_parameters
+        parameters['ram'] = True
 
-def input_getter_graphical():
+    return parameters['seq_files'],parameters['sgrna'],parameters['out'],parameters['start'],\
+    parameters['length'],parameters['miss'],parameters['phred'],parameters['ram'],\
+    parameters['fastq_extent']
 
-    """ Handles the parsing of the user interface parameters"""
+def inputs_initializer(separator):
     
-    input_parameters = []
-    msgs = ["Select the directory containing the sequencing files",
-            "Select the sgRNA .csv file",
-            "Select the output directory",
-            "Running Parameters"]
+    """ Handles the graphical interface, and all the parameter inputs"""
     
-    ### asking for directory with the fastq.gz files
-    input_parameters = inputs_asker(msgs[0], input_parameters, True)
+    from tkinter import Entry,LabelFrame,Button,Label,Tk,filedialog,StringVar,OptionMenu
     
-    ### asking for directory with the sgRNA files
-    input_parameters = inputs_asker(msgs[1], input_parameters, False)
-    
-    ### asking for the output directory
-    input_parameters = inputs_asker(msgs[2], input_parameters, True)
-    
-    ### updating the parameters
-    title = "Enter the appropriate running parameters (default)"
-    
-    fieldNames = ["Sequencing file extension",\
-                  "Allowed mismatches",\
-                "Minimal sgRNA Phred-score",\
-                "sgRNA start position in the read",\
-                "sgRNA length"]
+    def restart():
+        root.destroy()
+        inputs_initializer()
         
-    default = [".fastq.gz",1,30,0,20]  
-    input_parameters.append(ezi.multenterbox(msgs[3],title, fieldNames, default))
+    def submit():
+        for arg in temporary:
+            parameters[arg] = temporary[arg].get()
+        root.destroy()
     
-    ## error messages
-    for entry, msg in zip(input_parameters, msgs):
-        if (entry == None) & (msg != msgs[3]):
-            input(f"Please enter a valid directory for the folowing request: '{msg}'\nPlease close the program and start again")
-            break
+    def directory(column,row,parameter,frame):
+        filename = filedialog.askdirectory(initialdir =  separator, title = "Select a folder")
+        filing_parser(column,row,filename,parameter,frame)
         
-        elif (entry == None) & (msg == msgs[3]):
-            input("Please do not cancel the parameters box. Click OK next time.\nPlease close the program and start again")
-            break
+    def file(column,row,parameter,frame):
+        filename = filedialog.askopenfilename(initialdir =  separator, title = "Select a file", filetype =
+            (("Microsoft Excel Comma Separated Values File","*.csv"),("all files","*.*")) )
+        filing_parser(column,row,filename,parameter,frame)
+    
+    def filing_parser(column,row,filename,parameter,frame):
+        place = Entry(frame,borderwidth=5,width=50)
+        place.grid(row=row,column=column+1)
+        place.insert(0, filename)
+        parameters[parameter] = filename
+
+    def browsing(keyword,inputs):
+        title1,title2,row,column,function=inputs
+        frame=LabelFrame(root,text=title1,padx=5,pady=5)
+        frame.grid(row=row,column=column, columnspan=2)
+        button = Button(frame, text = title2,command = lambda: function(column,row,keyword,frame))
+        button.grid(column = column, row = row)
+        button_place = Entry(frame,borderwidth=5,width=50)
+        button_place.grid(row=row,column=column+1)
+        button_place.insert(0, "Use the Browse button to navigate")
         
-        elif (entry != None) & (msg == msgs[3]) & (len(input_parameters [-1]) != 5):
-            input("The wrong parameter format was entered\nPlease restart the program and re-introduce the parameters (or leave at default)\nPlease close the program and start again")
-            break
+    def write_menu(keyword,inputs):
+        title,row,column,default=inputs
+        start = Entry(root,width=25,borderwidth=5)
+        start.grid(row=row,column=column+1,padx=20,pady=5)
+        start.insert(0, default)
+        placeholder(row,column,title,10,1)
+        temporary[keyword]=start
         
-    return input_parameters
+    def dropdown():
+        file_ext = StringVar()
+        file_ext.set(".fastq.gz")
+        placeholder(4,0,"Sequencing file extension",20,1)
+        drop = OptionMenu(root, file_ext, ".fastq.gz", ".fastq")
+        drop.grid(column = 1,row = 4)
+        temporary["fastq_extent"]=file_ext
+        
+    def button_click(row, column, title, function):
+        button_ok = Button(root,text=title,padx=12,pady=5, width=15,command=function)
+        button_ok.grid(row=row, column=column,columnspan=1)
+        
+    def placeholder(row, column,title,padx,pady):
+        placeholder = Label(root, text=title)
+        placeholder.grid(row=row,column=column,padx=padx,pady=pady)
+        return placeholder
+        
+    root = Tk()
+    root.title("Crispery Input Parameters Window")
+    root.minsize(400, 475)
+    parameters,temporary = {},{}  
+
+    browsing_inputs = {"seq_files":["Path to the .fastq(.gz) files folder","Browse",1,0,directory],
+                       "sgrna":["Path to the sgRNA .csv file","Browse",2,0,file],
+                       "out":["Path to the output folder","Browse",3,0,directory]}
+
+    default_inputs = {"start":["sgRNA start position in the read",5,0,0],
+                      "length":["sgRNA length",6,0,20],
+                      "miss":["Allowed mismatches",7,0,1],
+                      "phred":["Minimal sgRNA Phred-score",8,0,30],
+                      "ram":["RAM saving mode [y/n]",9,0,"n"]}
+    
+    # Generating the file/folder browsing buttons
+    for arg in browsing_inputs:
+        browsing(arg,browsing_inputs[arg])
+    
+    # Generating the input parameter buttons
+    for arg in default_inputs:
+        write_menu(arg,default_inputs[arg])
+    
+    dropdown()
+    placeholder(0,1,"",0,0)
+    placeholder(10,0,"",0,0)
+    button_click(11, 0, "OK", submit)
+    button_click(11, 1, "Reset", restart)
+
+    root.mainloop()
+
+    return parameters
 
 def input_getter_txt():
 
@@ -302,6 +388,7 @@ def input_getter_txt():
     
     if not os.path.isfile(inputs): 
         input(f'\nNo "inputs.txt" file found. Please copy the correct file to the following directory: {inputs}')
+        raise Exception
     
     input_parameters = []
     with open(inputs) as current:
@@ -310,8 +397,14 @@ def input_getter_txt():
                 line = line[:-1].split('"')
                 input_parameters.append(line[1])
                 
-    if len(input_parameters) != 8:
+    if len(input_parameters) != 9:
         input("\nCheck the 'inputs.txt' file. Some parameters are missing.\n")
+        raise Exception
+        
+    if input_parameters[-1] == "n":
+        input_parameters[-1] = True
+    else:
+        input_parameters[-1] = False
                 
     return input_parameters
 
@@ -321,23 +414,23 @@ def initializer():
     Makes sure the path separators, and the input parser function is correct
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
-    
-    version = "1.4.1"
+ 
+    version = "1.4.3"
     
     print("\nVersion: {}".format(version))
     
     if system() == 'Windows':
         separator = "\\"
-        folder_path, guides, out, (extension, mismatch, phred, start, lenght) = input_getter_graphical()
+        folder_path, guides, out, start, lenght, mismatch, phred, ram, extension = inputs_handler(separator)
         
     else:
         separator = "/"
         
         if system() == 'Darwin':
-            folder_path, guides, out, (extension, mismatch, phred, start, lenght) = input_getter_graphical()
+            folder_path, guides, out, start, lenght, mismatch, phred, ram, extension = inputs_handler(separator)
             
         else:
-            folder_path, guides, out, extension, mismatch, phred, start, lenght = input_getter_txt()
+            folder_path, guides, out, extension, mismatch, phred, start, lenght, ram = input_getter_txt()
     
     extension = f'*{extension}'
     
@@ -349,12 +442,14 @@ def initializer():
     if not os.path.exists(directory):
         os.makedirs(directory)
     
-    print("\nRunning with parameters:\n{} mismatch allowed\nMinimal Phred Score per bp >= {}\n".format(mismatch, phred))
-    print("All data will be saved into {}".format(directory))
-
+    if psutil.virtual_memory().percent>=60:
+        print("\nLow RAM availability detected, file processing may be slow\n")
+    
+    print(f"\nRunning with parameters:\n{mismatch} mismatch allowed\nMinimal Phred Score per bp >= {phred}\n")
+    print(f"All data will be saved into {directory}")
 
     return folder_path, guides, int(mismatch), quality_set, directory, \
-        version, int(phred), separator, int(start), int(lenght), extension 
+        version, int(phred), separator, int(start), int(lenght), ram, extension 
 
 
 def compiling(directory,phred,mismatch,version,separator):
@@ -408,13 +503,17 @@ def run_stats(headers, out_file,separator):
     
     ### parsing the stats from the read files
     global_stat = [["#Sample name", "Running Time", "Running Time unit", \
-                   "Total number of reads in sample", "Total number of reads that passed quality control parameters", \
-                    "Number of reads that were aligned without mismatches", "Number of reads that were aligned with mismatches"]]
+                    "Total number of reads in sample", \
+                    "Total number of reads that passed quality control parameters", \
+                    "Number of reads that were aligned without mismatches", \
+                    "Number of reads that were aligned with mismatches"]]
         
     for run in headers:
         if "script ran" in run:
             parsed = run.split()
-            global_stat.append([parsed[7][:-1]] + [parsed[3]] + [parsed[4]] + [parsed[12]] + [parsed[8]] + [parsed[16]] + [parsed[20]])
+            global_stat.append([parsed[7][:-1]] + [parsed[3]] + [parsed[4]] + \
+                               [parsed[12]] + [parsed[8]] + [parsed[16]] + \
+                               [parsed[20]])
         else:
             global_stat.insert(0,[run])
     
@@ -444,25 +543,41 @@ def run_stats(headers, out_file,separator):
     
     plt.savefig(f"{out_file}{separator}reads_plot.png", dpi=300)
 
+def ram_lock():
 
-def multi(files,guides, write_path_save, quality_set,mismatch,sgrna,version,separator, start, lenght):
+    """ stalls the program until more RAM is available from finishing the 
+    processing of other files """
+    
+    if psutil.virtual_memory().percent >= 98:
+        print("\nSub-optimal RAM allocation detected. Please consider running the program in 'RAM saving mode'\n")
+    
+    while psutil.virtual_memory().percent >= 98:
+        pass
+    return True
+
+def cpu_counter():
+    
+    """ counts the available cpu cores, required for spliting the processing
+    of the files """
+    
+    cpu = multiprocessing.cpu_count()
+    if cpu >= 2:
+        cpu -= 1
+    pool = multiprocessing.Pool(processes = cpu)
+    
+    return pool
+
+def multi(files,guides, write_path_save, quality_set,mismatch,sgrna,version,separator, start, lenght, ram):
     
     """ starts and handles the parallel processing of all the samples by calling 
     multiple instances of the "aligner" function (one per sample) """
-    
-    cpu = multiprocessing.cpu_count()
-    
-    if cpu >= 2:
-        cpu -= 1
-        
-    pool = multiprocessing.Pool(processes = cpu)
-    
+
+    pool = cpu_counter()
     for i, (name, out) in enumerate(zip(files, write_path_save)):
-        pool.apply_async(aligner, args=(name, guides, out, quality_set,mismatch,i,len(files),sgrna,version,separator, start, lenght))
+        pool.apply_async(aligner, args=(name, guides, out, quality_set,mismatch,i,len(files),sgrna,version,separator, start, lenght, ram))
         
     pool.close()
     pool.join()
-
 
 def input_file_type(ordered, extension, directory):
 
@@ -490,7 +605,7 @@ def main():
     
     ### parses all inputted parameters
     folder_path, guides,mismatch, quality_set,directory, \
-    version,phred,separator,start, lenght, extension = initializer()
+    version,phred,separator,start, lenght, ram, extension = initializer()
     
     ### parses the names/paths, and orders the sequencing files
     ordered = path_finder_seq(folder_path, extension, separator)
@@ -504,7 +619,7 @@ def main():
     
     ### Processes all the samples by associating sgRNAs to the reads on the fastq files.
     ### Creates one process per sample, allowing multiple samples to be processed in parallel. 
-    multi(files,guides, write_path_save, quality_set,mismatch,sgrna,version,separator, start, lenght)
+    multi(files,guides, write_path_save, quality_set,mismatch,sgrna,version,separator, start, lenght, ram)
     
     ### Compiles all the processed samples from multi into one file, and creates the run statistics
     compiling(directory,phred,mismatch,version,separator)

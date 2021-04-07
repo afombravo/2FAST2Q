@@ -5,7 +5,7 @@ Crispery requires absolutly no instalation whatsoever, and can work with any CRI
 
 The program is available as a standalone executable on MSwindows, MacOS, and Linux (Ubuntu), and can be downloaded from Zenodo by acessing the folowing link: {Coming soon}
 
-In here we share the original Python3 source code, Crispery.py;
+In here I share the original Python3 source code, Crispery.py;
 The instructions on how to use crispery;
 And some test data to run the program.
 
@@ -21,7 +21,7 @@ There are two versions of the program, with and without a basic user interface.
 
 
 The windows version only uses the user interface. 
-For macOS there are both versions, as the graphical interface does not work in some macOS. If one fails, please try the other one.
+For macOS there are both versions, as the graphical interface can be buggy. If one fails, please try the other one.
 For Linux there is only the non graphical interface. 
 
 
@@ -98,13 +98,18 @@ A path to the output folder (for safety, a subfolder will always be created on t
 
 The file extension type (default = fastq.gz) (change to the appropriate extension if uncompressed, for example ".fastq") 
 
-The number of allowed missmatches per sgRNA (default = 1)
-
 The minimal sequencing phred-score for each nucleotide (default = 30)
 
 The start position of the sgRNA within the read (default = 0, meaning the sequenced sgRNA is located at the first position of the read sequence)
 
 The lenght of the sgRNA in bp (default = 20)
+
+The number of allowed missmatches per sgRNA (default = 1)
+
+RAM saving mode (default = no) 
+Only useful when allowing missmatch search, as search speed is increased by ~40% due to caching. 
+When in RAM saving mode, Crispery should take about 200MB of RAM. 
+When NOT in RAM saving mode, several GB might be required. 
 
 # While Running
 
@@ -112,7 +117,7 @@ The lenght of the sgRNA in bp (default = 20)
 
 Crispery is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavilly use the computer while crispery is running to avoid constraining the processor.
 
-
+When running Crispery in the compiled form, the initializating sequence might take up to a minute. Crispery will be operational when "Version X.X.X" appears on the window.
 Depending on the used computer, crispery might take a few minutes to run. If no errors are shown, crispery is still running. GIVE IT TIME!
 
 If for some reason crispery is closed before completing. please delete the output folder in its entirety as the outputed uncompressed .fastq files might have become corrupted. 
@@ -179,8 +184,8 @@ Common Errors:
 | Error Message | Probable Cause/Fix |
 | ------------- | ------------------ |
 |Please enter a valid directory for the folowing request: (see printed requests). Please close the program and start again | You have entered an invalid file or folder location. Check that the correct folder/file was selected. When choosing a file click on the file. When selecting a folder, double click (go into the folder, no files will be visible. Its normal).|
-|Please do not cancel the parameters box. Click OK next time. Please close the program and start again | Click OK on the pop up parameter box |
-|The wrong parameter format was entered. Please restart the program and re-introduce the parameters (or leave at default). Please close the program and start again | Introduce parameters that respect the default format (text and integers, when appropriate). |
+|Please confirm that all the input boxes are filled. Some parameters are missing. Press any key to exit | Click OK on the pop up parameter box |
+|The wrong parameter format was entered. Please restart the program and re-introduce ALL the required paths (you must use the btowse buttons for this), and parameters (or leave at default). Please close the program and start again | Introduce parameters that respect the default format (text and integers, when appropriate). |
 | Check the 'inputs.txt' file. Some parameters are missing. | Check if no lines were added or deleted by mistake in the “inputs.txt” file. Check that all the inputs are delimited by “”. |
 | No "inputs.txt" file found. Please copy the correct file to the following directory: |The program is not running on the same directory "inputs.txt" is located. Please move the "inputs.txt" file to the directory indicated in the error message. |
 | Warning!! X and Y share the same sequence. Only X will be considered valid. |X and Y correspond to guideRNA names. The indicated entries have the same sequence, and only the first will be considered valid. |
