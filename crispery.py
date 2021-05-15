@@ -623,3 +623,8 @@ def main(arg):
     
     ### Compiles all the processed samples from multi into one file, and creates the run statistics
     compiling(directory,phred,mismatch,version,separator)
+
+if __name__ == "__main__":
+    if len(sys.argv)>1:
+        argv = sys.argv[1]
+    main(argv)
