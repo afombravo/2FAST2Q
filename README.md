@@ -29,7 +29,7 @@ For macOS there are both versions, as the graphical interface can be buggy. If o
 For Linux there is only the non graphical interface. 
 
 
-# On MSWindows and MacOS Catalina (graphical interface):
+# Using the executable files (graphical mode only):
 
 
 # 1.	
@@ -51,29 +51,35 @@ The program will initialize and ask, in turn, for directories and file paths. Se
 
 
 
-
-# On MacOS and linux (Ubuntu) (non graphical interface)
+# Using the non executable files (graphical and non-graphical mode)
 
 # 1.	
 Obtain the .csv file with the sgRNAs like in step 1 of the graphical interface instructions.
 
 # 2.	
-Download the Crispery software version appropriate to the intended operating system, as well as the provided template “inputs.txt” file, into the same folder.
+Download the crispery Python3 module using pip install: `pip install crispery`.
 
-# 3.
-Open the “inputs.txt” file. All the inputs to the program are given via the "inputs.txt" file (see below for an explanation). This file MUST be located in the same folder the program is running on.
+# 3. For starting the graphical interface mode:
+type `python -m crispery`
 
+# 3.1 For starting the non-graphical interface mode:
+type `python -m crispery -c --s "c/path/seqfiledir" --g "c/path/sgrna.csv" --o "c/path/outputfolder"`
 
-# 4. (for MacOS)
-Double click the program icon. 
+There are also several optional parameters. For their description and input type. A more indepth description is provided below:
 
-# 4. (for Linux)
-Using the terminal, navigate into the folder where Crispery is located and type the following commands:
+`python -m crispery -h`
 
-
- i.	chmod +x ./Crispery
- 
- ii.	./Crispery -h
+` -h, --help  show this help message and exit
+  -c [C]      cmd line mode
+  --s S       The full path to the directory with the sequencing files
+  --g G       The full path to the .csv file with the sgRNAs.
+  --o O       The full path to the output directory
+  --se SE     Sequencing file extenction (ie:'.fastq.gz')
+  --m M       number of allowed mismatches (default=1)
+  --ph PH     Minimal Phred-score (default=30)
+  --st ST     guideRNA start position in the read (default is 0==1st bp)
+  --l L       guideRNA length
+  --r R       ram saving mode (only appropriate for mismatch searching) `
 
 
 # Inputs
@@ -190,7 +196,6 @@ Common Errors:
 |Please enter a valid directory for the folowing request: (see printed requests). Please close the program and start again | You have entered an invalid file or folder location. Check that the correct folder/file was selected. When choosing a file click on the file. When selecting a folder, double click (go into the folder, no files will be visible. Its normal).|
 |Please confirm that all the input boxes are filled. Some parameters are missing. Press any key to exit | Click OK on the pop up parameter box. The wrong parameter format was entered. Please restart the program and re-introduce ALL the required paths (you must use the btowse buttons for this), and parameters (or leave at default). Please close the program and start again |
 | Only numeric values are accepted in the folowing fields: ... | Introduce parameters that respect the default format (text and integers, when appropriate). |
-| Check the 'inputs.txt' file. Some parameters are missing. | Check if no lines were added or deleted by mistake in the “inputs.txt” file. Check that all the inputs are delimited by “”. |
 | No "inputs.txt" file found. Please copy the correct file to the following directory: |The program is not running on the same directory "inputs.txt" is located. Please move the "inputs.txt" file to the directory indicated in the error message. |
 | Warning!! X and Y share the same sequence. Only X will be considered valid. |X and Y correspond to guideRNA names. The indicated entries have the same sequence, and only the first will be considered valid. |
 | Check the path to the sgRNA file. No file found in the following path: X | Confirm the indicated path (X) to the guideRNA .csv file is correct |
