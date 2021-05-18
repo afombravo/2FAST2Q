@@ -57,7 +57,8 @@ The program will initialize and ask, in turn, for directories and file paths. Se
 Obtain the .csv file with the sgRNAs like in step 1 of the graphical interface instructions.
 
 # 2.	
-Download the crispery Python3 module using pip install: `pip install crispery`.
+Download the crispery Python3 module using pip install: 
+`pip install crispery`.
 
 # 3. For starting the graphical interface mode:
 type `python -m crispery`
