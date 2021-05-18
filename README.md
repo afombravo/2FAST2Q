@@ -70,15 +70,25 @@ There are also several optional parameters. For their description and input type
 `python -m crispery -h`
 
 ` -h, --help  show this help message and exit
+
   -c [C]      cmd line mode
+  
   --s S       The full path to the directory with the sequencing files
+  
   --g G       The full path to the .csv file with the sgRNAs.
+  
   --o O       The full path to the output directory
+  
   --se SE     Sequencing file extenction (ie:'.fastq.gz')
+  
   --m M       number of allowed mismatches (default=1)
+  
   --ph PH     Minimal Phred-score (default=30)
+  
   --st ST     guideRNA start position in the read (default is 0==1st bp)
+  
   --l L       guideRNA length
+  
   --r R       ram saving mode (only appropriate for mismatch searching) `
 
 
