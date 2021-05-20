@@ -274,10 +274,9 @@ def inputs_handler(separator):
         raise Exception    
     
     # parsing the RAM saving choice as a bolean
+    parameters['ram'] = True
     if parameters['ram'] == "n":
         parameters['ram'] = False
-    else:
-        parameters['ram'] = True
 
     return parameters['seq_files'],parameters['sgrna'],parameters['out'],parameters['start'],\
     parameters['length'],parameters['miss'],parameters['phred'],parameters['ram'],\
@@ -388,7 +387,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "1.4.6.2"
+    version = "1.4.6.3"
     
     print("\nVersion: {}".format(version))
     
@@ -450,15 +449,15 @@ def input_parser():
         ram=True
         
     lenght=20
-    if args.m is not None:
+    if args.l is not None:
         lenght=args.l
                  
     start=0
-    if args.m is not None:
+    if args.st is not None:
         start=args.st
         
     phred=30
-    if args.m is not None:
+    if args.ph is not None:
         phred=args.ph
                  
     mismatch=1
