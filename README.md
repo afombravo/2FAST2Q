@@ -190,8 +190,7 @@ Running Crispery with example data:
 
 1. Download the "D39V_guides.csv" file
 2. Download the "example.fastq.gz"
-3. Modify the "inputs.txt" to match your system´s apropriate paths and file names. (ignore this step if using the graphical interface option)
-4. Run crispery
+3. Run crispery
 
 In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appear as a warning message.
 
