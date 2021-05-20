@@ -388,7 +388,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "1.4.6"
+    version = "1.4.6.2"
     
     print("\nVersion: {}".format(version))
     
