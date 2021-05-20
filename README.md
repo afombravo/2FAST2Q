@@ -64,7 +64,7 @@ Download the crispery Python3 module using pip install:
 type `python -m crispery`
 
 # 3.1 For starting the non-graphical interface mode:
-type `python -m crispery -c --s "c/path/seqfiledir" --g "c/path/sgrna.csv" --o "c/path/outputfolder"`
+type `python -m crispery -c --s "c/path/seqfiledir" --g "c/path/sgrna.csv" --o "c/path/outputfolder" --se ".fastq.gz"`
 
 There are also several optional parameters. For their description and input type. A more indepth description is provided below:
 

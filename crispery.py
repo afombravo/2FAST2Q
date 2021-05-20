@@ -303,7 +303,7 @@ def inputs_initializer(separator):
         filing_parser(column,row,filename,parameter,frame)
         
     def file(column,row,parameter,frame):
-        filename = filedialog.askopenfilename(initialdir =  separator, title = "Select a file", filetype =
+        filename = filedialog.askopenfilename(initialdir = separator, title = "Select a file", filetype = \
             (("Microsoft Excel Comma Separated Values File","*.csv"),("all files","*.*")) )
         filing_parser(column,row,filename,parameter,frame)
     
@@ -388,7 +388,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "1.4.6"
+    version = "1.4.6.2"
     
     print("\nVersion: {}".format(version))
     
