@@ -274,9 +274,10 @@ def inputs_handler(separator):
         raise Exception    
     
     # parsing the RAM saving choice as a bolean
-    parameters['ram'] = True
     if parameters['ram'] == "n":
         parameters['ram'] = False
+    else:
+        parameters['ram'] = True
 
     return parameters['seq_files'],parameters['sgrna'],parameters['out'],parameters['start'],\
     parameters['length'],parameters['miss'],parameters['phred'],parameters['ram'],\
@@ -302,8 +303,8 @@ def inputs_initializer(separator):
         filing_parser(column,row,filename,parameter,frame)
         
     def file(column,row,parameter,frame):
-        filename = filedialog.askopenfilename(initialdir = separator, title = "Select a file", filetype = \
-            (("Microsoft Excel Comma Separated Values File","*.csv"),("all files","*.*")) )
+        filename = filedialog.askopenfilename(initialdir = separator, title = "Select a file", filetypes = \
+            (("CSV files","*.csv"),("all files","*.*")) )
         filing_parser(column,row,filename,parameter,frame)
     
     def filing_parser(column,row,filename,parameter,frame):
@@ -387,7 +388,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "1.4.6.3"
+    version = "1.4.6.4"
     
     print("\nVersion: {}".format(version))
     
