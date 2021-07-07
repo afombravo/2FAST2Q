@@ -3,7 +3,7 @@ A Python3.7 based program that counts guideRNA occurences in fastq files
 
 Crispery requires absolutly no instalation whatsoever, and can work with any CRISPRi experimental setup.
 
-The program is available as a standalone executable on MSwindows, MacOS, and Linux (Ubuntu), and can be downloaded from Zenodo by acessing the folowing link: {Coming soon}
+The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by acessing the folowing link: http://doi.org/10.5281/zenodo.5079799
 
 crispery is also available as a python package (https://pypi.org/project/crispery/)
 
