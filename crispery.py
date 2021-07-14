@@ -6,11 +6,10 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 import multiprocessing 
 from platform import system
-from regex import match
 from time import time
 import matplotlib.pyplot as plt
 import numpy as np
-from functools import lru_cache
+from numba import njit
 import psutil
 import argparse
 #also needs tkinter (imported inside inputs_initializer())
@@ -126,11 +125,32 @@ def reads_counter(raw, quality_set, start, lenght, sgrna, mismatch, ram):
     If the read doesnt have a perfect match, it is sent for mismatch comparison
     via the "imperfect_alignment" function.
     """
+    
+    def binary_converter(sgrna):
+        from numba import types
+        from numba.typed import Dict
+        
+        """ Parses the input sgRNAs into binary dictionaries. Converts all DNA
+        sequences to their respective binary array forms. This gives some computing
+        speed advantages with mismatches."""
+        
+        container = Dict.empty(key_type=types.unicode_type,
+                               value_type=types.int8[:])
 
+        for sequence in sgrna:
+            byte_list = bytearray(sequence,'utf8')
+            if sequence not in container:
+                container[sequence] = np.array((byte_list), dtype=np.int8)
+        return container
+
+    if mismatch != 0:
+        binary_sgrna = binary_converter(sgrna)
+    
     n = set("N")
     reading = []
     perfect_counter, imperfect_counter, reads = 0,0,0
     guide_len = start + lenght
+    failed_reads = set()
     
     with open(raw) as current:
         for line in current:
@@ -152,63 +172,65 @@ def reads_counter(raw, quality_set, start, lenght, sgrna, mismatch, ram):
                         perfect_counter += 1
                     
                     elif mismatch != 0:
-                        sgrna, imperfect_counter = imperfect_alignment(seq, sgrna, mismatch, imperfect_counter,ram)
-
-    # clears the cache RAM from each individual file/process when using the imperfect_find_ram_horder function
-    imperfect_find_ram_horder.cache_clear() 
+                        byte_list = bytearray(seq,'utf8')
+                        read=np.array((byte_list), dtype=np.int8)
+                        
+                        if not ram: #keeps track of reads that are already known to not align with confidence
+                            if seq not in failed_reads:
+                                sgrna,imperfect_counter,failed_reads = imperfect_alignment(read,seq,binary_sgrna,mismatch,imperfect_counter,sgrna,failed_reads,ram)
+                        else:
+                            sgrna,imperfect_counter,failed_reads = imperfect_alignment(read,seq,binary_sgrna,mismatch,imperfect_counter,sgrna,failed_reads,ram)
+                            
+    # clears the cache RAM from each individual file/process
+    failed_reads = set()
     
     return reads, perfect_counter, imperfect_counter, sgrna
   
-@lru_cache(maxsize=None)
-def imperfect_find_ram_horder(seq,guide,diffnumber):
+@njit
+def binary_subtract(array1,array2,mismatch):
+    miss=0
+    for arr1,arr2 in zip(array1,array2):
+        if arr1-arr2 != 0:
+            miss += 1
+        if miss>mismatch:
+            return 0
+    return 1
 
-    """ regex function to compare if the inputed sequences are similar to
-     the indicated mismatch degree. returns True if they are similar enough.
-     Keeps the inputs in cache for faster checking as a lot of the times
-     the same seq results in the same kind of sequencing errors."""
-     
-    if match("(%s" % seq + "){s<=%s" % diffnumber + "}", guide):
-        return True
+@njit
+def sgrna_all_vs_all(binary_sgrna,read,mismatch):
+    
+    """ Runs the loop of the read vs all sgRNA comparison.
+    Sends individually the sgRNAs for comparison.
+    Returns the final mismatch score"""
+    
+    found = 0
+    for guide in binary_sgrna:
+        if binary_subtract(binary_sgrna[guide],read,mismatch):
+            found+=1
+            found_guide = guide
+            if found>=2:
+                return
+    if found==1:
+        return found_guide
+    return
 
-def imperfect_find(seq,guide,diffnumber):
-
-    """ regex function to compare if the inputed sequences are similar to
-     the indicated mismatch degree. returns True if they are similar enough"""
-     
-    if match("(%s" % seq + "){s<=%s" % diffnumber + "}", guide):
-        return True        
-
-def imperfect_alignment(sequence, sgrna, mismatch, counter,ram):
+def imperfect_alignment(read,seq,binary_sgrna, mismatch, counter, sgrna,failed_reads,ram):
     
     """ for the inputed read sequence, this compares if there is a sgRNA 
     with a sequence that is similar to it, to the indicated mismatch degree
-    (see "imperfect_find" function).
     if the read can be atributed to more than 1 sgRNA, the read is discarded.
     If all conditions are meet, the read goes into the respective sgRNA count 
     score"""
+    
+    finder = sgrna_all_vs_all(binary_sgrna, read, mismatch)
 
-    found = 0
-    for guide in sgrna:
-        
-        if not ram:
-            finder = imperfect_find_ram_horder(sequence, guide, mismatch)
-        else:
-            finder = imperfect_find(sequence, guide, mismatch)
-
-        if finder:
-
-            found += 1
-            found_guide = guide
-            
-            if found >=2:
-                break           
-
-    if found == 1:
-        sgrna[found_guide].counts += 1
+    if finder is not None:
+        sgrna[finder].counts += 1
         counter += 1
+    elif not ram:
+        failed_reads.add(seq)
         
-    return sgrna, counter
-
+    return sgrna, counter, failed_reads
 
 def aligner(raw, guides, out, quality_set,mismatch,i,o,sgrna,version,separator, start, lenght, ram):
 
@@ -244,7 +266,6 @@ def aligner(raw, guides, out, quality_set,mismatch,i,o,sgrna,version,separator, 
     csv_writer(csvfile, master_list)
     
     print(stats_condition[1:]) # quality control
-
 
 def csv_writer(path, outfile):
     
@@ -388,7 +409,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "1.4.6.4"
+    version = "1.5"
     
     print("\nVersion: {}".format(version))
     
@@ -641,4 +662,5 @@ def main():
     compiling(directory,phred,mismatch,version,separator)
     
 if __name__ == "__main__":
+    multiprocessing.freeze_support() # required to run multiprocess as .exe on windows
     main()
