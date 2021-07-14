@@ -148,9 +148,11 @@ If for some reason crispery is closed before completing. please delete the outpu
 A completion message will be given at the end
 
 +++++++++
+
 Note on mismatch searching:
 When performing mismatch searching, especially when large sgRNA libraries and/or large sequencing datasets are used, crispery might take a few hours to run. 
 In this case it is advisable to first run crispery without mismatch search (see parameters), and check the output. Non mismatch search uses hashing, and thus it is fast.
+
 +++++++++
 
 # Output
