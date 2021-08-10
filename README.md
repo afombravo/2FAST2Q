@@ -1,7 +1,9 @@
 # Welcome to Crispery
-A Python3.7 based program that counts guideRNA occurences in fastq files
+A Python3 program that counts sequence occurences in raw fastq files. 
+Crispery is ideal for CRISPRi-Seq, and for extracting and counting any kind of information from Illumina reads, such as barcodes.
+Crispery can work with sequence mismatches, and can be used to find sequences delimited by known sequences in unaligned reads.  
 
-Crispery requires absolutly no instalation whatsoever, and can work with any CRISPRi experimental setup.
+Crispery requires absolutly no instalation whatsoever, and can work with any classic CRISPRi experimental setup.
 
 The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by acessing the folowing link: 
 https://zenodo.org/record/5102031
@@ -92,6 +94,16 @@ There are also several optional parameters. For their description and input type
  `--l L       guideRNA length`
   
  `--r R       ram saving mode (only appropriate for mismatch searching) `
+ 
+ `--us US     Upstream search sequence`
+ 
+ `--ds DS     Downstream search sequence`
+ 
+ `--ms MS     mismatches allowed when searching reads with Up/Down streamsequences`
+ 
+ `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter(EC)]`
+ 
+ `--k K       If enabled, keeps all temporary files (default is enabled)`
 
 
 # Inputs
@@ -108,7 +120,7 @@ A path to the folder with either:
 
 2. all the uncompressed .fastq files
 
-# 2 the path to the sgRNA .csv file
+# 2 the path to the sgRNA .csv file (only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment)
 
 A path to the .csv file with the sgRNAs. See example "D39V_guides.csv" for layout (remove any headers).
 
@@ -130,9 +142,21 @@ The number of allowed missmatches per sgRNA (default = 1)
 
 RAM saving mode (default = no) 
 Only useful when allowing missmatch search, as search speed is increased by ~40% due to caching. 
-When in RAM saving mode, Crispery should take about 200MB of RAM. 
-When NOT in RAM saving mode, several GB might be required. 
+When in RAM saving mode, Crispery should only take a few MB of RAM. 
+When NOT in RAM saving mode, several GB might be required.
 
+Keep temporary files mode (default = yes).
+When enabled, deletes all temporary files. To keep all files, change to "n" in the graphical mode, or input the parameter `--k` in the cmd lines.
+
+For extracting all sequences at a certain position in the read select the extractor + Counter (EC) mode. The default is Counter (C) mode only.
+
+If the starting position varies within the read, it is possible to search for a delimiting known sequence, and then extract the sequence before/after it.
+In this case, it is allowed to input the following: 
+ 1) A 5' end search sequence, and the ammount of bp the program should inventory after.
+ 2) A 3' end search sequence, and the ammount of bp the program should inventory after.
+ 3) A 5'and 3' end search sequence, the progrma will return and count everything in between these two.
+ 4) How many mismatches are allowed in the search sequence
+ 
 # While Running
 
 =================================
@@ -140,7 +164,7 @@ When NOT in RAM saving mode, several GB might be required.
 Crispery is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavilly use the computer while crispery is running to avoid constraining the processor.
 
 When running Crispery in the compiled form, the initializating sequence might take up to a minute. Crispery will be operational when "Version X.X.X" appears on the window.
-Depending on the used computer, crispery might take a few minutes to run. If no errors are shown, crispery is still running. GIVE IT TIME!
+Depending on the used computer, crispery might take a few minutes to run, especially with large datasets and when using mismatch finding. If no errors are shown, crispery is still running. GIVE IT TIME! 
 
 If for some reason crispery is closed before completing. please delete the output folder in its entirety as the outputed uncompressed .fastq files might have become corrupted. 
 
@@ -151,14 +175,14 @@ A completion message will be given at the end
 +++++++++
 
 Note on mismatch searching:
-When performing mismatch searching, especially when large sgRNA libraries and/or large sequencing datasets are used, crispery might take a few hours to run. 
+When performing mismatch searching, especially with sgRNA libraries with thousands of guideRNAs and/or when large sequencing datasets are used, crispery might take 1-2 hours to run. 
 In this case it is advisable to first run crispery without mismatch search (see parameters), and check the output. Non mismatch search uses hashing, and thus it is fast.
 
 +++++++++
 
 # Output
 
-Upon completion, several files should be seen in the indicated output folder: 
+Upon completion, several files should be seen in the indicated output folder (when running in default mode only c, d, and e will be kept): 
 
 a.	The uncompressed “*.fastq” files; 
 
@@ -173,7 +197,8 @@ e.	A “compiled.csv” file with the compilation of all the read counts per gui
 
 # Short Explanation
 
-Crispery will return the read counts for all the guideRNAs present in the input file. 
+Crispery will return the read counts for all the guideRNAs present in the input file (Counter mode). 
+When running in Extractor + Counter mode, no input file is required as all sequences will be discovered de novo.
 A read will be aligned to its guideRNAs if the minimum quality score in each nucleotide is >= the indicated phred-score,
 and if there is less than the indicated allowed missmatches. 
 Like said before, these parameters can be modified by the user.
