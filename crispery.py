@@ -230,7 +230,7 @@ def reads_counter(raw, sgrna, param):
                                     sgrna,imperfect_counter,failed_reads = imperfect_alignment(read,seq,binary_sgrna,param['miss'],imperfect_counter,sgrna,failed_reads,param['ram'])
                         else:
                             if seq not in sgrna:
-                                sgrna[seq] = SgRNA(seq,seq, 0)
+                                sgrna[seq] = SgRNA(seq,seq, 1)
                             else:
                                 sgrna[seq].counts += 1
                                 perfect_counter += 1
@@ -368,6 +368,10 @@ def inputs_handler(separator):
         input("\nOnly numeric values are accepted in the folowing fields:\nsgRNA read starting place;\nsgRNA length;\nmismatch;\nPhred score;\nmismatches in the search sequence.\n\nPlease try again. Press any key to exit")
         raise Exception    
     
+    # avoids getting -1 and actually filtering by highest phred score by mistake
+    if int(parameters["phred"]) == 0:
+        parameters["phred"] = 1
+    
     # parsing the RAM saving choice as a bolean
     if parameters['ram'] == "n":
         parameters['ram'] = False
@@ -477,7 +481,7 @@ def inputs_initializer(separator):
                       "miss":["Allowed mismatches",8,0,1],
                       "phred":["Minimal sgRNA Phred-score",9,0,30],
                       "ram":["RAM saving mode [y/n]",10,0,"n"],
-                      "delete":["keep intermediary files [y/n]",11,0,"y"],
+                      "delete":["Delete intermediary files [y/n]",11,0,"y"],
                       "upstream":["upstream search sequence",12,0,"None"],
                       "downstream":["downstream search sequence",13,0,"None"],
                       "miss_search":["mismatches in the search sequence",14,0,0],}
@@ -587,19 +591,21 @@ def input_parser():
         
     parameters['length']=20
     if args.l is not None:
-        parameters['length']=args.l
+        parameters['length']=int(args.l)
                  
     parameters['start']=0
     if args.st is not None:
-        parameters['start']=args.st
+        parameters['start']=int(args.st)
         
     parameters['phred']=30
     if args.ph is not None:
-        parameters['phred']=args.ph
+        parameters['phred']=int(args.ph)
+        if int(parameters["phred"]) == 0:
+            parameters["phred"] = 1
                  
     parameters['miss']=1
     if args.m is not None:
-        parameters['miss']=args.m
+        parameters['miss']=int(args.m)
         
     parameters['upstream']=None
     if args.us is not None:
@@ -611,7 +617,7 @@ def input_parser():
                  
     parameters['miss_search']=0
     if args.ms is not None:
-        parameters['miss_search']=args.ms
+        parameters['miss_search']=int(args.ms)
         
     parameters['Running Mode']="C"
     if args.mo is not None:
