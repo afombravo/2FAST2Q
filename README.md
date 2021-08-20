@@ -32,11 +32,11 @@ For macOS there are both versions, as the graphical interface can be buggy. If o
 For Linux there is only the non graphical interface. 
 
 
-# Using the executable files (graphical mode only):
+# Using the executable files:
 
 
 # 1.	
-Obtain a .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used sgRNAs, and their respective names (any name can be given, as long as it doesnt repeat). See the provided "D39V_guides.csv" sample file.
+Obtain a .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used sgRNAs, and their respective names (any name can be given, as long as it doesnt repeat). See the provided "D39V_guides.csv" sample file. (Optional, only required when running in Counting mode)	
 
 | sgRNA0001 | AATAGCATAGAAATCATACA |
 |-----------|----------------------|
@@ -54,10 +54,10 @@ The program will initialize and ask, in turn, for directories and file paths. Se
 
 
 
-# Using the non executable files (graphical and non-graphical mode)
+# Using the non executable files (recomendable if the executable file is buggy)
 
 # 1.	
-Obtain the .csv file with the sgRNAs like in step 1 of the graphical interface instructions.
+Obtain the .csv file with the sgRNAs like in step 1 of the previous instructions. (Optional, only required when running in Counting mode)	
 
 # 2.	
 Download the crispery Python3 module using pip install: 
@@ -110,7 +110,7 @@ There are also several optional parameters. For their description and input type
 
 To run the program, three input paths are required:
 
-# 1 directory containing the sequencing files
+# 1  Directory containing the sequencing files
 
 A path to the folder with either:
 
@@ -120,7 +120,8 @@ A path to the folder with either:
 
 2. all the uncompressed .fastq files
 
-# 2 the path to the sgRNA .csv file (only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment)
+# 2  The path to the sgRNA .csv file 
+(only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment)
 
 A path to the .csv file with the sgRNAs. See example "D39V_guides.csv" for layout (remove any headers).
 
