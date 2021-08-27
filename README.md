@@ -199,7 +199,7 @@ b. “*_reads.csv” files corresponding to the read counts per guideRNA per inp
 
 c.	A “compiled_stats.csv” containing all the relevant input/output information about the Crispery analysis; 
 
-d. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample; 
+d. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample (only available when using the python version);
 
 e.	A “compiled.csv” file with the compilation of all the read counts per guideRNA in all the inputted files. Use this latter in the next steps of the data analysis pipeline. 
 
