@@ -164,10 +164,13 @@ In this case, it is allowed to input the following:
 
 Crispery is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavilly use the computer while crispery is running to avoid constraining the processor.
 
-When running Crispery in the compiled form, the initializating sequence might take up to a minute. Crispery will be operational when "Version X.X.X" appears on the window.
+When running Crispery in the executable form, the initializating sequence might take up to a minute. Crispery will be operational when "Version X.X.X" appears on the window.
 Depending on the used computer, crispery might take a few minutes to run, especially with large datasets and when using mismatch finding. If no errors are shown, crispery is still running. GIVE IT TIME! 
 
 If for some reason crispery is closed before completing. please delete the output folder in its entirety as the outputed uncompressed .fastq files might have become corrupted. 
+
+macOS use WARNING!
+When using the graphical user interface option, it's possible that the interface doesnt close down after pressing OK and "gets stuck". The program is still running, and progress can be monitored by checking the indicated output folder. When the final "compiled.csv" appears on the folder, the program has finished running and can be closed using any means.
 
 =================================
 
