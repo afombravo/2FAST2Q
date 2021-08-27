@@ -169,7 +169,12 @@ Depending on the used computer, crispery might take a few minutes to run, especi
 
 If for some reason crispery is closed before completing. please delete the output folder in its entirety as the outputed uncompressed .fastq files might have become corrupted. 
 
+\\\\\\\
+
 macOS use WARNING!
+
+\\\\\\\
+
 When using the graphical user interface option, it's possible that the interface doesnt close down after pressing OK and "gets stuck". The program is still running, and progress can be monitored by checking the indicated output folder. When the final "compiled.csv" appears on the folder, the program has finished running and can be closed using any means.
 
 =================================
