@@ -1,19 +1,19 @@
-# Welcome to Crispery
+# Welcome to 2FAST2Q
 A Python3 program that counts sequence occurences in raw fastq files. 
-Crispery is ideal for CRISPRi-Seq, and for extracting and counting any kind of information from Illumina reads, such as barcodes.
-Crispery can work with sequence mismatches, and can be used to find sequences delimited by known sequences in unaligned reads.  
+2FAST2Q is ideal for CRISPRi-Seq, and for extracting and counting any kind of information from Illumina reads, such as barcodes.
+2FAST2Q can work with sequence mismatches, and can be used to find sequences delimited by known sequences in unaligned reads.  
 
-Crispery requires absolutly no instalation whatsoever, and can work with any classic CRISPRi experimental setup.
+2FAST2Q requires absolutly no instalation whatsoever, and can work with any classic CRISPRi experimental setup.
 
 The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by acessing the folowing link: 
 https://zenodo.org/record/5102031
 
-crispery is also available as a python package (https://pypi.org/project/crispery/)
+2FAST2Q is also available as a python package (https://pypi.org/project/2FAST2Q/)
 
-`pip install crispery`
+`pip install 2FAST2Q`
 
-In here I share the original Python3 source code, Crispery.py;
-The instructions on how to use crispery;
+In here I share the original Python3 source code, 2FAST2Q.py;
+The instructions on how to use 2FAST2Q;
 And some test data to run the program.
 
 
@@ -44,7 +44,7 @@ Obtain a .csv file (this format can be obtained using the "save as" option in ex
 
 
 # 2.	
-Download the Crispery software version appropriate to the intended operating system.
+Download the 2FAST2Q software version appropriate to the intended operating system.
 
 # 3. 
 Double click the program icon. 
@@ -60,18 +60,18 @@ The program will initialize and ask, in turn, for directories and file paths. Se
 Obtain the .csv file with the sgRNAs like in step 1 of the previous instructions. (Optional, only required when running in Counting mode)	
 
 # 2.	
-Download the crispery Python3 module using pip install: 
-`pip install crispery`.
+Download the 2FAST2Q Python3 module using pip install: 
+`pip install 2FAST2Q`.
 
 # 3. For starting the graphical interface mode:
-type `python -m crispery`
+type `python -m 2FAST2Q`
 
 # 3.1 For starting the non-graphical interface mode:
-type `python -m crispery -c --s "c/path/seqfiledir" --g "c/path/sgrna.csv" --o "c/path/outputfolder" --se ".fastq.gz"`
+type `python -m 2FAST2Q -c --s "c/path/seqfiledir" --g "c/path/sgrna.csv" --o "c/path/outputfolder" --se ".fastq.gz"`
 
 There are also several optional parameters. For their description and input type. A more indepth description is provided below:
 
-`python -m crispery -h`
+`python -m 2FAST2Q -h`
 
  `-h, --help  show this help message and exit `
 
@@ -143,7 +143,7 @@ The number of allowed missmatches per sgRNA (default = 1)
 
 RAM saving mode (default = no) 
 Only useful when allowing missmatch search, as search speed is increased by ~40% due to caching. 
-When in RAM saving mode, Crispery should only take a few MB of RAM. 
+When in RAM saving mode, 2FAST2Q should only take a few MB of RAM. 
 When NOT in RAM saving mode, several GB might be required.
 
 Keep temporary files mode (default = yes).
@@ -162,12 +162,12 @@ In this case, it is allowed to input the following:
 
 =================================
 
-Crispery is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavilly use the computer while crispery is running to avoid constraining the processor.
+2FAST2Q is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavilly use the computer while 2FAST2Q is running to avoid constraining the processor.
 
-When running Crispery in the executable form, the initializating sequence might take up to a minute. Crispery will be operational when "Version X.X.X" appears on the window.
-Depending on the used computer, crispery might take a few minutes to run, especially with large datasets and when using mismatch finding. If no errors are shown, crispery is still running. GIVE IT TIME! 
+When running 2FAST2Q in the executable form, the initializating sequence might take up to a minute. 2FAST2Q will be operational when "Version X.X.X" appears on the window.
+Depending on the used computer, 2FAST2Q might take a few minutes to run, especially with large datasets and when using mismatch finding. If no errors are shown, 2FAST2Q is still running. GIVE IT TIME! 
 
-If for some reason crispery is closed before completing. please delete the output folder and restart the program.
+If for some reason 2FAST2Q is closed before completing. please delete the output folder and restart the program.
 
 \\\\\\\
 
@@ -184,8 +184,8 @@ A completion message will be given at the end
 +++++++++
 
 Note on mismatch searching:
-When performing mismatch searching, especially with sgRNA libraries with thousands of guideRNAs and/or when large sequencing datasets are used, crispery might take 1-2 hours to run. 
-In this case it is advisable to first run crispery without mismatch search (see parameters), and check the output. Non mismatch search uses hashing, and thus it is fast.
+When performing mismatch searching, especially with sgRNA libraries with thousands of guideRNAs and/or when large sequencing datasets are used, 2FAST2Q might take 1-2 hours to run. 
+In this case it is advisable to first run 2FAST2Q without mismatch search (see parameters), and check the output. Non mismatch search uses hashing, and thus it is fast.
 
 +++++++++
 
@@ -197,7 +197,7 @@ a.	The uncompressed “*.fastq” files;
 
 b. “*_reads.csv” files corresponding to the read counts per guideRNA per inputted sequencing file; 
 
-c.	A “compiled_stats.csv” containing all the relevant input/output information about the Crispery analysis; 
+c.	A “compiled_stats.csv” containing all the relevant input/output information about the 2FAST2Q analysis; 
 
 d. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample (only available when using the python version);
 
@@ -206,7 +206,7 @@ e.	A “compiled.csv” file with the compilation of all the read counts per gui
 
 # Short Explanation
 
-Crispery will return the read counts for all the guideRNAs present in the input file (Counter mode). 
+2FAST2Q will return the read counts for all the guideRNAs present in the input file (Counter mode). 
 When running in Extractor + Counter mode, no input file is required as all sequences will be discovered de novo.
 A read will be aligned to its guideRNAs if the minimum quality score in each nucleotide is >= the indicated phred-score,
 and if there is less than the indicated allowed missmatches. 
@@ -228,11 +228,11 @@ However, there is a safe mechanism in place to prevent 2 or more guideRNAs with 
 # Troubleshooting
 
 
-Running Crispery with example data:
+Running 2FAST2Q with example data:
 
 1. Download the "D39V_guides.csv" file
 2. Download the "example.fastq.gz"
-3. Run crispery
+3. Run 2FAST2Q
 
 In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appear as a warning message.
 
@@ -252,5 +252,6 @@ Common Errors:
 | Warning!! X and Y share the same sequence. Only X will be considered valid. |X and Y correspond to guideRNA names. The indicated entries have the same sequence, and only the first will be considered valid. |
 | Check the path to the sgRNA file. No file found in the following path: X | Confirm the indicated path (X) to the guideRNA .csv file is correct |
 | Check the path to the X files folder. No files of this type found. | Confirm the indicated path to the folder with the sequencing (X) files is correct. |
-| Program doesn’t initialize | Confirm the downloaded program is the appropriate one for the current operating system. Contact the Crispery developer if the issue persists. |
-| Program crashes, or behaves unexpectedly. | Restart the program and carefully indicate the appropriate required input paths. Check if the program behaves as expected with the provided sample data. Contact the Crispery developer if the issue persists. |
+| Program doesn’t initialize | Confirm the downloaded program is the appropriate one for the current operating system. Contact the 2FAST2Q developer if the issue persists. |
+| Program crashes, or behaves unexpectedly. | Restart the program and carefully indicate the appropriate required input paths. Check if the program behaves as expected with the provided sample data. Contact the 2FAST2Q developer if the issue persists. |
+
