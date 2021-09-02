@@ -1,3 +1,3 @@
 if __name__ == "__main__":
-    from crispery import crispery
-    crispery.main()
+    from fast2q import fast2q
+    fast2q.main()
