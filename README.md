@@ -3,7 +3,7 @@ A Python3 program that counts sequence occurences in raw fastq files.
 2FAST2Q is ideal for CRISPRi-Seq, and for extracting and counting any kind of information from Illumina reads, such as barcodes.
 2FAST2Q can work with sequence mismatches, and can be used to find sequences delimited by known sequences in unaligned reads.  
 
-2FAST2Q requires absolutly no instalation whatsoever, and can work with any classic CRISPRi experimental setup.
+2FAST2Q requires absolutly no instalation whatsoever, and can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
 
 The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by acessing the folowing link: 
 https://zenodo.org/record/5102031
