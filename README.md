@@ -1,9 +1,9 @@
 # Welcome to 2FAST2Q
-A Python3 program that counts sequence occurences in raw fastq files. 
+A Python3 program that counts sequence occurrences in raw FASTQ files. 
 2FAST2Q is ideal for CRISPRi-Seq, and for extracting and counting any kind of information from Illumina reads, such as barcodes.
 2FAST2Q can work with sequence mismatches, and can be used to find sequences delimited by known sequences in unaligned reads.  
 
-2FAST2Q requires absolutly no instalation whatsoever, and can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
+2FAST2Q requires absolutely no installation whatsoever, and can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
 
 The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by accessing the following link: 
 https://zenodo.org/record/5102031
@@ -29,7 +29,7 @@ There are two versions of the program, with and without a basic user interface.
 
 The windows version only uses the user interface. 
 For macOS there are both versions, as the graphical interface can be buggy. If one fails, please try the other one.
-For Linux there is only the non graphical interface. 
+For Linux there is only the non-graphical interface. 
 
 
 # Using the executable files:
@@ -137,12 +137,12 @@ The minimal sequencing phred-score for each nucleotide (default = 30)
 
 The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence)
 
-The lenght of the feature in bp (default = 20)
+The length of the feature in bp (default = 20)
 
-The number of allowed missmatches per feature (default = 1)
+The number of allowed mismatches per feature (default = 1)
 
 RAM saving mode (default = no) 
-Only useful when allowing missmatch search, as search speed is increased by ~40% due to caching. 
+Only useful when allowing mismatch search, as search speed is increased by ~40% due to caching. 
 When in RAM saving mode, 2FAST2Q should only take a few MB of RAM. 
 When NOT in RAM saving mode, several GB might be required.
 
@@ -153,18 +153,18 @@ For extracting all sequences at a certain position in the read select the extrac
 
 If the starting position varies within the read, it is possible to search for a delimiting known sequence, and then extract the sequence before/after it.
 In this case, it is allowed to input the following: 
- 1) A 5' end search sequence, and the ammount of bp the program should inventory after.
- 2) A 3' end search sequence, and the ammount of bp the program should inventory after.
- 3) A 5'and 3' end search sequence, the progrma will return and count everything in between these two.
+ 1) A 5' end search sequence, and the amount of bp the program should inventory after.
+ 2) A 3' end search sequence, and the amount of bp the program should inventory after.
+ 3) A 5'and 3' end search sequence, the program will return and count everything in between these two.
  4) How many mismatches are allowed in the search sequence
  
 # While Running
 
 =================================
 
-2FAST2Q is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavilly use the computer while 2FAST2Q is running to avoid constraining the processor.
+2FAST2Q is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavily use the computer while 2FAST2Q is running to avoid constraining the processor.
 
-When running 2FAST2Q in the executable form, the initializating sequence might take up to a minute. 2FAST2Q will be operational when "Version X.X.X" appears on the window.
+When running 2FAST2Q in the executable form, the initialization sequence might take up to a minute. 2FAST2Q will be operational when "Version X.X.X" appears on the window.
 Depending on the used computer, 2FAST2Q might take a few minutes to run, especially with large datasets and when using mismatch finding. If no errors are shown, 2FAST2Q is still running. GIVE IT TIME! 
 
 If for some reason 2FAST2Q is closed before completing. please delete the output folder and restart the program.
@@ -175,7 +175,7 @@ macOS use WARNING!
 
 \\\\\\\
 
-When using the graphical user interface option, it's possible that the interface doesnt close down after pressing OK and "gets stuck". The program is still running, and progress can be monitored by checking the indicated output folder. When the final "compiled.csv" appears on the folder, the program has finished running and can be closed using any means.
+When using the graphical user interface option, it's possible that the interface doesn’t close down after pressing OK and "gets stuck". The program is still running, and progress can be monitored by checking the indicated output folder. When the final "compiled.csv" appears on the folder, the program has finished running and can be closed using any means.
 
 =================================
 
@@ -209,7 +209,7 @@ e.	A “compiled.csv” file with the compilation of all the read counts per fea
 2FAST2Q will return the read counts for all the features present in the input file (Counter mode). 
 When running in Extractor + Counter mode, no input file is required as all sequences will be discovered de novo.
 A read will be aligned to its features if the minimum quality score in each nucleotide is >= the indicated phred-score,
-and if there is less than the indicated allowed missmatches. 
+and if there is less than the indicated allowed mismatches. 
 Like said before, these parameters can be modified by the user.
 
 However, why these parameters?
@@ -217,10 +217,10 @@ However, why these parameters?
 Base quality filtering using Q>=30 means there is a 0.01% chance of a given nucleotide being miss-sequenced. 
 To assure alignment quality, the program filters out by default any reads that have nucleotides with a Q < 30.
 
-Why the missmatch?
+Why the mismatch?
 
 To avoid a too highly stringent cutoff.
-Allowing a missmatch allows the alignment of reads to their features when just a single nucleotide is wrongly sequenced. 
+Allowing a mismatch allows the alignment of reads to their features when just a single nucleotide is wrongly sequenced. 
 Even at a 0.01% chance (Q>=30 default) this event is bound to happen due to the large sample size.
 
 However, there is a safe mechanism in place to prevent 2 or more features with mismatches from being aligned to the same read (the read is discarded in this case, as there is no way of knowing to which feature the read aligns to)
@@ -254,3 +254,4 @@ Common Errors:
 | Check the path to the X files folder. No files of this type found. | Confirm the indicated path to the folder with the sequencing (X) files is correct. |
 | Program doesn’t initialize | Confirm the downloaded program is the appropriate one for the current operating system. Contact the 2FAST2Q developer if the issue persists. |
 | Program crashes, or behaves unexpectedly. | Restart the program and carefully indicate the appropriate required input paths. Check if the program behaves as expected with the provided sample data. Contact the 2FAST2Q developer if the issue persists. |
+
