@@ -170,10 +170,11 @@ Depending on the used computer, 2FAST2Q might take a few minutes to run, especia
 
 macOS use WARNING!
 
-\\\\
 
 When using the graphical user interface option, it's possible that the interface doesn’t close down after pressing OK and "gets stuck". The program is still running, and progress can be monitored by checking the indicated output folder. When the final "compiled.csv" appears on the folder, the program has finished running and can be closed using any means.
 A completion message should be given at the end. In any case, the program will be finish when the compiled.csv file is visible in the directory.
+
+\\\\
 
 +++++++++
 
