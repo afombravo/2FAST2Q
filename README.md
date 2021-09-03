@@ -49,6 +49,7 @@ Download the 2FAST2Q software version appropriate to the intended operating syst
 Double click the program icon. 
 
 
+
 If using the linux version:
 
 change directory to location of the file
