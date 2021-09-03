@@ -48,6 +48,21 @@ Download the 2FAST2Q software version appropriate to the intended operating syst
 # 3. 
 Double click the program icon. 
 
+
+If using the linux version:
+
+change directory to location of the file
+
+type and enter:
+
+chmod +x ./2FAST2Q_Linux
+
+type and enter:
+
+./2FAST2Q_Linux -h
+
+
+
 # 4.
 The program will initialize and ask, in turn, for directories and file paths. See the "inputs" section below for an explanation of these inputs.
 
