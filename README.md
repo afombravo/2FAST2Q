@@ -181,6 +181,7 @@ A completion message should be given at the end. In any case, the program will b
 Note on mismatch searching: When performing mismatch searching, especially with feature libraries with thousands of features and/or when large sequencing datasets are used, 2FAST2Q might take 1-2 hours to run. In this case it is advisable to first run 2FAST2Q without mismatch search (see parameters), and check the output. Non mismatch search uses hashing, and thus it is fast. +++++++++
 
 Output
+
 Upon completion, several files should be seen in the indicated output folder (when running in default mode only c, d, and e will be kept):
 
 a. The uncompressed “*.fastq” files;
@@ -195,6 +196,7 @@ e. A “compiled.csv” file with the compilation of all the read counts per fea
 
 
 Short Explanation
+
 2FAST2Q will return the read counts for all the features present in the input file. A read will be aligned to its features if the minimum quality score in each nucleotide is >= the indicated phred-score, and if there is less than the indicated allowed mismatches. Like said before, these parameters can be modified by the user.
 
 However, why these parameters?
@@ -210,6 +212,7 @@ However, there is a safe mechanism in place to prevent 2 or more features with m
 
 
 Troubleshooting
+
 Running 2FAST2Q with example data :
 
 Download the "D39V_guides.csv" file
