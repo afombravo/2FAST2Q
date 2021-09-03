@@ -27,9 +27,8 @@ Remove any "Undetermined" or unwanted fastq.gz files from the input folder as th
 There are two versions of the program, with and without a basic user interface. 
 
 
-The windows version only uses the user interface. 
-For macOS there are both versions, as the graphical interface can be buggy. If one fails, please try the other one.
-For Linux there is only the non-graphical interface. 
+There is a graphical interface version for Windows, MacOS, and Linux.
+If for some reason the compiled version fails, please use the souce Python code from PyPI (`pip install fast2q`).
 
 
 # Using the executable files:
