@@ -165,3 +165,57 @@ In this case, it is allowed to input the following:
 
 When running 2FAST2Q in the executable form, the initialization sequence might take up to a minute. 2FAST2Q will be operational when "Version X.X.X" appears on the window.
 Depending on the used computer, 2FAST2Q might take a few minutes to run, especially with large datasets and when using mismatch finding. If no errors are shown, 2FAST2Q is still running. GIVE IT TIME! 
+
+\\\\
+
+macOS use WARNING!
+
+
+When using the graphical user interface option, it's possible that the interface doesn’t close down after pressing OK and "gets stuck". The program is still running, and progress can be monitored by checking the indicated output folder. When the final "compiled.csv" appears on the folder, the program has finished running and can be closed using any means.
+A completion message should be given at the end. In any case, the program will be finish when the compiled.csv file is visible in the directory.
+
+\\\\
+
++++++++++
+
+Note on mismatch searching: When performing mismatch searching, especially with feature libraries with thousands of features and/or when large sequencing datasets are used, 2FAST2Q might take 1-2 hours to run. In this case it is advisable to first run 2FAST2Q without mismatch search (see parameters), and check the output. Non mismatch search uses hashing, and thus it is fast. +++++++++
+
+Output
+Upon completion, several files should be seen in the indicated output folder (when running in default mode only c, d, and e will be kept):
+
+a. The uncompressed “*.fastq” files;
+
+b. “*_reads.csv” files corresponding to the read counts per feature per inputted sequencing file;
+
+c. A “compiled_stats.csv” containing all the relevant input/output information about the 2FAST2Q analysis;
+
+d. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample;
+
+e. A “compiled.csv” file with the compilation of all the read counts per feature in all the inputted files. Use this latter in the next steps of the data analysis pipeline.
+
+
+Short Explanation
+2FAST2Q will return the read counts for all the features present in the input file. A read will be aligned to its features if the minimum quality score in each nucleotide is >= the indicated phred-score, and if there is less than the indicated allowed mismatches. Like said before, these parameters can be modified by the user.
+
+However, why these parameters?
+
+Base quality filtering using Q>=30 means there is a 0.01% chance of a given nucleotide being miss-sequenced. To assure alignment quality, the program filters out by default any reads that have nucleotides with a Q < 30.
+
+
+Why the mismatch?
+
+To avoid a too highly stringent cutoff. Allowing a mismatch allows the alignment of reads to their features when just a single nucleotide is wrongly sequenced. Even at a 0.01% chance (Q>=30 default) this event is bound to happen due to the large sample size.
+
+However, there is a safe mechanism in place to prevent 2 or more features with mismatches from being aligned to the same read (the read is discarded in this case, as there is no way of knowing to which feature the read aligns to)
+
+
+Troubleshooting
+Running 2FAST2Q with example data :
+
+Download the "D39V_guides.csv" file
+Download the "example.fastq.gz"
+Run 2FAST2Q
+In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appear as a warning message.
+
+
+The expected example output file is given: "compiled.csv"
