@@ -56,11 +56,11 @@ change directory to location of the file
 
 type and enter:
 
-chmod +x ./2FAST2Q_Linux
+`chmod +x ./2FAST2Q_Linux`
 
 type and enter:
 
-./2FAST2Q_Linux -h
+`./2FAST2Q_Linux`
 
 
 
