@@ -86,9 +86,9 @@ type `python -m fast2q -c`
 
 When running without specified parameters, 2FAST2Q will assume the current running directory has all the required files:
 
-one .csv corresponding to features file
+	one .csv corresponding to features file
 	
-the .FASTQ files
+	the .FASTQ files
 
 
 There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
