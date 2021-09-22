@@ -207,15 +207,15 @@ Output
 
 Upon completion, several files should be seen in the indicated output folder (when running in default mode only c, d, and e will be kept):
 
-a. The uncompressed “*.fastq” files;
+	a. The uncompressed “*.fastq” files;
 
-b. “*_reads.csv” files corresponding to the read counts per feature per inputted sequencing file;
+	b. “*_reads.csv” files corresponding to the read counts per feature per inputted sequencing file;
 
-c. A “compiled_stats.csv” containing all the relevant input/output information about the 2FAST2Q analysis;
+	c. A “compiled_stats.csv” containing all the relevant input/output information about the 2FAST2Q analysis;
 
-d. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample;
+	d. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample;
 
-e. A “compiled.csv” file with the compilation of all the read counts per feature in all the inputted files. Use this latter in the next steps of the data analysis pipeline.
+	e. A “compiled.csv” file with the compilation of all the read counts per feature in all the inputted files. Use this latter in the next steps of the data analysis pipeline.
 
 
 Short Explanation
@@ -234,7 +234,9 @@ To avoid a too highly stringent cutoff. Allowing a mismatch allows the alignment
 However, there is a safe mechanism in place to prevent 2 or more features with mismatches from being aligned to the same read (the read is discarded in this case, as there is no way of knowing to which feature the read aligns to)
 
 
+
 Troubleshooting
+
 
 Running 2FAST2Q with example data :
 
@@ -242,6 +244,7 @@ Download the "D39V_guides.csv" file
 Download the "example.fastq.gz"
 Run 2FAST2Q
 In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appear as a warning message.
+
 
 
 The expected example output file is given: "compiled.csv"
