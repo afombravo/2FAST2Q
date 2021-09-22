@@ -6,7 +6,7 @@ A Python3 program that counts sequence occurrences in raw FASTQ files.
 2FAST2Q requires absolutely no installation whatsoever, and can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
 
 The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by accessing the following link: 
-https://zenodo.org/record/5410822
+https://zenodo.org/record/5521996
 
 2FAST2Q is also available as a python package (https://pypi.org/project/fast2q/)
 
