@@ -234,17 +234,19 @@ To avoid a too highly stringent cutoff. Allowing a mismatch allows the alignment
 However, there is a safe mechanism in place to prevent 2 or more features with mismatches from being aligned to the same read (the read is discarded in this case, as there is no way of knowing to which feature the read aligns to)
 
 
-
 Troubleshooting
-
 
 Running 2FAST2Q with example data :
 
 Download the "D39V_guides.csv" file
 Download the "example.fastq.gz"
 Run 2FAST2Q
+
+
 In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appear as a warning message.
 
+
+=======
 
 
 The expected example output file is given: "compiled.csv"
