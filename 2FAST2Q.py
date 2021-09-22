@@ -26,17 +26,23 @@ class SgRNA:
     def __init__(self, name, counts):
         self.name = name
         self.counts = counts
-        
-def path_finder_seq(folder_path, extension, separator): 
+
+def path_finder(folder_path,extension,separator):
     
     """ Finds the correct file paths from the indicated directories,
-    and parses the file names into an ordered list for later use"""
+    and parses the file names into a list for later use"""
     
     pathing = []
     for filename in glob.glob(os.path.join(folder_path, extension)):
         stop = filename[::-1].find(separator) + 1 
         pathing.append([filename[-stop:]] + [filename] + [os.path.getsize(filename)]) 
+    return pathing
 
+def path_parser(folder_path, extension, separator): 
+    
+    """ parses the file names and paths into an ordered list for later use"""
+
+    pathing=path_finder(folder_path,extension,separator)
     if extension != '*reads.csv':
         
         """sorting by size makes multiprocessing more efficient 
@@ -540,7 +546,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "2.2"
+    version = "2.2.2"
     
     print("\nVersion: {}".format(version))
     
@@ -583,10 +589,11 @@ def input_parser():
         if param[0] is None:
             parameters[param[1]]=os.getcwd()
             if param[1] == 'sgrna':
-                file = path_finder_seq(os.getcwd(), "*.csv", "/")
+                file = path_finder(os.getcwd(), "*.csv", "/")
                 if len(file) > 1:
                     raise Exception("There is more than one .csv in the current directory. If not directly indicating a path for sgRNA.csv, please only have 1 .csv file.") 
-                parameters[param[1]]=file[0][1]
+                if len(file) == 1:
+                    parameters[param[1]]=file[0][1]
         else:
             parameters[param[1]]=param[0]
         return parameters
@@ -678,7 +685,7 @@ def compiling(param,paths):
     Gathers the individual sample statistic and parses it into "run_stats" """
     
     separator = param["separator"]
-    ordered_csv = path_finder_seq(param["directory"], '*reads.csv',separator)
+    ordered_csv = path_parser(param["directory"], '*reads.csv',separator)
     
     headers = [f"#2FAST2Q version: {param['version']}"] + \
             [f"#Mismatch: {param['miss']}"] + \
@@ -855,7 +862,7 @@ def main():
     param = initializer(input_parser())
     
     ### parses the names/paths, and orders the sequencing files
-    ordered = path_finder_seq(param["seq_files"], param["extension"], param["separator"])
+    ordered = path_parser(param["seq_files"], param["extension"], param["separator"])
     
     ### parses the sequencing files depending on whether they require unzipping or not
     files, write_path_save = input_file_type(ordered, param["extension"], param["directory"])
