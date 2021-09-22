@@ -5,7 +5,7 @@ A Python3 program that counts sequence occurrences in raw FASTQ files.
 
 2FAST2Q requires absolutely no installation whatsoever, and can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
 
-The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by accessing the following link (keep in mind a newer version might exist, if so, use it): 
+The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by accessing the following link: 
 https://zenodo.org/record/5410822
 
 2FAST2Q is also available as a python package (https://pypi.org/project/fast2q/)
@@ -82,7 +82,12 @@ Download the 2FAST2Q Python3 module using pip install:
 type `python -m fast2q`
 
 # 3.1 For starting the non-graphical interface mode:
-type `python -m fast2q -c --s "c/path/seqfiledir" --g "c/path/sgrna.csv" --o "c/path/outputfolder" --se ".fastq.gz"`
+type `python -m fast2q -c`
+
+When running without specified parameters, 2FAST2Q will assume the current running directory has all the required files:
+	one .csv corresponding to features file
+	the .FASTQ files
+
 
 There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
 
@@ -98,27 +103,27 @@ There are also several optional parameters. For their description and input type
   
  `--o O       The full path to the output directory`
   
- `--se SE     Sequencing file extenction (ie:'.fastq.gz')`
+ `--se SE     Sequencing file extension (ie:'.fastq.gz')`
   
  `--m M       number of allowed mismatches (default=1)`
   
  `--ph PH     Minimal Phred-score (default=30)`
   
- `--st ST     feature start position in the read (default is 0==1st bp)`
+ `--st ST     Feature start position in the read (default is 0==1st bp)`
   
- `--l L       feature length`
+ `--l L       Feature length`
   
  `--r R       ram saving mode (only appropriate for mismatch searching) `
- 
- `--us US     Upstream search sequence`
- 
- `--ds DS     Downstream search sequence`
- 
- `--ms MS     mismatches allowed when searching reads with Up/Down stream sequences`
- 
- `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter(EC)]`
- 
- `--k K       If enabled, keeps all temporary files (default is enabled)`
+
+ `--us US     Upstream search sequence `
+
+ `--ds DS     Downstream search sequence `
+
+ `--ms MS     mismatches allowed when searching reads with Up/Down stream sequences `
+
+ `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)] `
+
+ ` --k K       If enabled, keeps all temporary files (default is enabled) `
 
 
 # Inputs
