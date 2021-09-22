@@ -5,7 +5,7 @@ A Python3 program that counts sequence occurrences in raw FASTQ files.
 
 2FAST2Q requires absolutely no installation whatsoever, and can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
 
-The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by accessing the following link (keep in mind a newer version might exist, if so, use it): 
+The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by accessing the following link: 
 https://zenodo.org/record/5410822
 
 2FAST2Q is also available as a python package (https://pypi.org/project/fast2q/)
@@ -82,43 +82,50 @@ Download the 2FAST2Q Python3 module using pip install:
 type `python -m fast2q`
 
 # 3.1 For starting the non-graphical interface mode:
-type `python -m fast2q -c --s "c/path/seqfiledir" --g "c/path/sgrna.csv" --o "c/path/outputfolder" --se ".fastq.gz"`
+type `python -m fast2q -c`
+
+When running without specified parameters, 2FAST2Q will assume the current running directory has all the required files:
+
+	one .csv corresponding to features file
+	
+	the .FASTQ files
+
 
 There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
 
-`python -m fast2q -h`
+	`python -m fast2q -h`
 
- `-h, --help  show this help message and exit `
+	 `-h, --help  show this help message and exit `
 
- `-c [C]      cmd line mode`
-  
- `--s S       The full path to the directory with the sequencing files`
-  
- `--g G       The full path to the .csv file with the features.`
-  
- `--o O       The full path to the output directory`
-  
- `--se SE     Sequencing file extenction (ie:'.fastq.gz')`
-  
- `--m M       number of allowed mismatches (default=1)`
-  
- `--ph PH     Minimal Phred-score (default=30)`
-  
- `--st ST     feature start position in the read (default is 0==1st bp)`
-  
- `--l L       feature length`
-  
- `--r R       ram saving mode (only appropriate for mismatch searching) `
- 
- `--us US     Upstream search sequence`
- 
- `--ds DS     Downstream search sequence`
- 
- `--ms MS     mismatches allowed when searching reads with Up/Down stream sequences`
- 
- `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter(EC)]`
- 
- `--k K       If enabled, keeps all temporary files (default is enabled)`
+	 `-c [C]      cmd line mode`
+
+	 `--s S       The full path to the directory with the sequencing files`
+
+	 `--g G       The full path to the .csv file with the features.`
+
+	 `--o O       The full path to the output directory`
+
+	 `--se SE     Sequencing file extension (ie:'.fastq.gz')`
+
+	 `--m M       number of allowed mismatches (default=1)`
+
+	 `--ph PH     Minimal Phred-score (default=30)`
+
+	 `--st ST     Feature start position in the read (default is 0==1st bp)`
+
+	 `--l L       Feature length`
+
+	 `--r R       ram saving mode (only appropriate for mismatch searching) `
+
+	 `--us US     Upstream search sequence `
+
+	 `--ds DS     Downstream search sequence `
+
+	 `--ms MS     mismatches allowed when searching reads with Up/Down stream sequences `
+
+	 `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)] `
+
+	 ` --k K       If enabled, keeps all temporary files (default is enabled) `
 
 
 # Inputs
@@ -200,15 +207,15 @@ Output
 
 Upon completion, several files should be seen in the indicated output folder (when running in default mode only c, d, and e will be kept):
 
-a. The uncompressed “*.fastq” files;
+	a. The uncompressed “*.fastq” files;
 
-b. “*_reads.csv” files corresponding to the read counts per feature per inputted sequencing file;
+	b. “*_reads.csv” files corresponding to the read counts per feature per inputted sequencing file;
 
-c. A “compiled_stats.csv” containing all the relevant input/output information about the 2FAST2Q analysis;
+	c. A “compiled_stats.csv” containing all the relevant input/output information about the 2FAST2Q analysis;
 
-d. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample;
+	d. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample;
 
-e. A “compiled.csv” file with the compilation of all the read counts per feature in all the inputted files. Use this latter in the next steps of the data analysis pipeline.
+	e. A “compiled.csv” file with the compilation of all the read counts per feature in all the inputted files. Use this latter in the next steps of the data analysis pipeline.
 
 
 Short Explanation
@@ -235,7 +242,11 @@ Download the "D39V_guides.csv" file
 Download the "example.fastq.gz"
 Run 2FAST2Q
 
+
 In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appear as a warning message.
+
+
+=======
 
 
 The expected example output file is given: "compiled.csv"
