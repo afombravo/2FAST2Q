@@ -93,39 +93,39 @@ When running without specified parameters, 2FAST2Q will assume the current runni
 
 There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
 
-`python -m fast2q -h`
+	`python -m fast2q -h`
 
- `-h, --help  show this help message and exit `
+	 `-h, --help  show this help message and exit `
 
- `-c [C]      cmd line mode`
-  
- `--s S       The full path to the directory with the sequencing files`
-  
- `--g G       The full path to the .csv file with the features.`
-  
- `--o O       The full path to the output directory`
-  
- `--se SE     Sequencing file extension (ie:'.fastq.gz')`
-  
- `--m M       number of allowed mismatches (default=1)`
-  
- `--ph PH     Minimal Phred-score (default=30)`
-  
- `--st ST     Feature start position in the read (default is 0==1st bp)`
-  
- `--l L       Feature length`
-  
- `--r R       ram saving mode (only appropriate for mismatch searching) `
+	 `-c [C]      cmd line mode`
 
- `--us US     Upstream search sequence `
+	 `--s S       The full path to the directory with the sequencing files`
 
- `--ds DS     Downstream search sequence `
+	 `--g G       The full path to the .csv file with the features.`
 
- `--ms MS     mismatches allowed when searching reads with Up/Down stream sequences `
+	 `--o O       The full path to the output directory`
 
- `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)] `
+	 `--se SE     Sequencing file extension (ie:'.fastq.gz')`
 
- ` --k K       If enabled, keeps all temporary files (default is enabled) `
+	 `--m M       number of allowed mismatches (default=1)`
+
+	 `--ph PH     Minimal Phred-score (default=30)`
+
+	 `--st ST     Feature start position in the read (default is 0==1st bp)`
+
+	 `--l L       Feature length`
+
+	 `--r R       ram saving mode (only appropriate for mismatch searching) `
+
+	 `--us US     Upstream search sequence `
+
+	 `--ds DS     Downstream search sequence `
+
+	 `--ms MS     mismatches allowed when searching reads with Up/Down stream sequences `
+
+	 `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)] `
+
+	 ` --k K       If enabled, keeps all temporary files (default is enabled) `
 
 
 # Inputs
