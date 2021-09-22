@@ -417,6 +417,8 @@ def inputs_handler(separator):
         if len(parameters) != 14:
             input("Please confirm that all the input boxes are filled. Some parameters are missing.\nPress any key to exit")
             raise Exception
+            
+    parameters["cmd"] = False
 
     return parameters
 
@@ -427,12 +429,14 @@ def inputs_initializer(separator):
     from tkinter import Entry,LabelFrame,Button,Label,Tk,filedialog,StringVar,OptionMenu
     
     def restart():
+        root.quit()
         root.destroy()
         inputs_initializer()
         
     def submit():
         for arg in temporary:
             parameters[arg] = temporary[arg].get()
+        root.quit()
         root.destroy()
     
     def directory(column,row,parameter,frame):
@@ -536,7 +540,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "2.1"
+    version = "2.2"
     
     print("\nVersion: {}".format(version))
     
@@ -575,6 +579,18 @@ def input_parser():
     
     """ Handles the cmd line interface, and all the parameter inputs"""
     
+    def current_dir_path_handling(param):
+        if param[0] is None:
+            parameters[param[1]]=os.getcwd()
+            if param[1] == 'sgrna':
+                file = path_finder_seq(os.getcwd(), "*.csv", "/")
+                if len(file) > 1:
+                    raise Exception("There is more than one .csv in the current directory. If not directly indicating a path for sgRNA.csv, please only have 1 .csv file.") 
+                parameters[param[1]]=file[0][1]
+        else:
+            parameters[param[1]]=param[0]
+        return parameters
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("-c",nargs='?',const=True,help="cmd line mode")
     parser.add_argument("--s",help="The full path to the directory with the sequencing files")
@@ -592,17 +608,23 @@ def input_parser():
     parser.add_argument("--mo",help="Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)]")
     parser.add_argument("--k",help="If enabled, keeps all temporary files (default is enabled)")
     args = parser.parse_args()
-
+    
+    #if its not running on command window mode
     if args.c is None:
         return None
     
     parameters = {}
-    if (args.s is None) or (args.g is None) or (args.o is None) or (args.se is None):
-        print(parser.print_usage())
-        raise ValueError("\nPlease specify --s,--g,--o, and --se parameters. type -h into cmd for help")
-    else:
-        parameters['seq_files'],parameters['sgrna'],parameters['out'],\
-        parameters['extension'] = args.s, args.g, args.o, args.se
+    parameters["cmd"] = True
+    paths_param = [[args.s,'seq_files'],
+                   [args.g,'sgrna'],
+                   [args.o,'out']]
+    
+    for param in paths_param:
+        parameters = current_dir_path_handling(param)
+        
+    parameters['extension']='.fastq.gz'
+    if args.se is not None:
+        parameters['extension']=args.se     
 
     parameters['ram']=False
     if args.r is not None:
@@ -696,11 +718,12 @@ def compiling(param,paths):
         for file in ordered_csv:
             os.remove(file[1])
             
-    if (param["delete"]) & (param["extension"]==".fastq.gz"):
+    if (param["delete"]) & (param["extension"]=="*.fastq.gz"):
         for file in paths:
             os.remove(file)
-        
-    input("\nAnalysis successfully completed\nAll the reads have been compiled into the compiled.csv file.\nPress any key to exit")
+    
+    if not param["cmd"]:
+        input("\nAnalysis successfully completed\nAll the reads have been compiled into the compiled.csv file.\nPress any key to exit")
 
 def run_stats(headers, out_file,separator):
     
