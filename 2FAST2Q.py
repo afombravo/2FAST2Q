@@ -14,18 +14,19 @@ import psutil
 import argparse
 import datetime
 from tqdm import tqdm
+from dataclasses import dataclass
 #also needs tkinter (imported inside inputs_initializer())
 #####################
 
+@dataclass
 class SgRNA:
     
     """ Each sgRNA will have its own class instance, where the read counts will be kept.
-    Each sgRNA class is stored in a dictionary with the sequence as its key. 
-    See the "guides loader" function """    
+    Each sgRNA class is stored in a dictionary with the name as its key. 
+    See the "guides loader" function """   
     
-    def __init__(self, name, counts):
-        self.name = name
-        self.counts = counts
+    name: str
+    counts: int
 
 def path_finder(folder_path,extension,separator):
     
@@ -361,7 +362,7 @@ def aligner(raw,out,i,o,sgrna,param,cpu):
     except ValueError:
         master_list.sort(key = lambda master_list: master_list[0]) #alphabetical sorting
     
-    master_list.insert(0,["#sgRNA"] + ["Reads"])
+    master_list.insert(0,["#Feature"] + ["Reads"])
     master_list.insert(0,[stats_condition])
     csvfile = out[:-out[::-1].find(".")-1] + "_reads.csv"
     csv_writer(csvfile, master_list)
@@ -569,7 +570,7 @@ def initializer(cmd):
     param["quality_set"] = set(quality_list[:int(param['phred'])-1])
     
     current_time = datetime.datetime.now().strftime('%S%M%H%d%m%Y')
-    param["directory"] = os.path.join(param['out'], f"output_{current_time}")
+    param["directory"] = os.path.join(param['out'], f"2FAST2Q_output_{current_time}")
     if not os.path.exists(param["directory"]):
         os.makedirs(param["directory"])
     
@@ -692,21 +693,27 @@ def compiling(param,paths):
             [f"#Phred Score: {param['phred']}"]
             
     compiled = {} #dictionary with all the reads per sgRNA
-    head = ["#sgRNA"] #name of the samples
-    for name, file in ordered_csv:
+    head = ["#Feature"] #name of the samples
+    for i,(name, file) in enumerate(ordered_csv):
         head.append(name[name.find(separator)+len(separator):name.find("_reads.csv")])
         with open(file) as current:
             for line in current:
                 line = line[:-1].split(",")
                 if "#" not in line[0]:
-                    if line[0] in compiled:
+                    
+                    if line[0] in compiled: 
                         compiled[line[0]] = compiled[line[0]] + [int(line[1])]
                     else:
-                        compiled[line[0]] = [int(line[1])]
+                        compiled[line[0]] = [0]*i + [int(line[1])]
                         
-                elif "#sgRNA" not in line[0]:
+                elif "#Feature" not in line[0]:
                     headers.append(line[0][1:]+"\n")
-  
+    
+    #important in extract and count mode for creating entries with 0 reads
+    for entry in compiled:
+        if len(compiled[entry])<len(ordered_csv):
+            compiled[entry] = compiled[entry] + [0]*(len(ordered_csv)-len(compiled[entry]))
+        
     path = ordered_csv[0][1]
     out_file = path[:-path[::-1].find(separator)-1]
     
@@ -717,7 +724,7 @@ def compiling(param,paths):
         final.append([sgrna] + compiled[sgrna])
         
     final.insert(0, head)
-    
+        
     csvfile = out_file + separator + "compiled.csv"
     csv_writer(csvfile, final)
 
@@ -763,21 +770,18 @@ def run_stats(headers, out_file,separator):
     width = 0.4
     for i, (a,b,c,d,e,f,g) in enumerate(global_stat[header_ofset:]):   
 
-        plt.bar(i+width/2, int(d), width,  capsize=5, color = "darkorange", hatch="//")
-        plt.bar(i-width/2, int(e), width, capsize=5, color = "slateblue", hatch="\\\\\\")
+        plt.bar(i+width/2, int(d), width,  capsize=5, color = "#FFD25A", hatch="//",edgecolor = "black", linewidth = .7)
+        plt.bar(i-width/2, int(e), width, capsize=5, color = "#FFAA5A", hatch="\\\\\\",edgecolor = "black", linewidth = .7)
 
     ax.set_xticks(np.arange(len([n[0] for n in global_stat[header_ofset:]])))
     ax.set_xticklabels([n[0] for n in global_stat[header_ofset:]])
-    plt.xlabel('Sample')
     plt.ylabel('Number of reads')
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.legend(["Total number of reads in sample", "Total number of reads that passed quality control parameters"], \
-              loc='upper center', bbox_to_anchor=(0.5, -0.4),ncol=1,prop={'size': 8})
-        
-    plt.gcf().subplots_adjust(bottom=0.4)
-    
+    ax.legend(["Reads in sample", "Reads that passed quality control parameters"], \
+              loc='upper center', bbox_to_anchor=(0.5, 1.15),ncol=1,prop={'size': 8})
+    plt.tight_layout()
     plt.savefig(f"{out_file}{separator}reads_plot.png", dpi=300)
 
 def ram_lock():
@@ -817,22 +821,6 @@ def multi(files,write_path_save,sgrna,param):
         
     pool.close()
     pool.join()
-    
-def multi1(files,write_path_save,sgrna,param):
-    
-    """ starts and handles the parallel processing of all the samples by calling 
-    multiple instances of the "aligner" function (one per sample) """
-    
-    def update(a):
-        pbar.update()
-  
-    pool,cpu = cpu_counter()
-    pbar=tqdm(total=len(files),colour="red",desc="Total Progress",ascii=True,position=0,unit="file")
-    for i, (name, out) in enumerate(zip(files, write_path_save)):
-        pool.apply_async(aligner, args=(name,out,i,len(files),sgrna,param,cpu),callback=update)
-
-    pool.close()
-    pool.join()  
 
 def input_file_type(ordered, extension, directory):
 
