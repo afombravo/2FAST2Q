@@ -19,7 +19,7 @@ from dataclasses import dataclass
 #####################
 
 @dataclass
-class SgRNA:
+class Features:
     
     """ Each sgRNA will have its own class instance, where the read counts will be kept.
     Each sgRNA class is stored in a dictionary with the name as its key. 
@@ -52,7 +52,7 @@ def path_parser(folder_path, extension, separator):
         ordered = [path[:2] for path in sorted(pathing, key=lambda e: e[-1])][::-1]
      
         if ordered == []:
-            input(f"Check the path to the {extension[1:]} files folder. No files of this type found.\n Press any key to exit")
+            input(f"Check the path to the {extension[1:]} files folder. No files of this type found.\nPress enter to exit")
             raise Exception
 
     else:
@@ -88,20 +88,20 @@ def unpack(ordered,directory):
 
     return write_path_save
 
-def guides_loader(guides):
+def features_loader(guides):
     
     """ parses the sgRNA names and sequences from the indicated sgRNA .csv file.
     Creates a dictionary using the sgRNA sequence as key, with an instace of the 
-    SgRNA class as respective value. If duplicated sgRNA sequences exist, 
+    Features class as respective value. If duplicated sgRNA sequences exist, 
     this will be caught in here"""
     
     print("\nLoading Features")
     
     if not os.path.isfile(guides):
-        input("\nCheck the path to the sgRNA file.\nNo file found in the following path: {}\nPress any key to exit".format(guides))
+        input("\nCheck the path to the sgRNA file.\nNo file found in the following path: {}\nPress enter to exit".format(guides))
         raise Exception
     
-    sgrna = {}
+    features = {}
     
     with open(guides) as current: 
         for line in current:
@@ -109,15 +109,16 @@ def guides_loader(guides):
             sequence = line[1].upper()
             sequence = sequence.replace(" ", "")
             
-            if sequence not in sgrna:
-                sgrna[sequence] = SgRNA(line[0], 0)
+            if sequence not in features:
+                features[sequence] = Features(line[0], 0)
                 
             else:
-                print("\nWarning!!\n{} and {} share the same sequence. Only {} will be considered valid.\n".format(sgrna[sequence].name, line[0],sgrna[sequence].name))
+                print("\nWarning!!\n{} and {} share the same sequence. Only {} will be considered valid.".format(features[sequence].name, line[0],features[sequence].name))
 
-    return sgrna
+    print(f"\n{len(features)} different features were provided.")
+    return features
 
-def reads_counter(i,o,raw, sgrna, param,cpu):
+def reads_counter(i,o,raw, features, param,cpu):
     
     """ Reads the fastq file on the fly to avoid RAM issues. 
     Each read is assumed to be composed of 4 lines, with the sequense being 
@@ -131,16 +132,8 @@ def reads_counter(i,o,raw, sgrna, param,cpu):
     If the read doesnt have a perfect match, it is sent for mismatch comparison
     via the "imperfect_alignment" function.
     """
-    
-    def seq2bin(sequence):
-        
-        """ Converts a string to binary, and then to 
-        a numpy array in int8 format"""
-        
-        byte_list = bytearray(sequence,'utf8')
-        return np.array((byte_list), dtype=np.int8)
-    
-    def binary_converter(sgrna):
+
+    def binary_converter(features):
 
         """ Parses the input sgRNAs into numba dictionaries with int8 layout. 
         Converts all DNA sequences to their respective binary array forms. 
@@ -152,7 +145,7 @@ def reads_counter(i,o,raw, sgrna, param,cpu):
         container = Dict.empty(key_type=types.unicode_type,
                                value_type=types.int8[:])
 
-        for sequence in sgrna:
+        for sequence in features:
             container[sequence] = seq2bin(sequence)
         return container
     
@@ -194,7 +187,7 @@ def reads_counter(i,o,raw, sgrna, param,cpu):
         return tqdm(total=total_file_size,desc=tqdm_text, position=pos,colour="green",leave=False,ascii=True,unit="characters")
             
     if param['miss'] != 0:
-        binary_sgrna = binary_converter(sgrna)
+        binary_features = binary_converter(features)
 
     quality_set = param['quality_set']
     fixed_start = True
@@ -217,7 +210,6 @@ def reads_counter(i,o,raw, sgrna, param,cpu):
         upstream,downstream,mismatch_search,lenght = \
         param['upstream'],param['downstream'],param['miss_search'],param['length']
     
-
     with open(raw) as current:
         for line in current:
             pbar.update(len(line))
@@ -235,8 +227,8 @@ def reads_counter(i,o,raw, sgrna, param,cpu):
                     if (len(quality_set.intersection(quality)) == 0):
                         
                         if param['Running Mode']=='C':
-                            if seq in sgrna:
-                                sgrna[seq].counts += 1
+                            if seq in features:
+                                features[seq].counts += 1
                                 perfect_counter += 1
                             
                             elif mismatch != 0:
@@ -244,14 +236,14 @@ def reads_counter(i,o,raw, sgrna, param,cpu):
                                 
                                 if not ram: #keeps track of reads that are already known to not align with confidence
                                     if seq not in failed_reads:
-                                        sgrna,imperfect_counter,failed_reads = imperfect_alignment(read,seq,binary_sgrna,mismatch,imperfect_counter,sgrna,failed_reads,ram)
+                                        features,imperfect_counter,failed_reads = imperfect_alignment(read,seq,binary_features,mismatch,imperfect_counter,features,failed_reads,ram)
                                 else:
-                                    sgrna,imperfect_counter,failed_reads = imperfect_alignment(read,seq,binary_sgrna,mismatch,imperfect_counter,sgrna,failed_reads,ram)
+                                    features,imperfect_counter,failed_reads = imperfect_alignment(read,seq,binary_features,mismatch,imperfect_counter,features,failed_reads,ram)
                         else:
-                            if seq not in sgrna:
-                                sgrna[seq] = SgRNA(seq, 1)
+                            if seq not in features:
+                                features[seq] = Features(seq, 1)
                             else:
-                                sgrna[seq].counts += 1
+                                features[seq].counts += 1
                                 perfect_counter += 1
                 reading = []
                 reads += 1
@@ -261,7 +253,15 @@ def reads_counter(i,o,raw, sgrna, param,cpu):
     # clears the cache RAM from each individual file/process
     failed_reads = set()
     
-    return reads, perfect_counter, imperfect_counter, sgrna
+    return reads, perfect_counter, imperfect_counter, features
+
+def seq2bin(sequence):
+    
+    """ Converts a string to binary, and then to 
+    a numpy array in int8 format"""
+    
+    byte_list = bytearray(sequence,'utf8')
+    return np.array((byte_list), dtype=np.int8)
 
 @njit
 def binary_subtract(array1,array2,mismatch):
@@ -295,15 +295,15 @@ def border_finder(seq,read,mismatch):
             break
 
 @njit
-def sgrna_all_vs_all(binary_sgrna,read,mismatch):
+def features_all_vs_all(binary_features,read,mismatch):
     
     """ Runs the loop of the read vs all sgRNA comparison.
     Sends individually the sgRNAs for comparison.
     Returns the final mismatch score"""
     
     found = 0
-    for guide in binary_sgrna:
-        if binary_subtract(binary_sgrna[guide],read,mismatch):
+    for guide in binary_features:
+        if binary_subtract(binary_features[guide],read,mismatch):
             found+=1
             found_guide = guide
             if found>=2:
@@ -312,7 +312,7 @@ def sgrna_all_vs_all(binary_sgrna,read,mismatch):
         return found_guide
     return
 
-def imperfect_alignment(read,seq,binary_sgrna, mismatch, counter, sgrna,failed_reads,ram):
+def imperfect_alignment(read,seq,binary_features, mismatch, counter, features,failed_reads,ram):
     
     """ for the inputed read sequence, this compares if there is a sgRNA 
     with a sequence that is similar to it, to the indicated mismatch degree
@@ -320,17 +320,17 @@ def imperfect_alignment(read,seq,binary_sgrna, mismatch, counter, sgrna,failed_r
     If all conditions are meet, the read goes into the respective sgRNA count 
     score"""
     
-    finder = sgrna_all_vs_all(binary_sgrna, read, mismatch)
+    feature = features_all_vs_all(binary_features, read, mismatch)
 
-    if finder is not None:
-        sgrna[finder].counts += 1
+    if feature is not None:
+        features[feature].counts += 1
         counter += 1
     elif not ram:
         failed_reads.add(seq)
         
-    return sgrna, counter, failed_reads
+    return features, counter, failed_reads
 
-def aligner(raw,out,i,o,sgrna,param,cpu):
+def aligner(raw,out,i,o,features,param,cpu):
 
     """ Runs the main read to sgRNA associating function "reads_counter".
     Creates some visual prompts to alert the user that the samples are being
@@ -341,10 +341,10 @@ def aligner(raw,out,i,o,sgrna,param,cpu):
     ram_lock()
     tempo = time()
 
-    reads, perfect_counter, imperfect_counter, sgrna = reads_counter(i,o,raw,sgrna,param,cpu)
+    reads, perfect_counter, imperfect_counter, features = reads_counter(i,o,raw,features,param,cpu)
 
     master_list = []
-    [master_list.append([sgrna[guide].name] + [sgrna[guide].counts]) for guide in sgrna]
+    [master_list.append([features[guide].name] + [features[guide].counts]) for guide in features]
 
     tempo = time() - tempo
     if tempo > 3600:
@@ -391,7 +391,7 @@ def inputs_handler(separator):
         parameters["phred"]=int(parameters["phred"])
         parameters["miss_search"]=int(parameters["miss_search"])
     except Exception:
-        input("\nOnly numeric values are accepted in the folowing fields:\nsgRNA read starting place;\nsgRNA length;\nmismatch;\nPhred score;\nmismatches in the search sequence.\n\nPlease try again. Press any key to exit")
+        input("\nPlease confirm you have provided the correct parameters.\nOnly numeric values are accepted in the folowing fields:\n-Feature read starting place;\n-Feature length;\n-mismatch;\n-Phred score;\n-mismatches in the search sequence.\n\nPlease try again. Press enter to exit")
         raise Exception    
     
     # avoids getting -1 and actually filtering by highest phred score by mistake
@@ -422,7 +422,7 @@ def inputs_handler(separator):
         
     if parameters['Running Mode']=='C':
         if len(parameters) != 14:
-            input("Please confirm that all the input boxes are filled. Some parameters are missing.\nPress any key to exit")
+            input("Please confirm that all the input boxes are filled. Some parameters are missing.\nPress enter to exit")
             raise Exception
             
     parameters["cmd"] = False
@@ -503,13 +503,13 @@ def inputs_initializer(separator):
     parameters,temporary = {},{}  
 
     browsing_inputs = {"seq_files":["Path to the .fastq(.gz) files folder","Browse",1,0,directory],
-                       "sgrna":["Path to the sgRNA .csv file","Browse",2,0,file],
+                       "feature":["Path to the features .csv file","Browse",2,0,file],
                        "out":["Path to the output folder","Browse",3,0,directory]}
 
-    default_inputs = {"start":["sgRNA start position in the read",6,0,0],
-                      "length":["sgRNA length",7,0,20],
+    default_inputs = {"start":["Feature start position in the read",6,0,0],
+                      "length":["Feature length",7,0,20],
                       "miss":["Allowed mismatches",8,0,1],
-                      "phred":["Minimal sgRNA Phred-score",9,0,30],
+                      "phred":["Minimal feature Phred-score",9,0,30],
                       "ram":["RAM saving mode [y/n]",10,0,"n"],
                       "delete":["Delete intermediary files [y/n]",11,0,"y"],
                       "upstream":["upstream search sequence",12,0,"None"],
@@ -547,7 +547,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "2.2.2"
+    version = "2.3"
     
     print("\nVersion: {}".format(version))
     
@@ -569,7 +569,7 @@ def initializer(cmd):
 
     param["quality_set"] = set(quality_list[:int(param['phred'])-1])
     
-    current_time = datetime.datetime.now().strftime('%S%M%H%d%m%Y')
+    current_time = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     param["directory"] = os.path.join(param['out'], f"2FAST2Q_output_{current_time}")
     if not os.path.exists(param["directory"]):
         os.makedirs(param["directory"])
@@ -589,7 +589,7 @@ def input_parser():
     def current_dir_path_handling(param):
         if param[0] is None:
             parameters[param[1]]=os.getcwd()
-            if param[1] == 'sgrna':
+            if param[1] == 'feature':
                 file = path_finder(os.getcwd(), "*.csv", "/")
                 if len(file) > 1:
                     raise Exception("There is more than one .csv in the current directory. If not directly indicating a path for sgRNA.csv, please only have 1 .csv file.") 
@@ -607,14 +607,14 @@ def input_parser():
     parser.add_argument("--se",help="Sequencing file extenction (ie:'.fastq.gz')")
     parser.add_argument("--m",help="number of allowed mismatches (default=1)")
     parser.add_argument("--ph",help="Minimal Phred-score (default=30)")
-    parser.add_argument("--st",help="guideRNA start position in the read (default is 0==1st bp)")
-    parser.add_argument("--l",help="guideRNA length (default=20bp)")
-    parser.add_argument("--r",help="ram saving mode (only appropriate for mismatch searching)")
+    parser.add_argument("--st",help="Feauture start position in the read (default is 0==1st bp)")
+    parser.add_argument("--l",help="Feature length (default=20bp)")
+    parser.add_argument("--r",nargs='?',const=False,help="ram saving mode (only appropriate for mismatch searching)")
     parser.add_argument("--us",help="Upstream search sequence")
     parser.add_argument("--ds",help="Downstream search sequence")
     parser.add_argument("--ms",help="mismatches allowed when searching reads with Up/Down stream sequences")
     parser.add_argument("--mo",help="Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)]")
-    parser.add_argument("--k",help="If enabled, keeps all temporary files (default is enabled)")
+    parser.add_argument("--k",nargs='?',const=False,help="If enabled, keeps all temporary files (default is enabled)")
     args = parser.parse_args()
     
     #if its not running on command window mode
@@ -624,7 +624,7 @@ def input_parser():
     parameters = {}
     parameters["cmd"] = True
     paths_param = [[args.s,'seq_files'],
-                   [args.g,'sgrna'],
+                   [args.g,'feature'],
                    [args.o,'out']]
     
     for param in paths_param:
@@ -692,7 +692,7 @@ def compiling(param,paths):
             [f"#Mismatch: {param['miss']}"] + \
             [f"#Phred Score: {param['phred']}"]
             
-    compiled = {} #dictionary with all the reads per sgRNA
+    compiled = {} #dictionary with all the reads per feature
     head = ["#Feature"] #name of the samples
     for i,(name, file) in enumerate(ordered_csv):
         head.append(name[name.find(separator)+len(separator):name.find("_reads.csv")])
@@ -709,10 +709,10 @@ def compiling(param,paths):
                 elif "#Feature" not in line[0]:
                     headers.append(line[0][1:]+"\n")
     
-    #important in extract and count mode for creating entries with 0 reads
-    for entry in compiled:
-        if len(compiled[entry])<len(ordered_csv):
-            compiled[entry] = compiled[entry] + [0]*(len(ordered_csv)-len(compiled[entry]))
+        #important in extract and count mode for creating entries with 0 reads
+        for entry in compiled:
+            if len(compiled[entry])<i+1:
+                compiled[entry] = compiled[entry] + [0]*(i+1-len(compiled[entry]))
         
     path = ordered_csv[0][1]
     out_file = path[:-path[::-1].find(separator)-1]
@@ -720,9 +720,7 @@ def compiling(param,paths):
     run_stats(headers,out_file,separator)
                         
     final = []
-    for sgrna in compiled:
-        final.append([sgrna] + compiled[sgrna])
-        
+    [final.append([feature] + compiled[feature]) for feature in compiled] 
     final.insert(0, head)
         
     csvfile = out_file + separator + "compiled.csv"
@@ -737,7 +735,7 @@ def compiling(param,paths):
             os.remove(file)
     
     if not param["cmd"]:
-        input("\nAnalysis successfully completed\nAll the reads have been compiled into the compiled.csv file.\nPress any key to exit")
+        input("\nAnalysis successfully completed\nAll the reads have been compiled into the compiled.csv file.\nPress enter to exit")
 
 def run_stats(headers, out_file,separator):
     
@@ -810,14 +808,15 @@ def cpu_counter():
     
     return pool,cpu
 
-def multi(files,write_path_save,sgrna,param):
+def aligner_mp_dispenser(files,write_path_save,features,param):
     
     """ starts and handles the parallel processing of all the samples by calling 
     multiple instances of the "aligner" function (one per sample) """
 
     pool,cpu = cpu_counter()
+    print(f"\nProcessing {len(files)} files. Please hold.")
     for i, (name, out) in enumerate(zip(files, write_path_save)):
-        pool.apply_async(aligner, args=(name,out,i,len(files),sgrna,param,cpu))
+        pool.apply_async(aligner, args=(name,out,i,len(files),features,param,cpu))
         
     pool.close()
     pool.join()
@@ -855,15 +854,15 @@ def main():
     ### parses the sequencing files depending on whether they require unzipping or not
     files, write_path_save = input_file_type(ordered, param["extension"], param["directory"])
     
-    ### loads the sgRNAs from the input .csv file. 
-    ### Creates a dictionary "sgrna" of class instances for each sgRNA
-    sgrna = {}
+    ### loads the features from the input .csv file. 
+    ### Creates a dictionary "feature" of class instances for each sgRNA
+    features = {}
     if param['Running Mode']=='C':
-        sgrna = guides_loader(param["sgrna"])
+        features = features_loader(param["feature"])
     
     ### Processes all the samples by associating sgRNAs to the reads on the fastq files.
     ### Creates one process per sample, allowing multiple samples to be processed in parallel. 
-    multi(files,write_path_save,sgrna,param)
+    aligner_mp_dispenser(files,write_path_save,features,param)
     
     ### Compiles all the processed samples from multi into one file, and creates the run statistics
     compiling(param,write_path_save)
