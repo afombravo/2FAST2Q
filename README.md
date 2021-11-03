@@ -37,7 +37,6 @@ Basic principle:
 
 ## Using the executable files:
 
-
 ### 1.	
 Obtain a .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used features, and their respective names (any name can be given, as long as it doesn’t repeat). See the provided "D39V_guides.csv" sample file. (Optional, only required when running in Counting mode)	
 
@@ -78,15 +77,12 @@ The program will initialize and ask, in turn, for directories and file paths. Se
 ### 1.	
 Obtain the .csv file with the features like in step 1 of the previous instructions. (Optional, only required when running in Counting mode)	
 
-
 ### 2.	
 Download the 2FAST2Q Python3 module using pip install: 
 `pip install fast2q`.
 
-
 ### 3. For starting the graphical interface mode:
 type `python -m fast2q`
-
 
 ### 3.1 For starting the non-graphical interface mode:
 type `python -m fast2q -c`
@@ -190,7 +186,7 @@ In this case, it is allowed to input the following:
  3) A 5'and 3' end search sequence, the program will return and count everything in between these two.
  4) How many mismatches are allowed in the search sequence
  
- 
+
 ## While Running
 
 =================================
@@ -211,8 +207,6 @@ A completion message should be given at the end. In any case, the program will b
 +++++++++
 
 Note on mismatch searching: When performing mismatch searching, especially with feature libraries with thousands of features and/or when large sequencing datasets are used, 2FAST2Q might take 1-2 hours to run. In this case it is advisable to first run 2FAST2Q without mismatch search (see parameters), and check the output. Non mismatch search uses hashing, and thus it is fast. 
-
-+++++++++
 
 ## Output
 
