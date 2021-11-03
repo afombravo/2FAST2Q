@@ -32,7 +32,7 @@ If for some reason the compiled version fails, please use the souce Python code 
 
 `pip install fast2q`
 
-Basic principle:
+Basic working principle behind 2FAST2Q:
 ![Screenshot](graphical_workings.png)
 
 ## Using the executable files:
@@ -150,6 +150,7 @@ A path to the folder with either:
 (only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment)
 
 A path to the .csv file with the features. See example "D39V_guides.csv" for layout (remove any headers).
+Leave empty if you want to run the program in extract and count mode (extract all found features without alignements)
 
 
 ### 3 the output directory
