@@ -146,14 +146,17 @@ A path to the folder with either:
 
 2. all the uncompressed .fastq files
 
+
 ### 2  The path to the feature .csv file 
 (only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment)
 
 A path to the .csv file with the features. See example "D39V_guides.csv" for layout (remove any headers).
 
+
 ### 3 the output directory
 
 A path to the output folder (for safety, a subfolder will always be created on this directory)
+
 
 ### 4 Parameters
 
@@ -183,6 +186,7 @@ In this case, it is allowed to input the following:
  2) A 3' end search sequence, and the amount of bp the program should inventory after.
  3) A 5'and 3' end search sequence, the program will return and count everything in between these two.
  4) How many mismatches are allowed in the search sequence
+ 
  
 ## While Running
 
