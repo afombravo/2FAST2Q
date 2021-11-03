@@ -78,12 +78,15 @@ The program will initialize and ask, in turn, for directories and file paths. Se
 ### 1.	
 Obtain the .csv file with the features like in step 1 of the previous instructions. (Optional, only required when running in Counting mode)	
 
+
 ### 2.	
 Download the 2FAST2Q Python3 module using pip install: 
 `pip install fast2q`.
 
+
 ### 3. For starting the graphical interface mode:
 type `python -m fast2q`
+
 
 ### 3.1 For starting the non-graphical interface mode:
 type `python -m fast2q -c`
