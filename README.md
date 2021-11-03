@@ -17,12 +17,12 @@ The instructions on how to use 2FAST2Q;
 And some test data to run the program.
 
 
-# Before running:
+## Before running:
 
 Remove any "Undetermined" or unwanted fastq.gz files from the input folder as the program will attempt to align all the fastq files in the input folder.
 
 
-# How to use it
+## How to use it
 
 There are two versions of the program, with and without a basic user interface. 
 
@@ -30,11 +30,13 @@ There are two versions of the program, with and without a basic user interface.
 There is a graphical interface version for Windows, MacOS, and Linux.
 If for some reason the compiled version fails, please use the souce Python code from PyPI (`pip install fast2q`).
 
+Basic principle:
+![Screenshot](graphical_workings.png)
 
-# Using the executable files:
+## Using the executable files:
 
 
-# 1.	
+#### 1.	
 Obtain a .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used features, and their respective names (any name can be given, as long as it doesn’t repeat). See the provided "D39V_guides.csv" sample file. (Optional, only required when running in Counting mode)	
 
 | sgRNA0001 | AATAGCATAGAAATCATACA |
@@ -42,10 +44,10 @@ Obtain a .csv file (this format can be obtained using the "save as" option in ex
 | sgRNA0002 | AGTGTTGATTTACCAACGTT |
 
 
-# 2.	
+#### 2.	
 Download the 2FAST2Q software version appropriate to the intended operating system.
 
-# 3. 
+#### 3. 
 Double click the program icon. 
 
 
@@ -64,24 +66,24 @@ type and enter:
 
 
 
-# 4.
+#### 4.
 The program will initialize and ask, in turn, for directories and file paths. See the "inputs" section below for an explanation of these inputs.
 
 
 
-# Using the non executable files (recommendable if the executable file is buggy)
+## Using the non executable files (recommendable if the executable file is buggy)
 
-# 1.	
+#### 1.	
 Obtain the .csv file with the features like in step 1 of the previous instructions. (Optional, only required when running in Counting mode)	
 
-# 2.	
+#### 2.	
 Download the 2FAST2Q Python3 module using pip install: 
 `pip install fast2q`.
 
-# 3. For starting the graphical interface mode:
+#### 3. For starting the graphical interface mode:
 type `python -m fast2q`
 
-# 3.1 For starting the non-graphical interface mode:
+#### 3.1 For starting the non-graphical interface mode:
 type `python -m fast2q -c`
 
 When running without specified parameters, 2FAST2Q will assume the current running directory has all the required files:
@@ -128,11 +130,11 @@ There are also several optional parameters. For their description and input type
 	 ` --k K       If enabled, keeps all temporary files (default is enabled) `
 
 
-# Inputs
+## Inputs
 
 To run the program, three input paths are required:
 
-# 1  Directory containing the sequencing files
+#### 1  Directory containing the sequencing files
 
 A path to the folder with either:
 
@@ -142,16 +144,16 @@ A path to the folder with either:
 
 2. all the uncompressed .fastq files
 
-# 2  The path to the feature .csv file 
+#### 2  The path to the feature .csv file 
 (only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment)
 
 A path to the .csv file with the features. See example "D39V_guides.csv" for layout (remove any headers).
 
-# 3 the output directory
+#### 3 the output directory
 
 A path to the output folder (for safety, a subfolder will always be created on this directory)
 
-# 4 Parameters
+#### 4 Parameters
 
 The file extension type (default = fastq.gz) (change to the appropriate extension if uncompressed, for example ".fastq") 
 
@@ -180,7 +182,7 @@ In this case, it is allowed to input the following:
  3) A 5'and 3' end search sequence, the program will return and count everything in between these two.
  4) How many mismatches are allowed in the search sequence
  
-# While Running
+## While Running
 
 =================================
 
@@ -201,7 +203,9 @@ A completion message should be given at the end. In any case, the program will b
 
 +++++++++
 
-Note on mismatch searching: When performing mismatch searching, especially with feature libraries with thousands of features and/or when large sequencing datasets are used, 2FAST2Q might take 1-2 hours to run. In this case it is advisable to first run 2FAST2Q without mismatch search (see parameters), and check the output. Non mismatch search uses hashing, and thus it is fast. +++++++++
+Note on mismatch searching: When performing mismatch searching, especially with feature libraries with thousands of features and/or when large sequencing datasets are used, 2FAST2Q might take 1-2 hours to run. In this case it is advisable to first run 2FAST2Q without mismatch search (see parameters), and check the output. Non mismatch search uses hashing, and thus it is fast. 
+
++++++++++
 
 Output
 
