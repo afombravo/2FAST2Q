@@ -186,7 +186,7 @@ For extracting all sequences at a certain position in the read select the extrac
 If the starting position varies within the read, it is possible to search for a delimiting known sequence, and then extract the sequence before/after it.
 In this case, it is allowed to input the following: 
  1) A 5' end search sequence, and the amount of bp the program should inventory after.
- 2) A 3' end search sequence, and the amount of bp the program should inventory after.
+ 2) A 3' end search sequence, and the amount of bp the program should inventory before.
  3) A 5'and 3' end search sequence, the program will return and count everything in between these two.
  4) How many mismatches are allowed in the search sequence
  
@@ -200,15 +200,13 @@ In this case, it is allowed to input the following:
 When running 2FAST2Q in the executable form, the initialization sequence might take up to a minute. 2FAST2Q will be operational when "Version X.X.X" appears on the window.
 Depending on the used computer, 2FAST2Q might take a few minutes to run, especially with large datasets and when using mismatch finding. If no errors are shown, 2FAST2Q is still running. GIVE IT TIME! 
 
-\\\\
 
-macOS use WARNING!
+### macOS use WARNING!
 
 
 When using the graphical user interface option, it's possible that the interface doesn’t close down after pressing OK and "gets stuck". The program is still running, and progress can be monitored by checking the indicated output folder. When the final "compiled.csv" appears on the folder, the program has finished running and can be closed using any means.
 A completion message should be given at the end. In any case, the program will be finish when the compiled.csv file is visible in the directory.
 
-\\\\
 
 +++++++++
 
@@ -216,9 +214,9 @@ Note on mismatch searching: When performing mismatch searching, especially with 
 
 +++++++++
 
-Output
+## Output
 
-Upon completion, several files should be seen in the indicated output folder (when running in default mode only c, d, and e will be kept):
+Upon completion, several files should be seen in the indicated output folder (when running in default mode only c, d (only in cmd line mode), and e will be kept):
 
 	a. The uncompressed “*.fastq” files;
 
@@ -231,7 +229,7 @@ Upon completion, several files should be seen in the indicated output folder (wh
 	e. A “compiled.csv” file with the compilation of all the read counts per feature in all the inputted files. Use this latter in the next steps of the data analysis pipeline.
 
 
-Short Explanation
+### Short Explanation
 
 2FAST2Q will return the read counts for all the features present in the input file. A read will be aligned to its features if the minimum quality score in each nucleotide is >= the indicated phred-score, and if there is less than the indicated allowed mismatches. Like said before, these parameters can be modified by the user.
 
@@ -247,7 +245,7 @@ To avoid a too highly stringent cutoff. Allowing a mismatch allows the alignment
 However, there is a safe mechanism in place to prevent 2 or more features with mismatches from being aligned to the same read (the read is discarded in this case, as there is no way of knowing to which feature the read aligns to)
 
 
-Troubleshooting
+## Troubleshooting
 
 Running 2FAST2Q with example data :
 
