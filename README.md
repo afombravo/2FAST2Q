@@ -128,7 +128,7 @@ There are also several optional parameters. For their description and input type
 
 	 `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)] `
 
-	 ` --k K       If enabled, keeps all temporary files (default is enabled) `
+	 ` --k K       If enabled, keeps all temporary files (default is disabled) `
 
 
 ## Inputs
@@ -168,7 +168,7 @@ The start position of the feature within the read (default = 0, meaning the sequ
 
 The length of the feature in bp (default = 20)
 
-The number of allowed mismatches per feature (default = 1)
+The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned.
 
 RAM saving mode (default = no) 
 Only useful when allowing mismatch search, as search speed is increased by ~40% due to caching. 
