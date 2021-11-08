@@ -289,10 +289,10 @@ def border_finder(seq,read,mismatch):
     for i,bp in enumerate(read):
         comparison = read[i:s+i]
         finder = binary_subtract(seq,comparison,mismatch)
+        if i > r-s+mismatch:
+            return None
         if finder != 0:
             return i
-        if i > r:
-            break
 
 @njit
 def features_all_vs_all(binary_features,read,mismatch):
