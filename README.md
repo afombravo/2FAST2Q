@@ -17,11 +17,6 @@ The instructions on how to use 2FAST2Q;
 And some test data to run the program.
 
 
-## Before running:
-
-Remove any "Undetermined" or unwanted fastq.gz files from the input folder as the program will attempt to align all the fastq files in the input folder.
-
-
 ## How to use it
 
 There are two versions of the program, with and without a basic user interface. 
