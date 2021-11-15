@@ -1,21 +1,26 @@
-import csv
-import glob
-import os
-import gzip
-import shutil
-from concurrent.futures import ThreadPoolExecutor
-import multiprocessing as mp
-from platform import system
-from time import time
-import matplotlib.pyplot as plt
-import numpy as np
-from numba import njit
-import psutil
-import argparse
-import datetime
-from tqdm import tqdm
-from dataclasses import dataclass
-#also needs tkinter (imported inside inputs_initializer())
+try:
+    import csv
+    import glob
+    import os
+    import gzip
+    import shutil
+    from concurrent.futures import ThreadPoolExecutor
+    import multiprocessing as mp
+    from platform import system
+    from time import time
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from numba import njit
+    import psutil
+    import argparse
+    import datetime
+    from tqdm import tqdm
+    from dataclasses import dataclass
+    import tkinter #(imported inside inputs_initializer()). imported here just to assertain
+except ImportError as e:
+    input(f"{e}\nConsider installing it using 'pip install {e.name}', and try again.\nPress enter to exit")
+    raise Exception
+
 #####################
 
 @dataclass
@@ -103,18 +108,22 @@ def features_loader(guides):
     
     features = {}
     
-    with open(guides) as current: 
-        for line in current:
-            line = line[:-1].split(",")
-            sequence = line[1].upper()
-            sequence = sequence.replace(" ", "")
-            
-            if sequence not in features:
-                features[sequence] = Features(line[0], 0)
+    try:
+        with open(guides) as current: 
+            for line in current:
+                line = line[:-1].split(",")
+                sequence = line[1].upper()
+                sequence = sequence.replace(" ", "")
                 
-            else:
-                print("\nWarning!!\n{} and {} share the same sequence. Only {} will be considered valid.".format(features[sequence].name, line[0],features[sequence].name))
-
+                if sequence not in features:
+                    features[sequence] = Features(line[0], 0)
+                    
+                else:
+                    print("\nWarning!!\n{} and {} share the same sequence. Only {} will be considered valid.".format(features[sequence].name, line[0],features[sequence].name))
+    except IndexError:
+        input("\nThe given .csv file doesn't seem to be comma separated. Please double check that the file's column separation is ','\nPress enter to exit")
+        raise Exception
+        
     print(f"\n{len(features)} different features were provided.")
     return features
 
@@ -547,7 +556,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "2.3.1"
+    version = "2.3.2"
     
     print("\nVersion: {}".format(version))
     
@@ -569,15 +578,31 @@ def initializer(cmd):
 
     param["quality_set"] = set(quality_list[:int(param['phred'])-1])
     
-    current_time = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    current_time = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     param["directory"] = os.path.join(param['out'], f"2FAST2Q_output_{current_time}")
+    
     if not os.path.exists(param["directory"]):
         os.makedirs(param["directory"])
     
     if psutil.virtual_memory().percent>=60:
         print("\nLow RAM availability detected, file processing may be slow\n")
     
-    print(f"\nRunning with parameters:\n{param['miss']} mismatch allowed\nMinimal Phred Score per bp >= {param['phred']}\n")
+    if param['Running Mode']=='C':
+        print(f"\nRunning in align and count mode with the following parameters:\n{param['miss']} mismatch allowed\nMinimal Phred Score per bp >= {param['phred']}\nFeature length: {param['length']}\nRead alignment start position: {param['start']}\n")
+    else:
+        print(f"\nRunning in extract and count mode with the following parameters:\nMinimal Phred Score per bp >= {param['phred']}\n")
+        
+        if param['upstream'] is not None:
+            print(f"Upstream search sequence: {param['upstream']}\n")
+        if param['downstream'] is not None:
+            print(f"Downstream search sequence: {param['downstream']}\n")
+        
+        if (param['upstream'] is not None) and (param['downstream'] is not None):
+            print(f"Mismatches allowed in the search sequence: {param['miss_search']}\n")
+            
+        elif (param['upstream'] is not None) or (param['downstream'] is not None):
+            print(f"Mismatches allowed in the search sequence: {param['miss_search']}\nReturned feature lenght: {param['length']}\n")
+
     print(f"All data will be saved into {param['directory']}")
 
     return param
@@ -592,7 +617,8 @@ def input_parser():
             if param[1] == 'feature':
                 file = path_finder(os.getcwd(), "*.csv", "/")
                 if len(file) > 1:
-                    raise Exception("There is more than one .csv in the current directory. If not directly indicating a path for sgRNA.csv, please only have 1 .csv file.") 
+                    input("There is more than one .csv in the current directory. If not directly indicating a path for sgRNA.csv, please only have 1 .csv file.") 
+                    raise Exception
                 if len(file) == 1:
                     parameters[param[1]]=file[0][1]
         else:
@@ -614,7 +640,7 @@ def input_parser():
     parser.add_argument("--ds",help="Downstream search sequence")
     parser.add_argument("--ms",help="mismatches allowed when searching reads with Up/Down stream sequences")
     parser.add_argument("--mo",help="Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)]")
-    parser.add_argument("--k",nargs='?',const=False,help="If enabled, keeps all temporary files (default is enabled)")
+    parser.add_argument("--k",nargs='?',const=False,help="If enabled, keeps all temporary files (default is disabled)")
     args = parser.parse_args()
     
     #if its not running on command window mode
@@ -687,10 +713,17 @@ def compiling(param,paths):
     
     separator = param["separator"]
     ordered_csv = path_parser(param["directory"], '*reads.csv',separator)
-    
+
     headers = [f"#2FAST2Q version: {param['version']}"] + \
             [f"#Mismatch: {param['miss']}"] + \
-            [f"#Phred Score: {param['phred']}"]
+            [f"#Phred Score: {param['phred']}"] + \
+            [f"#Feature Length: {param['length']}"] + \
+            [f"#Feature start position in the read: {param['start']}"] + \
+            [f"#Running mode: {param['Running Mode']}"] + \
+            [f"#Upstream search sequence: {param['upstream']}"] + \
+            [f"#Downstream search sequence: {param['downstream']}"] + \
+            [f"#Mismatches in search sequence: {param['miss_search']}"]
+    headers = headers[::-1]
             
     compiled = {} #dictionary with all the reads per feature
     head = ["#Feature"] #name of the samples
@@ -763,7 +796,7 @@ def run_stats(headers, out_file,separator):
     csv_writer(csvfile, global_stat)
     
     ### plotting
-    header_ofset = 4
+    header_ofset = 10
     fig, ax = plt.subplots()
     width = 0.4
     for i, (a,b,c,d,e,f,g) in enumerate(global_stat[header_ofset:]):   
