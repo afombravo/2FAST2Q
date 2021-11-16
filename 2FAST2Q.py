@@ -293,7 +293,7 @@ def border_finder(seq,read,mismatch):
     
     s=seq.size
     r=read.size
-    fall_over_index = r-s
+    fall_over_index = r-s-1
     for i,bp in enumerate(read):
         comparison = read[i:s+i]
         finder = binary_subtract(seq,comparison,mismatch)
