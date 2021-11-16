@@ -203,7 +203,8 @@ def reads_counter(i,o,raw, features, param,cpu):
     failed_reads = set()
     reading = []
     pbar = progress_bar(i,o,raw,cpu)
-    mismatch,ram = param['miss'],param['ram']
+    ram = param['ram']
+    mismatch = [n+1 for n in range(param['miss'])]
     perfect_counter, imperfect_counter, reads = 0,0,0
     
     # determining the read trimming starting/ending place
@@ -240,14 +241,11 @@ def reads_counter(i,o,raw, features, param,cpu):
                                 features[seq].counts += 1
                                 perfect_counter += 1
                             
-                            elif mismatch != 0:
-                                read=seq2bin(seq)
-                                
-                                if not ram: #keeps track of reads that are already known to not align with confidence
-                                    if seq not in failed_reads:
-                                        features,imperfect_counter,failed_reads = imperfect_alignment(read,seq,binary_features,mismatch,imperfect_counter,features,failed_reads,ram)
-                                else:
-                                    features,imperfect_counter,failed_reads = imperfect_alignment(read,seq,binary_features,mismatch,imperfect_counter,features,failed_reads,ram)
+                            elif mismatch != []:
+                                features,imperfect_counter=\
+                                mismatch_search_handler(seq,mismatch,ram,\
+                                                        failed_reads,binary_features,\
+                                                        imperfect_counter,features)
                         else:
                             if seq not in features:
                                 features[seq] = Features(seq, 1)
@@ -295,11 +293,12 @@ def border_finder(seq,read,mismatch):
     
     s=seq.size
     r=read.size
+    fall_over_index = r-s
     for i,bp in enumerate(read):
         comparison = read[i:s+i]
         finder = binary_subtract(seq,comparison,mismatch)
-        if i > r-s+mismatch:
-            return None
+        if i > fall_over_index:
+            return
         if finder != 0:
             return i
 
@@ -321,23 +320,44 @@ def features_all_vs_all(binary_features,read,mismatch):
         return found_guide
     return
 
-def imperfect_alignment(read,seq,binary_features, mismatch, counter, features,failed_reads,ram):
+def mismatch_search_handler(seq,mismatch,ram,failed_reads,binary_features,imperfect_counter,features):
+    
+    """Converts a read into numpy int 8 form. Runs the imperfect alignment 
+    function for all number of inputed mismatches."""
+    
+    read=seq2bin(seq)                         
+    for miss in mismatch:
+        if not ram:
+            inventory_seq = seq+str(miss)
+            if inventory_seq not in failed_reads:
+                features,imperfect_counter,fail_read_flag=\
+                    imperfect_alignment(read,binary_features,\
+                                        miss, imperfect_counter,\
+                                        features)
+                if fail_read_flag:
+                    failed_reads.add(inventory_seq)
+        else:
+            features,imperfect_counter,fail_read_flag=\
+                imperfect_alignment(read,binary_features,\
+                                    miss, imperfect_counter,\
+                                    features)
+                    
+    return features,imperfect_counter
+
+def imperfect_alignment(read,binary_features, mismatch, counter, features,fail_read_flag=False):
     
     """ for the inputed read sequence, this compares if there is a sgRNA 
-    with a sequence that is similar to it, to the indicated mismatch degree
-    if the read can be atributed to more than 1 sgRNA, the read is discarded.
-    If all conditions are meet, the read goes into the respective sgRNA count 
-    score"""
-    
-    feature = features_all_vs_all(binary_features, read, mismatch)
+    with a sequence that is similar to it, to the indicated mismatch degree"""
 
+    feature = features_all_vs_all(binary_features, read, mismatch)
+    
     if feature is not None:
         features[feature].counts += 1
         counter += 1
-    elif not ram:
-        failed_reads.add(seq)
-        
-    return features, counter, failed_reads
+    else:
+        fail_read_flag=True
+
+    return features,counter,fail_read_flag
 
 def aligner(raw,out,i,o,features,param,cpu):
 
@@ -556,7 +576,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "2.3.2"
+    version = "2.3.3"
     
     print("\nVersion: {}".format(version))
     
