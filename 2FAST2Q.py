@@ -204,7 +204,7 @@ def reads_counter(i,o,raw, features, param,cpu):
     reading = []
     pbar = progress_bar(i,o,raw,cpu)
     ram = param['ram']
-    mismatch = [n+1 for n in range(param['miss'])]
+    mismatch = [n+1 for n in range(param['miss'])][::-1]
     perfect_counter, imperfect_counter, reads = 0,0,0
     
     # determining the read trimming starting/ending place
@@ -320,7 +320,7 @@ def features_all_vs_all(binary_features,read,mismatch):
         return found_guide
     return
 
-def mismatch_search_handler(seq,mismatch,ram,failed_reads,binary_features,imperfect_counter,features):
+def mismatch_search_handler(seq,mismatch,ram,failed_reads,binary_features,imperfect_counter,features,break_flag=False):
     
     """Converts a read into numpy int 8 form. Runs the imperfect alignment 
     function for all number of inputed mismatches."""
@@ -330,21 +330,25 @@ def mismatch_search_handler(seq,mismatch,ram,failed_reads,binary_features,imperf
         if not ram:
             inventory_seq = seq+str(miss)
             if inventory_seq not in failed_reads:
-                features,imperfect_counter,fail_read_flag=\
+                features,imperfect_counter,fail_read_flag,break_flag=\
                     imperfect_alignment(read,binary_features,\
                                         miss, imperfect_counter,\
                                         features)
                 if fail_read_flag:
                     failed_reads.add(inventory_seq)
         else:
-            features,imperfect_counter,fail_read_flag=\
+            features,imperfect_counter,fail_read_flag,break_flag=\
                 imperfect_alignment(read,binary_features,\
                                     miss, imperfect_counter,\
                                     features)
+        #we need to stop the loop, otherwise we start counting the same entry over and over
+        #because the unique matched feature has been matched already
+        if break_flag:
+            break
                     
     return features,imperfect_counter
 
-def imperfect_alignment(read,binary_features, mismatch, counter, features,fail_read_flag=False):
+def imperfect_alignment(read,binary_features, mismatch, counter, features,fail_read_flag=False,break_flag=False):
     
     """ for the inputed read sequence, this compares if there is a sgRNA 
     with a sequence that is similar to it, to the indicated mismatch degree"""
@@ -354,10 +358,12 @@ def imperfect_alignment(read,binary_features, mismatch, counter, features,fail_r
     if feature is not None:
         features[feature].counts += 1
         counter += 1
+        #we need to stop the loop, otherwise we start counting the same entry over and over
+        break_flag = True 
     else:
         fail_read_flag=True
 
-    return features,counter,fail_read_flag
+    return features,counter,fail_read_flag,break_flag
 
 def aligner(raw,out,i,o,features,param,cpu):
 
