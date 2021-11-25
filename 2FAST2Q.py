@@ -54,8 +54,8 @@ def path_parser(folder_path, extension, separator):
         """sorting by size makes multiprocessing more efficient 
             as the bigger files will be ran first, thus maximizing processor queing """
         
-        ordered = [path[:2] for path in sorted(pathing, key=lambda e: e[-1])][::-1]
-     
+        ordered = [path[:2] for path in sorted(pathing, key=lambda e: e[-1])]#[::-1]
+
         if ordered == []:
             input(f"Check the path to the {extension[1:]} files folder. No files of this type found.\nPress enter to exit")
             raise Exception
@@ -127,7 +127,7 @@ def features_loader(guides):
     print(f"\n{len(features)} different features were provided.")
     return features
 
-def reads_counter(i,o,raw, features, param,cpu):
+def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preprocess=False):
     
     """ Reads the fastq file on the fly to avoid RAM issues. 
     Each read is assumed to be composed of 4 lines, with the sequense being 
@@ -200,13 +200,13 @@ def reads_counter(i,o,raw, features, param,cpu):
 
     quality_set = param['quality_set']
     fixed_start = True
-    failed_reads = set()
     reading = []
-    pbar = progress_bar(i,o,raw,cpu)
-    ram = param['ram']
-    mismatch = [n+1 for n in range(param['miss'])][::-1]
+    if not preprocess:
+        pbar = progress_bar(i,o,raw,cpu)
+    mismatch = [n+1 for n in range(param['miss'])]
     perfect_counter, imperfect_counter, reads = 0,0,0
-    
+    ram_clearance=ram_lock()
+
     # determining the read trimming starting/ending place
     if (param['upstream'] is None) & (param['downstream'] is None):
         end = param['start'] + param['length']
@@ -222,7 +222,8 @@ def reads_counter(i,o,raw, features, param,cpu):
     
     with open(raw) as current:
         for line in current:
-            pbar.update(len(line))
+            if not preprocess:
+                pbar.update(len(line))
             reading.append(line[:-1])
             
             if len(reading) == 4: #a read always has 4 lines
@@ -242,10 +243,11 @@ def reads_counter(i,o,raw, features, param,cpu):
                                 perfect_counter += 1
                             
                             elif mismatch != []:
-                                features,imperfect_counter=\
-                                mismatch_search_handler(seq,mismatch,ram,\
+                                features,imperfect_counter,failed_reads,passed_reads=\
+                                mismatch_search_handler(seq,mismatch,\
                                                         failed_reads,binary_features,\
-                                                        imperfect_counter,features)
+                                                        imperfect_counter,features,\
+                                                        passed_reads,ram_clearance)
                         else:
                             if seq not in features:
                                 features[seq] = Features(seq, 1)
@@ -254,13 +256,19 @@ def reads_counter(i,o,raw, features, param,cpu):
                                 perfect_counter += 1
                 reading = []
                 reads += 1
-
-    pbar.close()
                 
-    # clears the cache RAM from each individual file/process
-    failed_reads = set()
+                # keeps RAM under control by avoiding overflow
+                if reads % 1000000 == 0:
+                    ram_clearance=ram_lock()
+                
+                if preprocess:
+                    if reads == 200000:
+                        return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads
     
-    return reads, perfect_counter, imperfect_counter, features
+    if not preprocess:
+        pbar.close()
+
+    return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads
 
 def seq2bin(sequence):
     
@@ -318,37 +326,37 @@ def features_all_vs_all(binary_features,read,mismatch):
                 return
     if found==1:
         return found_guide
-    return
+    return #not needed, but here for peace of mind
 
-def mismatch_search_handler(seq,mismatch,ram,failed_reads,binary_features,imperfect_counter,features,break_flag=False):
+def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_counter,features,passed_reads,ram_clearance,break_flag=False):
     
     """Converts a read into numpy int 8 form. Runs the imperfect alignment 
     function for all number of inputed mismatches."""
     
     read=seq2bin(seq)                         
     for miss in mismatch:
-        if not ram:
-            inventory_seq = seq+str(miss)
-            if inventory_seq not in failed_reads:
-                features,imperfect_counter,fail_read_flag,break_flag=\
-                    imperfect_alignment(read,binary_features,\
-                                        miss, imperfect_counter,\
-                                        features)
-                if fail_read_flag:
-                    failed_reads.add(inventory_seq)
-        else:
-            features,imperfect_counter,fail_read_flag,break_flag=\
+
+        # we already know this read is going to pass
+        if seq in passed_reads:
+            features[passed_reads[seq]].counts += 1
+            imperfect_counter += 1
+            break
+        
+        elif seq not in failed_reads:
+            features,imperfect_counter,feature=\
                 imperfect_alignment(read,binary_features,\
                                     miss, imperfect_counter,\
                                     features)
-        #we need to stop the loop, otherwise we start counting the same entry over and over
-        #because the unique matched feature has been matched already
-        if break_flag:
-            break
-                    
-    return features,imperfect_counter
+            if ram_clearance:
+                if feature is None:
+                    failed_reads.add(seq)
+                    break
+                else:
+                    passed_reads[seq] = feature
 
-def imperfect_alignment(read,binary_features, mismatch, counter, features,fail_read_flag=False,break_flag=False):
+    return features,imperfect_counter,failed_reads,passed_reads
+
+def imperfect_alignment(read,binary_features, mismatch, counter, features):
     
     """ for the inputed read sequence, this compares if there is a sgRNA 
     with a sequence that is similar to it, to the indicated mismatch degree"""
@@ -358,14 +366,10 @@ def imperfect_alignment(read,binary_features, mismatch, counter, features,fail_r
     if feature is not None:
         features[feature].counts += 1
         counter += 1
-        #we need to stop the loop, otherwise we start counting the same entry over and over
-        break_flag = True 
-    else:
-        fail_read_flag=True
 
-    return features,counter,fail_read_flag,break_flag
+    return features,counter,feature
 
-def aligner(raw,out,i,o,features,param,cpu):
+def aligner(raw,out,i,o,features,param,cpu,failed_reads,passed_reads):
 
     """ Runs the main read to sgRNA associating function "reads_counter".
     Creates some visual prompts to alert the user that the samples are being
@@ -373,10 +377,10 @@ def aligner(raw,out,i,o,features,param,cpu):
     the total number of samples is correct, getting an estimate of the total
     number of reads per sample, and checking total running time"""
     
-    ram_lock()
     tempo = time()
 
-    reads, perfect_counter, imperfect_counter, features = reads_counter(i,o,raw,features,param,cpu)
+    reads, perfect_counter, imperfect_counter, features,failed_reads,passed_reads = \
+        reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads)
 
     master_list = []
     [master_list.append([features[guide].name] + [features[guide].counts]) for guide in features]
@@ -402,8 +406,7 @@ def aligner(raw,out,i,o,features,param,cpu):
     csvfile = out[:-out[::-1].find(".")-1] + "_reads.csv"
     csv_writer(csvfile, master_list)
     
-    #print(stats_condition[1:]) # quality control
-    #print(f"\nProcessed file {i+1} out of {o} in {timing}")
+    return failed_reads,passed_reads
 
 def csv_writer(path, outfile):
     
@@ -432,13 +435,7 @@ def inputs_handler(separator):
     # avoids getting -1 and actually filtering by highest phred score by mistake
     if int(parameters["phred"]) == 0:
         parameters["phred"] = 1
-    
-    # parsing the RAM saving choice as a bolean
-    if parameters['ram'] == "n":
-        parameters['ram'] = False
-    else:
-        parameters['ram'] = True
-        
+
     if parameters['delete'] == "y":
         parameters['delete'] = True
     else:
@@ -456,7 +453,7 @@ def inputs_handler(separator):
         parameters['Running Mode']="C"
         
     if parameters['Running Mode']=='C':
-        if len(parameters) != 14:
+        if len(parameters) != 13:
             input("Please confirm that all the input boxes are filled. Some parameters are missing.\nPress enter to exit")
             raise Exception
             
@@ -534,7 +531,7 @@ def inputs_initializer(separator):
         
     root = Tk()
     root.title("2FAST2Q Input Parameters Window")
-    root.minsize(425, 660)
+    root.minsize(425, 620)
     parameters,temporary = {},{}  
 
     browsing_inputs = {"seq_files":["Path to the .fastq(.gz) files folder","Browse",1,0,directory],
@@ -545,7 +542,6 @@ def inputs_initializer(separator):
                       "length":["Feature length",7,0,20],
                       "miss":["Allowed mismatches",8,0,1],
                       "phred":["Minimal feature Phred-score",9,0,30],
-                      "ram":["RAM saving mode [y/n]",10,0,"n"],
                       "delete":["Delete intermediary files [y/n]",11,0,"y"],
                       "upstream":["upstream search sequence",12,0,"None"],
                       "downstream":["downstream search sequence",13,0,"None"],
@@ -582,19 +578,12 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "2.3.3"
+    version = "2.3.4"
     
     print("\nVersion: {}".format(version))
     
-    if system() == 'Windows':
-        separator = "\\"
-    else:
-        separator = "/"
-
-    if cmd is None:
-        param = inputs_handler(separator)
-    else:
-        param = cmd
+    separator = "\\" if system() == 'Windows' else "/"
+    param = inputs_handler(separator) if cmd is None else cmd
     
     param["extension"] = f'*{param["extension"]}'
     param["version"] = version
@@ -610,7 +599,7 @@ def initializer(cmd):
     if not os.path.exists(param["directory"]):
         os.makedirs(param["directory"])
     
-    if psutil.virtual_memory().percent>=60:
+    if psutil.virtual_memory().percent>=75:
         print("\nLow RAM availability detected, file processing may be slow\n")
     
     if param['Running Mode']=='C':
@@ -661,7 +650,6 @@ def input_parser():
     parser.add_argument("--ph",help="Minimal Phred-score (default=30)")
     parser.add_argument("--st",help="Feauture start position in the read (default is 0==1st bp)")
     parser.add_argument("--l",help="Feature length (default=20bp)")
-    parser.add_argument("--r",nargs='?',const=False,help="ram saving mode (only appropriate for mismatch searching)")
     parser.add_argument("--us",help="Upstream search sequence")
     parser.add_argument("--ds",help="Downstream search sequence")
     parser.add_argument("--ms",help="mismatches allowed when searching reads with Up/Down stream sequences")
@@ -685,10 +673,6 @@ def input_parser():
     parameters['extension']='.fastq.gz'
     if args.se is not None:
         parameters['extension']=args.se     
-
-    parameters['ram']=False
-    if args.r is not None:
-        parameters['ram']=True
         
     parameters['length']=20
     if args.l is not None:
@@ -843,14 +827,11 @@ def run_stats(headers, out_file,separator):
 
 def ram_lock():
 
-    """ stalls the program until more RAM is available from finishing the 
-    processing of other files """
-    
-    if psutil.virtual_memory().percent >= 98:
-        print("\nSub-optimal RAM allocation detected. Please consider running the program in 'RAM saving mode'\n")
-    
-    while psutil.virtual_memory().percent >= 98:
-        pass
+    """ stops increasing the hash tables (failed and passed reads) 
+    size to avoid using RAM that isnt there """
+
+    if psutil.virtual_memory().percent >= 95:
+        return False
     return True
 
 def cpu_counter():
@@ -859,7 +840,9 @@ def cpu_counter():
     of the files """
     
     cpu = mp.cpu_count()
-    if cpu >= 2:
+    if cpu >= 3:
+        cpu -= 2
+    if cpu == 2:
         cpu -= 1
     pool = mp.Pool(processes = cpu, 
                     initargs=(mp.RLock(),), 
@@ -867,15 +850,75 @@ def cpu_counter():
     
     return pool,cpu
 
+def multiprocess_merger(start,failed_reads,passed_reads,files,write_path_save,features,param,pool,cpu,preprocess=False):
+    
+    """ runs all samples in blocks equal to the amount of cpus in the PC. 
+    Before starting a new block, the hash tables for the failed and passed reads 
+    are updated. This confers speed advantages for the next block. """ 
+    
+    result = []
+    for i, (name, out) in enumerate(zip(files[start:start+cpu], write_path_save[start:start+cpu])):
+        
+        result.append(pool.apply_async(aligner, args=(name,\
+                                                      out,\
+                                                      i+start,\
+                                                      len(files),\
+                                                      features,\
+                                                      param,\
+                                                      cpu,\
+                                                      failed_reads,\
+                                                      passed_reads)))
+    
+    compiled = [x.get() for x in result]
+    failed_reads_compiled,passed_reads_compiled = zip(*compiled)
+    
+    return hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,failed_reads,passed_reads)
+
+def hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,failed_reads=set(),passed_reads={}):
+    
+    """ parsed the results from all the processes, merging the individual failed and
+    passed reads into one master file, that will be subsquently used for the new
+    samples's processing """ 
+    
+    for failed,passed in zip(failed_reads_compiled,passed_reads_compiled):
+        failed_reads = set.union(failed_reads,failed)
+        passed_reads = {**passed_reads,**passed}
+        
+    return failed_reads,passed_reads
+
+def hash_preprocesser(files,features,param,pool,cpu):
+    
+    """ For the smallest files, we processe them for the first x amount of reads to
+    initialize the failed reads and passed reads hash tables. This will confer some 
+    speed advantages, as subsquent files normally share the same reads that dont
+    align to anything, or reads with mismatches that indeed align"""
+    
+    print("\nInitializing hash tables.")
+    result=[]
+    for name in files[:cpu]:
+        result.append(pool.apply_async(reads_counter, args=(0,0,name,features,param,cpu,set(),{},True)))
+    
+    compiled = [x.get() for x in result]
+    throw1,throw2,throw3,throw4,failed_reads_compiled,passed_reads_compiled = zip(*compiled)
+    
+    return hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled)
+
 def aligner_mp_dispenser(files,write_path_save,features,param):
     
     """ starts and handles the parallel processing of all the samples by calling 
     multiple instances of the "aligner" function (one per sample) """
-
+    
+    start,failed_reads,passed_reads = 0,set(),{}
     pool,cpu = cpu_counter()
+    
+    if len(files)>cpu:
+        failed_reads,passed_reads=hash_preprocesser(files,features,param,pool,cpu)
+    
     print(f"\nProcessing {len(files)} files. Please hold.")
-    for i, (name, out) in enumerate(zip(files, write_path_save)):
-        pool.apply_async(aligner, args=(name,out,i,len(files),features,param,cpu))
+    for start in range(0,len(files),cpu):
+        failed_reads,passed_reads = \
+        multiprocess_merger(start,failed_reads,passed_reads,files,\
+                            write_path_save,features,param,pool,cpu)
         
     pool.close()
     pool.join()
