@@ -113,8 +113,6 @@ There are also several optional parameters. For their description and input type
 
 	 `--l L       Feature length`
 
-	 `--r R       ram saving mode (only appropriate for mismatch searching) `
-
 	 `--us US     Upstream search sequence `
 
 	 `--ds DS     Downstream search sequence `
@@ -165,12 +163,7 @@ The length of the feature in bp (default = 20)
 
 The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned.
 
-RAM saving mode (default = no) 
-Only useful when allowing mismatch search, as search speed is increased by ~40% due to caching. 
-When in RAM saving mode, 2FAST2Q should only take a few MB of RAM. 
-When NOT in RAM saving mode, several GB might be required.
-
-Keep temporary files mode (default = yes).
+Keep temporary files mode (default = no).
 When enabled, deletes all temporary files. To keep all files, change to "n" in the graphical mode, or input the parameter `--k` in the cmd lines.
 
 For extracting all sequences at a certain position in the read select the extractor + Counter (EC) mode. The default is Counter (C) mode only.
@@ -199,10 +192,6 @@ Depending on the used computer, 2FAST2Q might take a few minutes to run, especia
 When using the graphical user interface option, it's possible that the interface doesn’t close down after pressing OK and "gets stuck". The program is still running, and progress can be monitored by checking the indicated output folder. When the final "compiled.csv" appears on the folder, the program has finished running and can be closed using any means.
 A completion message should be given at the end. In any case, the program will be finish when the compiled.csv file is visible in the directory.
 
-
-+++++++++
-
-Note on mismatch searching: When performing mismatch searching, especially with feature libraries with thousands of features and/or when large sequencing datasets are used, 2FAST2Q might take 1-2 hours to run. In this case it is advisable to first run 2FAST2Q without mismatch search (see parameters), and check the output. Non mismatch search uses hashing, and thus it is fast. 
 
 ## Output
 
