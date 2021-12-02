@@ -120,6 +120,8 @@ There are also several optional parameters. For their description and input type
 	 `--ms MS     mismatches allowed when searching reads with Up/Down stream sequences `
 
 	 `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)] `
+	 
+	 `--cp CP     Number of cpus to be used (default is max(cpu)-2 for >=3 cpus, -1 for >=2 cpus, 1 if 1 cpu `
 
 	 ` --k K       If enabled, keeps all temporary files (default is disabled) `
 
