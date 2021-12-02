@@ -7,7 +7,7 @@ try:
     from concurrent.futures import ThreadPoolExecutor
     import multiprocessing as mp
     from platform import system
-    from time import time
+    import time
     import matplotlib.pyplot as plt
     import numpy as np
     from numba import njit
@@ -26,8 +26,8 @@ except ImportError as e:
 @dataclass
 class Features:
     
-    """ Each sgRNA will have its own class instance, where the read counts will be kept.
-    Each sgRNA class is stored in a dictionary with the name as its key. 
+    """ Each feature will have its own class instance, where the read counts will be kept.
+    Each feature class is stored in a dictionary with the name as its key. 
     See the "guides loader" function """   
     
     name: str
@@ -95,9 +95,9 @@ def unpack(ordered,directory):
 
 def features_loader(guides):
     
-    """ parses the sgRNA names and sequences from the indicated sgRNA .csv file.
-    Creates a dictionary using the sgRNA sequence as key, with an instace of the 
-    Features class as respective value. If duplicated sgRNA sequences exist, 
+    """ parses the features names and sequences from the indicated features .csv file.
+    Creates a dictionary using the feature sequence as key, with an instace of the 
+    Features class as respective value. If duplicated features sequences exist, 
     this will be caught in here"""
     
     print("\nLoading Features")
@@ -144,7 +144,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
 
     def binary_converter(features):
 
-        """ Parses the input sgRNAs into numba dictionaries with int8 layout. 
+        """ Parses the input features into numba dictionaries with int8 layout. 
         Converts all DNA sequences to their respective binary array forms. 
         This gives some computing speed advantages with mismatches."""
         
@@ -302,7 +302,7 @@ def border_finder(seq,read,mismatch):
     s=seq.size
     r=read.size
     fall_over_index = r-s-1
-    for i,bp in enumerate(read):
+    for i,bp in enumerate(read): #range doesnt exist in njit
         comparison = read[i:s+i]
         finder = binary_subtract(seq,comparison,mismatch)
         if i > fall_over_index:
@@ -358,7 +358,7 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
 
 def imperfect_alignment(read,binary_features, mismatch, counter, features):
     
-    """ for the inputed read sequence, this compares if there is a sgRNA 
+    """ for the inputed read sequence, this compares if there is a feature 
     with a sequence that is similar to it, to the indicated mismatch degree"""
 
     feature = features_all_vs_all(binary_features, read, mismatch)
@@ -377,7 +377,7 @@ def aligner(raw,out,i,o,features,param,cpu,failed_reads,passed_reads):
     the total number of samples is correct, getting an estimate of the total
     number of reads per sample, and checking total running time"""
     
-    tempo = time()
+    tempo = time.perf_counter()
 
     reads, perfect_counter, imperfect_counter, features,failed_reads,passed_reads = \
         reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads)
@@ -385,7 +385,7 @@ def aligner(raw,out,i,o,features,param,cpu,failed_reads,passed_reads):
     master_list = []
     [master_list.append([features[guide].name] + [features[guide].counts]) for guide in features]
 
-    tempo = time() - tempo
+    tempo = time.perf_counter() - tempo
     if tempo > 3600:
         timing = str(round(tempo / 3600, 2)) + " hours"   
     elif tempo > 60:
@@ -435,7 +435,7 @@ def inputs_handler(separator):
     # avoids getting -1 and actually filtering by highest phred score by mistake
     if int(parameters["phred"]) == 0:
         parameters["phred"] = 1
-
+    
     if parameters['delete'] == "y":
         parameters['delete'] = True
     else:
@@ -458,6 +458,7 @@ def inputs_handler(separator):
             raise Exception
             
     parameters["cmd"] = False
+    parameters['cpu'] = False
 
     return parameters
 
@@ -551,16 +552,13 @@ def inputs_initializer(separator):
                         "Running Mode":["Counter", "Extractor + Counter",4,0]}
 
     # Generating the dropdown browsing buttons
-    for arg in dropdown_options:
-        dropdown(arg,dropdown_options[arg])
+    [dropdown(arg,dropdown_options[arg]) for arg in dropdown_options]
     
     # Generating the file/folder browsing buttons
-    for arg in browsing_inputs:
-        browsing(arg,browsing_inputs[arg])
+    [browsing(arg,browsing_inputs[arg]) for arg in browsing_inputs]
     
     # Generating the input parameter buttons
-    for arg in default_inputs:
-        write_menu(arg,default_inputs[arg])
+    [write_menu(arg,default_inputs[arg]) for arg in default_inputs]
     
     placeholder(0,1,"",0,0)
     placeholder(15,0,"",0,0)
@@ -654,6 +652,7 @@ def input_parser():
     parser.add_argument("--ds",help="Downstream search sequence")
     parser.add_argument("--ms",help="mismatches allowed when searching reads with Up/Down stream sequences")
     parser.add_argument("--mo",help="Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)]")
+    parser.add_argument("--cp",help="Number of cpus to be used (default is max(cpu)-2 for >=3 cpus, -1 for >=2 cpus, 1 if 1 cpu")
     parser.add_argument("--k",nargs='?',const=False,help="If enabled, keeps all temporary files (default is disabled)")
     args = parser.parse_args()
     
@@ -712,6 +711,10 @@ def input_parser():
     parameters['delete']=True
     if args.k is not None:
         parameters['delete']=False
+        
+    parameters['cpu']=False
+    if args.cp is not None:
+        parameters['cpu']=int(args.cp)
         
     return parameters
 
@@ -834,16 +837,22 @@ def ram_lock():
         return False
     return True
 
-def cpu_counter():
+def cpu_counter(cpu):
     
     """ counts the available cpu cores, required for spliting the processing
     of the files """
     
-    cpu = mp.cpu_count()
-    if cpu >= 3:
-        cpu -= 2
-    if cpu == 2:
-        cpu -= 1
+    available_cpu = mp.cpu_count()
+    if type(cpu) is not int:
+        cpu = available_cpu
+        if cpu >= 3:
+            cpu -= 2
+        if cpu == 2:
+            cpu -= 1
+    else:
+        if cpu > available_cpu:
+            cpu = available_cpu
+
     pool = mp.Pool(processes = cpu, 
                     initargs=(mp.RLock(),), 
                     initializer=tqdm.set_lock)
@@ -869,12 +878,15 @@ def multiprocess_merger(start,failed_reads,passed_reads,files,write_path_save,fe
                                                       failed_reads,\
                                                       passed_reads)))
     
-    compiled = [x.get() for x in result]
-    failed_reads_compiled,passed_reads_compiled = zip(*compiled)
+    if param["miss"] != 0:
+        compiled = [x.get() for x in result]
+        failed_reads_compiled,passed_reads_compiled = zip(*compiled)
+        return hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,failed_reads,passed_reads)
     
-    return hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,failed_reads,passed_reads)
+    else:
+        return failed_reads,passed_reads
 
-def hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,failed_reads=set(),passed_reads={}):
+def hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,failed_reads,passed_reads):
     
     """ parsed the results from all the processes, merging the individual failed and
     passed reads into one master file, that will be subsquently used for the new
@@ -901,7 +913,7 @@ def hash_preprocesser(files,features,param,pool,cpu):
     compiled = [x.get() for x in result]
     throw1,throw2,throw3,throw4,failed_reads_compiled,passed_reads_compiled = zip(*compiled)
     
-    return hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled)
+    return hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,set(),{})
 
 def aligner_mp_dispenser(files,write_path_save,features,param):
     
@@ -909,9 +921,9 @@ def aligner_mp_dispenser(files,write_path_save,features,param):
     multiple instances of the "aligner" function (one per sample) """
     
     start,failed_reads,passed_reads = 0,set(),{}
-    pool,cpu = cpu_counter()
+    pool,cpu = cpu_counter(param["cpu"])
     
-    if len(files)>cpu:
+    if (len(files)>cpu) & (param["miss"] != 0):
         failed_reads,passed_reads=hash_preprocesser(files,features,param,pool,cpu)
     
     print(f"\nProcessing {len(files)} files. Please hold.")
