@@ -48,22 +48,24 @@ Double click the program icon.
 
 
 
-If using the linux version:
+#### If using the linux or the MacOS version:
 
-change directory to location of the file
+Open a new terminal and change directory to the folder witht the downloaded file
+
+(example) `cd /user/etc/Downloads/`
+
+make the file executable by typing and entering:
+
+`chmod +x ./2FAST2Q` (change to match the correct file name) 
 
 type and enter:
 
-`chmod +x ./2FAST2Q_Linux`
-
-type and enter:
-
-`./2FAST2Q_Linux`
+`./2FAST2Q` (change to match the correct file name) 
 
 
 
 ### 4.
-The program will initialize and ask, in turn, for directories and file paths. See the "inputs" section below for an explanation of these inputs.
+The program will initialize after a few seconds and ask, in turn, for directories and file paths. See the "inputs" section below for an explanation of these inputs.
 
 
 
