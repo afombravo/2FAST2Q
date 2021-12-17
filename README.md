@@ -47,7 +47,9 @@ Double click the program icon.
 
 
 
-#### If using the linux or the MacOS version:
+
+### If using the linux or the MacOS version:
+
 
 
 Open a new terminal and change directory to the folder with the downloaded file
