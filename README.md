@@ -16,6 +16,12 @@ In here I share the original Python3 source code, fast2q.py;
 The instructions on how to use 2FAST2Q;
 And some test data to run the program.
 
+2FAST2Q is published as part of a CRISPRi-seq protocol
+https://www.nature.com/articles/s41596-021-00639-6
+
+A more in depth description of the program is also available as a preprint.
+https://www.biorxiv.org/content/10.1101/2021.12.17.473121v1
+
 
 ## How to use it
 
