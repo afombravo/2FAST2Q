@@ -252,3 +252,8 @@ In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appea
 
 
 The expected example output file is given: "compiled.csv"
+
+
+# License
+
+This works is distributed under a GNU General Public License v3.0
