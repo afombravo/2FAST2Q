@@ -18,6 +18,8 @@ try:
     from dataclasses import dataclass
     from pathlib import Path
     import struct
+    from io import SEEK_END
+    import zlib
     import tkinter #(imported inside inputs_initializer()). imported here just to assertain
 except ImportError as e:
     input(f"{e}\nConsider installing it using 'pip install {e.name}', and try again.\nPress enter to exit")
@@ -192,11 +194,26 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
     def progress_bar(i,o,raw,cpu):
         
         def getuncompressedsize(raw):
-            # only works in files < 4gb compressed
-            with open(raw, 'rb') as f:
-                f.seek(-4, 2)
-                return struct.unpack('I', f.read(4))[0]
-        
+            def estimate_uncompressed_gz_size(filename):
+                with open(filename, "rb") as gz_in:
+                    sample = gz_in.read(1000000)
+                    gz_in.seek(-4, SEEK_END)
+                    file_size = os.fstat(gz_in.fileno()).st_size
+
+                dobj = zlib.decompressobj(31)
+                d_sample = dobj.decompress(sample)
+            
+                compressed_len = len(sample) - len(dobj.unconsumed_tail)
+                decompressed_len = len(d_sample)
+            
+                return int(file_size * decompressed_len / compressed_len)
+            
+            size=0
+            if ext == ".gz":
+                return estimate_uncompressed_gz_size(raw)
+            else:
+                return os.path.getsize(raw)
+
         if o > cpu:
             current = mp.current_process()
             pos = current._identity[0]#-1
@@ -206,7 +223,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         tqdm_text = f"Processing file {i+1} out of {o}"
         return tqdm(total=total_file_size,desc=tqdm_text, position=pos,colour="green",leave=False,ascii=True,unit="characters")
     
-    def fastq_parser(current,end,start,features,failed_reads,passed_reads):
+    def fastq_parser(current,end,start,features,failed_reads,passed_reads,fixed_start):
         quality_set = param['quality_set']
         reading = []
     
@@ -215,7 +232,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         ram_clearance=ram_lock()
 
         for line in current:
-            if not preprocess:
+            if (not preprocess) & (param['Progress bar']):
                 pbar.update(len(line))
             reading.append(line[:-1])
             
@@ -258,7 +275,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                     if reads == 200000:
                         return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads
         
-        if not preprocess:
+        if (not preprocess) & (param['Progress bar']):
             pbar.close()
 
         return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads
@@ -266,7 +283,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
     if param['miss'] != 0:
         binary_features = binary_converter(features)
         
-    fixed_start = True
+    fixed_start,end,start = True,0,0
     # determining the read trimming starting/ending place
     if (param['upstream'] is None) & (param['downstream'] is None):
         end = param['start'] + param['length']
@@ -282,15 +299,15 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
     
     _, ext = os.path.splitext(raw)
 
-    if not preprocess:
+    if (not preprocess) & (param['Progress bar']):
         pbar = progress_bar(i,o,raw,cpu)
     
     if ext == ".gz":
         with gzip.open(raw, "rb") as current:
-            return fastq_parser(current,end,start,features,failed_reads,passed_reads)
+            return fastq_parser(current,end,start,features,failed_reads,passed_reads,fixed_start)
     else:
         with open(raw, "rb")  as current:
-            return fastq_parser(current,end,start,features,failed_reads,passed_reads)
+            return fastq_parser(current,end,start,features,failed_reads,passed_reads,fixed_start)
 
 def seq2bin(sequence):
     
@@ -426,6 +443,9 @@ def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
 
     stats_condition = f"#script ran in {timing} for file {name}. {perfect_counter+imperfect_counter} reads out of {reads} were considered valid. {perfect_counter} were perfectly aligned. {imperfect_counter} were aligned with mismatch"
     
+    if not param['Progress bar']:
+        print(f"Sample {name} was processed in {timing}")
+        
     try:
         master_list.sort(key = lambda master_list: int(master_list[0])) #numerical sorting
     except ValueError:
@@ -472,6 +492,11 @@ def inputs_handler():
     else:
         parameters['delete'] = False
         
+    if parameters['Progress bar'] == "Yes":
+        parameters['Progress bar'] = True
+    else:
+        parameters['Progress bar'] = False
+        
     if parameters['upstream'] == "None":
         parameters['upstream'] = None
         
@@ -484,7 +509,7 @@ def inputs_handler():
         parameters['Running Mode']="C"
         
     if parameters['Running Mode']=='C':
-        if len(parameters) != 12:
+        if len(parameters) != 13:
             input("Please confirm that all the input boxes are filled. Some parameters are missing.\nPress enter to exit")
             raise Exception
             
@@ -564,7 +589,7 @@ def inputs_initializer():
         
     root = Tk()
     root.title("2FAST2Q Input Parameters Window")
-    root.minsize(425, 600)
+    root.minsize(425, 620)
     parameters,temporary = {},{}  
 
     browsing_inputs = {"seq_files":["Path to the .fastq(.gz) files folder","Browse",1,0,directory],
@@ -580,7 +605,8 @@ def inputs_initializer():
                       "downstream":["downstream search sequence",13,0,"None"],
                       "miss_search":["mismatches in the search sequence",14,0,0],}
     
-    dropdown_options = {"Running Mode":["Counter", "Extractor + Counter",4,0]}
+    dropdown_options = {"Running Mode":["Counter", "Extractor + Counter",4,0],
+                        "Progress bar":["Yes", "No",5,0]}
 
     # Generating the dropdown browsing buttons
     [dropdown(arg,dropdown_options[arg]) for arg in dropdown_options]
@@ -671,6 +697,7 @@ def input_parser():
     parser.add_argument("--s",help="The full path to the directory with the sequencing files OR file")
     parser.add_argument("--g",help="The full path to the .csv file with the sgRNAs.")
     parser.add_argument("--o",help="The full path to the output directory")
+    parser.add_argument("--v",nargs='?',const=True,help="Adds progress bars (default is disabled")
     parser.add_argument("--m",help="number of allowed mismatches (default=1)")
     parser.add_argument("--ph",help="Minimal Phred-score (default=30)")
     parser.add_argument("--st",help="Feauture start position in the read (default is 0==1st bp)")
@@ -699,6 +726,10 @@ def input_parser():
     parameters['length']=20
     if args.l is not None:
         parameters['length']=int(args.l)
+        
+    parameters['Progress bar']=False
+    if args.v is not None:
+        parameters['Progress bar']=True
                  
     parameters['start']=0
     if args.st is not None:
