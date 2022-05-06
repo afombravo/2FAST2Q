@@ -16,6 +16,8 @@ try:
     import datetime
     from tqdm import tqdm
     from dataclasses import dataclass
+    from pathlib import Path
+    import struct
     import tkinter #(imported inside inputs_initializer()). imported here just to assertain
 except ImportError as e:
     input(f"{e}\nConsider installing it using 'pip install {e.name}', and try again.\nPress enter to exit")
@@ -33,35 +35,35 @@ class Features:
     name: str
     counts: int
 
-def path_finder(folder_path,extension,separator):
+def path_finder(folder_path,extension):
     
     """ Finds the correct file paths from the indicated directories,
     and parses the file names into a list for later use"""
     
     pathing = []
-    for filename in glob.glob(os.path.join(folder_path, extension)):
-        stop = filename[::-1].find(separator) + 1 
-        pathing.append([filename[-stop:]] + [filename] + [os.path.getsize(filename)]) 
+    for exten in extension:
+        for filename in glob.glob(os.path.join(folder_path, exten)):
+            pathing.append([filename] + [os.path.getsize(filename)]) 
     return pathing
 
-def path_parser(folder_path, extension, separator): 
+def path_parser(folder_path, extension): 
     
     """ parses the file names and paths into an ordered list for later use"""
 
-    pathing=path_finder(folder_path,extension,separator)
+    pathing=path_finder(folder_path,extension)
     if extension != '*reads.csv':
         
         """sorting by size makes multiprocessing more efficient 
             as the bigger files will be ran first, thus maximizing processor queing """
         
-        ordered = [path[:2] for path in sorted(pathing, key=lambda e: e[-1])]#[::-1]
+        ordered = [path[0] for path in sorted(pathing, key=lambda e: e[-1])]#[::-1]
 
         if ordered == []:
             input(f"Check the path to the {extension[1:]} files folder. No files of this type found.\nPress enter to exit")
             raise Exception
 
     else:
-        ordered = [path[:2] for path in sorted(pathing, reverse = False)]
+        ordered = [path[0] for path in sorted(pathing, reverse = False)]
 
     return ordered
 
@@ -111,7 +113,9 @@ def features_loader(guides):
     try:
         with open(guides) as current: 
             for line in current:
-                line = line[:-1].split(",")
+                if "\n" in line:
+                    line = line[:-1]
+                line = line.split(",")
                 sequence = line[1].upper()
                 sequence = sequence.replace(" ", "")
                 
@@ -132,12 +136,12 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
     """ Reads the fastq file on the fly to avoid RAM issues. 
     Each read is assumed to be composed of 4 lines, with the sequense being 
     on line 2, and the basepair quality on line 4. 
-    Every read is trimmed based on the indicated sgRNA positioning. 
+    Every read is trimmed based on the indicated feature positioning. 
     The quality of the obtained trimmed read is crossed against the indicated
     Phred score for quality control.
-    If the read has a perfect match with a sgRNA, the respective sgRNA gets a 
-    read increase of 1 (done by calling .counts from the respective sgRNA class 
-    from the sgRNA class dictionary).
+    If the read has a perfect match with a feature, the respective feature gets a 
+    read increase of 1 (done by calling .counts from the respective feature class 
+    from the feature class dictionary).
     If the read doesnt have a perfect match, it is sent for mismatch comparison
     via the "imperfect_alignment" function.
     """
@@ -186,41 +190,30 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         return start,end
     
     def progress_bar(i,o,raw,cpu):
+        
+        def getuncompressedsize(raw):
+            # only works in files < 4gb compressed
+            with open(raw, 'rb') as f:
+                f.seek(-4, 2)
+                return struct.unpack('I', f.read(4))[0]
+        
         if o > cpu:
             current = mp.current_process()
             pos = current._identity[0]#-1
         else:
             pos = i+1
-        total_file_size = os.path.getsize(raw)
+        total_file_size = getuncompressedsize(raw)
         tqdm_text = f"Processing file {i+1} out of {o}"
         return tqdm(total=total_file_size,desc=tqdm_text, position=pos,colour="green",leave=False,ascii=True,unit="characters")
-            
-    if param['miss'] != 0:
-        binary_features = binary_converter(features)
-
-    quality_set = param['quality_set']
-    fixed_start = True
-    reading = []
-    if not preprocess:
-        pbar = progress_bar(i,o,raw,cpu)
-    mismatch = [n+1 for n in range(param['miss'])]
-    perfect_counter, imperfect_counter, reads = 0,0,0
-    ram_clearance=ram_lock()
-
-    # determining the read trimming starting/ending place
-    if (param['upstream'] is None) & (param['downstream'] is None):
-        end = param['start'] + param['length']
-        start = param['start']
-    else:
-        fixed_start = False
-        if param['upstream'] is not None:
-            param['upstream']=seq2bin(param['upstream'].upper())
-        if param['downstream'] is not None:
-            param['downstream']=seq2bin(param['downstream'].upper())
-        upstream,downstream,mismatch_search,lenght = \
-        param['upstream'],param['downstream'],param['miss_search'],param['length']
     
-    with open(raw) as current:
+    def fastq_parser(current,end,start,features,failed_reads,passed_reads):
+        quality_set = param['quality_set']
+        reading = []
+    
+        mismatch = [n+1 for n in range(param['miss'])]
+        perfect_counter, imperfect_counter, reads = 0,0,0
+        ram_clearance=ram_lock()
+
         for line in current:
             if not preprocess:
                 pbar.update(len(line))
@@ -233,8 +226,8 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                 
                 if (fixed_start) or ((start is not None) & (end is not None)):
                     seq = reading[1][start:end].upper()
-                    quality = reading[3][start:end]
-
+                    quality = str(reading[3][start:end],"utf-8") #convert from bin to str
+    
                     if (len(quality_set.intersection(quality)) == 0):
                         
                         if param['Running Mode']=='C':
@@ -264,19 +257,51 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                 if preprocess:
                     if reads == 200000:
                         return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads
-    
-    if not preprocess:
-        pbar.close()
+        
+        if not preprocess:
+            pbar.close()
 
-    return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads
+        return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads
+    
+    if param['miss'] != 0:
+        binary_features = binary_converter(features)
+        
+    fixed_start = True
+    # determining the read trimming starting/ending place
+    if (param['upstream'] is None) & (param['downstream'] is None):
+        end = param['start'] + param['length']
+        start = param['start']
+    else:
+        fixed_start = False
+        if param['upstream'] is not None:
+            param['upstream']=seq2bin(param['upstream'].upper())
+        if param['downstream'] is not None:
+            param['downstream']=seq2bin(param['downstream'].upper())
+        upstream,downstream,mismatch_search,lenght = \
+        param['upstream'],param['downstream'],param['miss_search'],param['length']
+    
+    _, ext = os.path.splitext(raw)
+
+    if not preprocess:
+        pbar = progress_bar(i,o,raw,cpu)
+    
+    if ext == ".gz":
+        with gzip.open(raw, "rb") as current:
+            return fastq_parser(current,end,start,features,failed_reads,passed_reads)
+    else:
+        with open(raw, "rb")  as current:
+            return fastq_parser(current,end,start,features,failed_reads,passed_reads)
 
 def seq2bin(sequence):
     
     """ Converts a string to binary, and then to 
     a numpy array in int8 format"""
     
-    byte_list = bytearray(sequence,'utf8')
-    return np.array((byte_list), dtype=np.int8)
+    if type(sequence) != bytes:
+        sequence = bytearray(sequence,'utf8')
+    else:
+        sequence = bytearray(sequence)
+    return np.array((sequence), dtype=np.int8)
 
 @njit
 def binary_subtract(array1,array2,mismatch):
@@ -328,7 +353,7 @@ def features_all_vs_all(binary_features,read,mismatch):
         return found_guide
     return #not needed, but here for peace of mind
 
-def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_counter,features,passed_reads,ram_clearance,break_flag=False):
+def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_counter,features,passed_reads,ram_clearance):
     
     """Converts a read into numpy int 8 form. Runs the imperfect alignment 
     function for all number of inputed mismatches."""
@@ -369,7 +394,7 @@ def imperfect_alignment(read,binary_features, mismatch, counter, features):
 
     return features,counter,feature
 
-def aligner(raw,out,i,o,features,param,cpu,failed_reads,passed_reads):
+def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
 
     """ Runs the main read to sgRNA associating function "reads_counter".
     Creates some visual prompts to alert the user that the samples are being
@@ -392,8 +417,13 @@ def aligner(raw,out,i,o,features,param,cpu,failed_reads,passed_reads):
         timing = str(round(tempo / 60, 2)) + " minutes"   
     else:
         timing = str(round(tempo, 2)) + " seconds"
+    
+    name = Path(raw).stem
+    path,_ = os.path.splitext(raw)
+    if ".fastq" in name:
+         name = Path(name).stem
+         path,_ = os.path.splitext(path)
 
-    name = raw[-raw[::-1].find(param['separator']):-len(".fastq")]
     stats_condition = f"#script ran in {timing} for file {name}. {perfect_counter+imperfect_counter} reads out of {reads} were considered valid. {perfect_counter} were perfectly aligned. {imperfect_counter} were aligned with mismatch"
     
     try:
@@ -403,7 +433,8 @@ def aligner(raw,out,i,o,features,param,cpu,failed_reads,passed_reads):
     
     master_list.insert(0,["#Feature"] + ["Reads"])
     master_list.insert(0,[stats_condition])
-    csvfile = out[:-out[::-1].find(".")-1] + "_reads.csv"
+    
+    csvfile = os.path.join(param["directory"], name+"_reads.csv")
     csv_writer(csvfile, master_list)
     
     return failed_reads,passed_reads
@@ -416,11 +447,11 @@ def csv_writer(path, outfile):
         writer = csv.writer(output)
         writer.writerows(outfile)
 
-def inputs_handler(separator):
+def inputs_handler():
     
     """ assertains the correct parsing of the input parameters"""
     
-    parameters=inputs_initializer(separator)
+    parameters=inputs_initializer()
 
     try:
         parameters["start"]=int(parameters["start"])
@@ -462,11 +493,12 @@ def inputs_handler(separator):
 
     return parameters
 
-def inputs_initializer(separator):
+def inputs_initializer():
     
     """ Handles the graphical interface, and all the parameter inputs"""
     
     from tkinter import Entry,LabelFrame,Button,Label,Tk,filedialog,StringVar,OptionMenu
+    separator = "\\" if system() == 'Windows' else "/"
     
     def restart():
         root.quit()
@@ -532,7 +564,7 @@ def inputs_initializer(separator):
         
     root = Tk()
     root.title("2FAST2Q Input Parameters Window")
-    root.minsize(425, 620)
+    root.minsize(425, 600)
     parameters,temporary = {},{}  
 
     browsing_inputs = {"seq_files":["Path to the .fastq(.gz) files folder","Browse",1,0,directory],
@@ -548,8 +580,7 @@ def inputs_initializer(separator):
                       "downstream":["downstream search sequence",13,0,"None"],
                       "miss_search":["mismatches in the search sequence",14,0,0],}
     
-    dropdown_options = {"extension":[".fastq.gz", ".fastq",5,0],
-                        "Running Mode":["Counter", "Extractor + Counter",4,0]}
+    dropdown_options = {"Running Mode":["Counter", "Extractor + Counter",4,0]}
 
     # Generating the dropdown browsing buttons
     [dropdown(arg,dropdown_options[arg]) for arg in dropdown_options]
@@ -576,16 +607,13 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "2.3.4"
+    version = "2.4"
     
     print("\nVersion: {}".format(version))
-    
-    separator = "\\" if system() == 'Windows' else "/"
-    param = inputs_handler(separator) if cmd is None else cmd
-    
-    param["extension"] = f'*{param["extension"]}'
+
+    param = inputs_handler() if cmd is None else cmd
+
     param["version"] = version
-    param["separator"] = separator
     
     quality_list = '!"#$%&' + "'()*+,-/0123456789:;<=>?@ABCDEFGHI" #Phred score
 
@@ -628,22 +656,21 @@ def input_parser():
         if param[0] is None:
             parameters[param[1]]=os.getcwd()
             if param[1] == 'feature':
-                file = path_finder(os.getcwd(), "*.csv", "/")
+                file = path_finder(os.getcwd(), ["*.csv"])
                 if len(file) > 1:
                     input("There is more than one .csv in the current directory. If not directly indicating a path for sgRNA.csv, please only have 1 .csv file.") 
                     raise Exception
                 if len(file) == 1:
-                    parameters[param[1]]=file[0][1]
+                    parameters[param[1]]=file[0][0]
         else:
             parameters[param[1]]=param[0]
         return parameters
     
     parser = argparse.ArgumentParser()
     parser.add_argument("-c",nargs='?',const=True,help="cmd line mode")
-    parser.add_argument("--s",help="The full path to the directory with the sequencing files")
+    parser.add_argument("--s",help="The full path to the directory with the sequencing files OR file")
     parser.add_argument("--g",help="The full path to the .csv file with the sgRNAs.")
     parser.add_argument("--o",help="The full path to the output directory")
-    parser.add_argument("--se",help="Sequencing file extenction (ie:'.fastq.gz')")
     parser.add_argument("--m",help="number of allowed mismatches (default=1)")
     parser.add_argument("--ph",help="Minimal Phred-score (default=30)")
     parser.add_argument("--st",help="Feauture start position in the read (default is 0==1st bp)")
@@ -668,11 +695,7 @@ def input_parser():
     
     for param in paths_param:
         parameters = current_dir_path_handling(param)
-        
-    parameters['extension']='.fastq.gz'
-    if args.se is not None:
-        parameters['extension']=args.se     
-        
+
     parameters['length']=20
     if args.l is not None:
         parameters['length']=int(args.l)
@@ -719,13 +742,12 @@ def input_parser():
     return parameters
 
 
-def compiling(param,paths):
+def compiling(param):
 
     """ Combines all the individual processed .csv files into one final file.
     Gathers the individual sample statistic and parses it into "run_stats" """
     
-    separator = param["separator"]
-    ordered_csv = path_parser(param["directory"], '*reads.csv',separator)
+    ordered_csv = path_parser(param["directory"], ['*reads.csv'])
 
     headers = [f"#2FAST2Q version: {param['version']}"] + \
             [f"#Mismatch: {param['miss']}"] + \
@@ -737,11 +759,13 @@ def compiling(param,paths):
             [f"#Downstream search sequence: {param['downstream']}"] + \
             [f"#Mismatches in search sequence: {param['miss_search']}"]
     headers = headers[::-1]
-            
+
     compiled = {} #dictionary with all the reads per feature
     head = ["#Feature"] #name of the samples
-    for i,(name, file) in enumerate(ordered_csv):
-        head.append(name[name.find(separator)+len(separator):name.find("_reads.csv")])
+    for i, file in enumerate(ordered_csv):
+        path,_ = os.path.splitext(file)
+        path = path[:-len("_reads")]
+        head.append(path)
         with open(file) as current:
             for line in current:
                 line = line[:-1].split(",")
@@ -759,31 +783,24 @@ def compiling(param,paths):
         for entry in compiled:
             if len(compiled[entry])<i+1:
                 compiled[entry] = compiled[entry] + [0]*(i+1-len(compiled[entry]))
-        
-    path = ordered_csv[0][1]
-    out_file = path[:-path[::-1].find(separator)-1]
-    
-    run_stats(headers,out_file,separator)
+
+    run_stats(headers,param)
                         
     final = []
     [final.append([feature] + compiled[feature]) for feature in compiled] 
     final.insert(0, head)
-        
-    csvfile = out_file + separator + "compiled.csv"
+    
+    csvfile = os.path.join(param["directory"],"compiled.csv")
     csv_writer(csvfile, final)
 
     if param["delete"]:
         for file in ordered_csv:
-            os.remove(file[1])
-            
-    if (param["delete"]) & (param["extension"]=="*.fastq.gz"):
-        for file in paths:
             os.remove(file)
-    
+
     if not param["cmd"]:
         input("\nAnalysis successfully completed\nAll the reads have been compiled into the compiled.csv file.\nPress enter to exit")
 
-def run_stats(headers, out_file,separator):
+def run_stats(headers, param):
     
     """ Manipulates the statistics from all the samples into one file that can
     be used for downstream user quality control aplications. Creates a simple
@@ -804,8 +821,8 @@ def run_stats(headers, out_file,separator):
                                [parsed[20]])
         else:
             global_stat.insert(0,[run])
-    
-    csvfile = out_file + separator + "compiled_stats.csv"
+            
+    csvfile = os.path.join(param["directory"],"compiled_stats.csv")
     csv_writer(csvfile, global_stat)
     
     ### plotting
@@ -826,7 +843,8 @@ def run_stats(headers, out_file,separator):
     ax.legend(["Reads in sample", "Reads that passed quality control parameters"], \
               loc='upper center', bbox_to_anchor=(0.5, 1.15),ncol=1,prop={'size': 8})
     plt.tight_layout()
-    plt.savefig(f"{out_file}{separator}reads_plot.png", dpi=300)
+    file = os.path.join(param["directory"],"reads_plot.png")
+    plt.savefig(file, dpi=300, bbox_inches='tight')
 
 def ram_lock():
 
@@ -859,17 +877,16 @@ def cpu_counter(cpu):
     
     return pool,cpu
 
-def multiprocess_merger(start,failed_reads,passed_reads,files,write_path_save,features,param,pool,cpu,preprocess=False):
+def multiprocess_merger(start,failed_reads,passed_reads,files,features,param,pool,cpu,preprocess=False):
     
     """ runs all samples in blocks equal to the amount of cpus in the PC. 
     Before starting a new block, the hash tables for the failed and passed reads 
     are updated. This confers speed advantages for the next block. """ 
     
     result = []
-    for i, (name, out) in enumerate(zip(files[start:start+cpu], write_path_save[start:start+cpu])):
+    for i, name in enumerate(files[start:start+cpu]):
         
         result.append(pool.apply_async(aligner, args=(name,\
-                                                      out,\
                                                       i+start,\
                                                       len(files),\
                                                       features,\
@@ -915,7 +932,7 @@ def hash_preprocesser(files,features,param,pool,cpu):
     
     return hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,set(),{})
 
-def aligner_mp_dispenser(files,write_path_save,features,param):
+def aligner_mp_dispenser(files,features,param):
     
     """ starts and handles the parallel processing of all the samples by calling 
     multiple instances of the "aligner" function (one per sample) """
@@ -930,30 +947,10 @@ def aligner_mp_dispenser(files,write_path_save,features,param):
     for start in range(0,len(files),cpu):
         failed_reads,passed_reads = \
         multiprocess_merger(start,failed_reads,passed_reads,files,\
-                            write_path_save,features,param,pool,cpu)
+                            features,param,pool,cpu)
         
     pool.close()
     pool.join()
-
-def input_file_type(ordered, extension, directory):
-
-    """ funnels the sequencing files to either unzipping, or direct processing,
-    depending on the file extension they have"""
-    
-    if '.gz' in extension:
-        
-        print("\nUnpacking .gz files")
-        files = unpack(ordered,directory)
-        write_path_save = files
-        
-    else:
-        
-        files,write_path_save = [], []
-        for name, filename in ordered:
-            files.append(filename)
-            write_path_save.append(directory + name)
-    
-    return files, write_path_save
 
 def main():
     
@@ -963,11 +960,10 @@ def main():
     param = initializer(input_parser())
     
     ### parses the names/paths, and orders the sequencing files
-    ordered = path_parser(param["seq_files"], param["extension"], param["separator"])
-    
-    ### parses the sequencing files depending on whether they require unzipping or not
-    files, write_path_save = input_file_type(ordered, param["extension"], param["directory"])
-    
+    files = [param["seq_files"]]
+    if os.path.splitext(param["seq_files"])[1] == '':
+        files = path_parser(param["seq_files"], ["*.gz","*.fastq"])
+
     ### loads the features from the input .csv file. 
     ### Creates a dictionary "feature" of class instances for each sgRNA
     features = {}
@@ -976,10 +972,10 @@ def main():
     
     ### Processes all the samples by associating sgRNAs to the reads on the fastq files.
     ### Creates one process per sample, allowing multiple samples to be processed in parallel. 
-    aligner_mp_dispenser(files,write_path_save,features,param)
+    aligner_mp_dispenser(files,features,param)
     
     ### Compiles all the processed samples from multi into one file, and creates the run statistics
-    compiling(param,write_path_save)
+    compiling(param)
     
 if __name__ == "__main__":
     mp.freeze_support() # required to run multiprocess as .exe on windows
