@@ -113,7 +113,7 @@ There are also several optional parameters. For their description and input type
 
 	 `--o O       The full path to the output directory`
 	 
-	 `--v V       Adds progress bars (default is disabled)`
+	 `--v V       Adds progress bars (default is enabled)`
 
 	 `--m M       number of allowed mismatches (default=1)`
 
