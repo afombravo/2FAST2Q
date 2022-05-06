@@ -107,13 +107,11 @@ There are also several optional parameters. For their description and input type
 
 	 `-c [C]      cmd line mode`
 
-	 `--s S       The full path to the directory with the sequencing files`
+	 `--s S       The full path to the directory with the sequencing files OR file`
 
 	 `--g G       The full path to the .csv file with the features.`
 
 	 `--o O       The full path to the output directory`
-
-	 `--se SE     Sequencing file extension (ie:'.fastq.gz')`
 
 	 `--m M       number of allowed mismatches (default=1)`
 
@@ -140,32 +138,22 @@ There are also several optional parameters. For their description and input type
 
 To run the program, three input paths are required:
 
-### 1  Directory containing the sequencing files
+### 1  Directory containing the sequencing files (assumed to be the current directory when using the cmd line version and no inputs are given)
 
-A path to the folder with either:
+A path to the folder with the sequencing files (it doesn´t matter if in .gz or .fastq.gz format as 2fast2q auto determines the correct one)
 
-1. all the compressed sequencing files (at the moment, the program unzips .gz files only)
-
-   or
-
-2. all the uncompressed .fastq files
-
-
-### 2  The path to the feature .csv file 
-(only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment)
-
+### 2  The path to the feature .csv file (optional) (assumed to be the only .csv file in the current directory when using the cmd line version and no inputs are given)
+Only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment.
 A path to the .csv file with the features. See example "D39V_guides.csv" for layout (remove any headers).
 Leave empty if you want to run the program in extract and count mode (extract all found features without alignements)
 
 
 ### 3 the output directory
 
-A path to the output folder (for safety, a subfolder will always be created on this directory)
+A path to the output folder (for safety, a subfolder will always be created on this directory) (2fast2q automatically creates a subdirectory within the current directory when using the cmd line version and no inputs are given)
 
 
 ### 4 Parameters
-
-The file extension type (default = fastq.gz) (change to the appropriate extension if uncompressed, for example ".fastq") 
 
 The minimal sequencing phred-score for each nucleotide (default = 30)
 
@@ -207,17 +195,15 @@ A completion message should be given at the end. In any case, the program will b
 
 ## Output
 
-Upon completion, several files should be seen in the indicated output folder (when running in default mode only c, d (only in cmd line mode), and e will be kept):
+Upon completion, several files should be seen in the indicated output folder (when running in default mode only b, c (only in cmd line mode), and d will be kept):
 
-	a. The uncompressed “*.fastq” files;
+	a. “*_reads.csv” files corresponding to the read counts per feature per inputted sequencing file;
 
-	b. “*_reads.csv” files corresponding to the read counts per feature per inputted sequencing file;
+	b. A “compiled_stats.csv” containing all the relevant input/output information about the 2FAST2Q analysis;
 
-	c. A “compiled_stats.csv” containing all the relevant input/output information about the 2FAST2Q analysis;
+	c. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample;
 
-	d. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample;
-
-	e. A “compiled.csv” file with the compilation of all the read counts per feature in all the inputted files. Use this latter in the next steps of the data analysis pipeline.
+	d. A “compiled.csv” file with the compilation of all the read counts per feature in all the inputted files. Use this latter in the next steps of the data analysis pipeline.
 
 
 ### Short Explanation
