@@ -484,7 +484,7 @@ def inputs_handler():
         parameters['Running Mode']="C"
         
     if parameters['Running Mode']=='C':
-        if len(parameters) != 13:
+        if len(parameters) != 12:
             input("Please confirm that all the input boxes are filled. Some parameters are missing.\nPress enter to exit")
             raise Exception
             
