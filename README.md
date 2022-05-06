@@ -112,6 +112,8 @@ There are also several optional parameters. For their description and input type
 	 `--g G       The full path to the .csv file with the features.`
 
 	 `--o O       The full path to the output directory`
+	 
+	 `--v V       Adds progress bars (default is disabled)`
 
 	 `--m M       number of allowed mismatches (default=1)`
 
@@ -154,6 +156,10 @@ A path to the output folder (for safety, a subfolder will always be created on t
 
 
 ### 4 Parameters
+
+For extracting all sequences at a certain position in the read select the extractor + Counter (EC) mode. The default is Counter (C) mode only.
+
+Progress Bar. (Default is enabled)
 
 The minimal sequencing phred-score for each nucleotide (default = 30)
 
