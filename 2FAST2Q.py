@@ -697,7 +697,7 @@ def input_parser():
     parser.add_argument("--s",help="The full path to the directory with the sequencing files OR file")
     parser.add_argument("--g",help="The full path to the .csv file with the sgRNAs.")
     parser.add_argument("--o",help="The full path to the output directory")
-    parser.add_argument("--v",nargs='?',const=True,help="Adds progress bars (default is disabled")
+    parser.add_argument("--v",nargs='?',const=False,help="Adds progress bars (default is enabled)")
     parser.add_argument("--m",help="number of allowed mismatches (default=1)")
     parser.add_argument("--ph",help="Minimal Phred-score (default=30)")
     parser.add_argument("--st",help="Feauture start position in the read (default is 0==1st bp)")
@@ -727,9 +727,9 @@ def input_parser():
     if args.l is not None:
         parameters['length']=int(args.l)
         
-    parameters['Progress bar']=False
+    parameters['Progress bar']=True
     if args.v is not None:
-        parameters['Progress bar']=True
+        parameters['Progress bar']=False
                  
     parameters['start']=0
     if args.st is not None:
