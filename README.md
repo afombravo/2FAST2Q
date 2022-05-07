@@ -113,6 +113,8 @@ There are also several optional parameters. For their description and input type
 
 	 `--o O       The full path to the output directory`
 	 
+	 `--fn FN     Specify an output compiled file name (default is called compiled)`
+	 
 	 `--v V       Adds progress bars (default is enabled)`
 
 	 `--m M       number of allowed mismatches (default=1)`
@@ -168,6 +170,7 @@ The start position of the feature within the read (default = 0, meaning the sequ
 The length of the feature in bp (default = 20)
 
 The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned.
+2FAST2Q mismatch feature calculates HAMMING distance ONLY
 
 Keep temporary files mode (default = no).
 When enabled, deletes all temporary files. To keep all files, change to "n" in the graphical mode, or input the parameter `--k` in the cmd lines.
@@ -227,6 +230,7 @@ To avoid a too highly stringent cutoff. Allowing a mismatch allows the alignment
 
 However, there is a safe mechanism in place to prevent 2 or more features with mismatches from being aligned to the same read (the read is discarded in this case, as there is no way of knowing to which feature the read aligns to)
 
+2FAST2Q mismatch feature calculates HAMMING distance ONLY
 
 ## Troubleshooting
 
