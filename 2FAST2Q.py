@@ -599,7 +599,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "2.4.1"
+    version = "2.4.2"
     
     print("\nVersion: {}".format(version))
 
