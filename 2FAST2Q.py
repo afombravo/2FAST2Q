@@ -210,7 +210,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
             if len(reading) == 4: #a read always has 4 lines
                 
                 if not fixed_start:
-                    start,end=unfixed_starting_place_parser(reading[1],upstream,downstream,mismatch_search,lenght)
+                    start,end=unfixed_starting_place_parser(str(reading[1],"utf-8"),upstream,downstream,mismatch_search,lenght)
                 
                 if (fixed_start) or ((start is not None) & (end is not None)):
                     seq = str(reading[1][start:end].upper(),"utf-8")
