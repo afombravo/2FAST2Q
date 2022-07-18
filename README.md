@@ -38,19 +38,10 @@ Basic working principle behind 2FAST2Q:
 ## Using the executable files:
 
 ### 1.	
-Obtain a .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used features, and their respective names (any name can be given, as long as it doesn’t repeat). See the provided "D39V_guides.csv" sample file. (Optional, only required when running in Counting mode)	
-
-| sgRNA0001 | AATAGCATAGAAATCATACA |
-|-----------|----------------------|
-| sgRNA0002 | AGTGTTGATTTACCAACGTT |
-
-
-### 2.	
 Download the 2FAST2Q software version appropriate to the intended operating system.
 
-### 3. 
+### 2. 
 Double click the program icon. 
-
 
 
 
@@ -76,6 +67,13 @@ type and enter:
 The program will initialize after a few seconds, poping open the folowing window, and starting when 'OK' is selected. See the "inputs" section below for an explanation on these inputs.
 
 ![](https://github.com/afombravo/2FAST2Q/blob/main/C_mode.gif)
+
+In this case, a .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used features, and their respective names is required (any name can be given, as long as it doesn’t repeat). See the provided "D39V_guides.csv" sample file. (Optional, only required when running in Counting mode)	
+
+| sgRNA0001 | AATAGCATAGAAATCATACA |
+|-----------|----------------------|
+| sgRNA0002 | AGTGTTGATTTACCAACGTT |
+
 
 The default running mode is in "Counter" mode, however the user might want to run 2FAST2Q in 'Extract and Counter' mode. where features are not aligned to a reference, but *de novo* extracted from the file based on indicated search sequences. Consider the folowing example:
 
