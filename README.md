@@ -69,7 +69,7 @@ The program will initialize after a few seconds, poping open the folowing window
 ![](https://github.com/afombravo/2FAST2Q/blob/main/C_mode.gif)
 
 
-The default running mode is in "Counter" mode, however the user might want to run 2FAST2Q in 'Extract and Counter' mode. where features are not aligned to a reference, but *de novo* extracted from the file based on indicated search sequences. Consider the folowing example:
+The default running mode is in "Counter" mode, however the user might want to run 2FAST2Q in 'Extract and Counter' mode where features are not aligned to a reference, but *de novo* extracted from the file based on indicated search sequences. Consider the folowing example:
 
 ![](https://github.com/afombravo/2FAST2Q/blob/main/EC_mode.gif)
 
@@ -90,7 +90,7 @@ type `python -m fast2q -c`
 
 When running without specified parameters, 2FAST2Q will assume the current running directory has all the required files:
 
-* one .csv corresponding to features file (optional in 'Extract and Count' mode)
+* one .csv corresponding to features file (not required in 'Extract and Count' mode)
 	
 * the .FASTQ files
 
@@ -100,7 +100,7 @@ How it looks when running in the default 'Counter' mode:
 
 How it looks when running in the 'Extract and Counter' mode:
 
-![](https://github.com/afombravo/2FAST2Q/blob/main/EC_mode.gif)
+![](https://github.com/afombravo/2FAST2Q/blob/main/EC_mode_cmd.gif)
 
 
 There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
