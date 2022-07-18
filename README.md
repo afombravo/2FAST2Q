@@ -100,7 +100,7 @@ How it looks when running in the default 'Counter' mode:
 
 How it looks when running in the 'Extract and Counter' mode:
 
-![](https://github.com/afombravo/2FAST2Q/blob/main/EC_mode_cmd.gif)
+![](https://github.com/afombravo/2FAST2Q/blob/main/Ec_mode_cmd.gif)
 
 
 There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
