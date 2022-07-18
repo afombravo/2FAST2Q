@@ -105,7 +105,7 @@ How it looks when running in the 'Extract and Counter' mode:
 
 There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
 
-	`python -m fast2q -h`
+	 `python -m fast2q -h`
 
 	 `-h, --help  show this help message and exit `
 
@@ -133,7 +133,13 @@ There are also several optional parameters. For their description and input type
 
 	 `--ds DS     Downstream search sequence `
 
-	 `--ms MS     mismatches allowed when searching reads with Up/Down stream sequences `
+	 `--msu MSU   mismatches allowed when searching reads in the upstream sequence`
+
+  	 `--msd MSD   mismatches allowed when searching reads in the downstream sequence`
+
+  	 `--qsu QSU   Minimal Phred-score (default=30) in the upstream search sequence`
+
+  	 `--qsd QSD   Minimal Phred-score (default=30) in the downstream search sequence`
 
 	 `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)] `
 	 
