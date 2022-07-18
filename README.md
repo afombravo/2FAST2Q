@@ -32,7 +32,7 @@ There is a graphical interface version for Windows, MacOS, and Linux.
 If for some reason the compiled version fails, please use the souce Python code from PyPI 
 
 Basic working principle behind 2FAST2Q:
-![Screenshot](graphical_workings.png)
+![](https://github.com/afombravo/2FAST2Q/blob/main/graphical_workings.png)
 
 
 ## Using the executable files:
