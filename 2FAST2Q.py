@@ -105,7 +105,7 @@ def features_loader(guides):
 def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preprocess=False):
     
     """ Reads the fastq file on the fly to avoid RAM issues. 
-    Each read is assumed to be composed of 4 lines, with the sequense being 
+    Each read is assumed to be composed of 4 lines, with the sequence being 
     on line 2, and the basepair quality on line 4. 
     Every read is trimmed based on the indicated feature positioning. 
     The quality of the obtained trimmed read is crossed against the indicated
@@ -133,36 +133,56 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
             container[sequence] = seq2bin(sequence)
         return container
     
-    def unfixed_starting_place_parser(read,upstream,downstream,mismatch,lenght):
+    def unfixed_starting_place_parser(read,qual,param):
         
         """ Determines the starting place of a read trimming based on the
-        inputed parameters for upstream/downstream sequence matching"""
+        inputed parameters for upstream/downstream sequence matching. 
+        Also takes into consideration the quality of that search sequence,
+        and mismatches it might have"""
 
         read_bin=seq2bin(read)
         start,end = None,None
 
-        if (upstream is not None) & (downstream is not None):
-            start=border_finder(upstream,read_bin,mismatch)
-            end=border_finder(downstream,read_bin,mismatch)
-            if (start is not None) & (end is not None):
-                start+=len(upstream)
-
-        elif (upstream is not None) & (downstream is None):
-            start=border_finder(upstream,read_bin,mismatch)
-            if start is not None:
-                start+=len(upstream)
-                end = start + lenght
+        if (param['upstream'] is not None) & (param['downstream'] is not None):
+            start=border_finder(param['upstream'],read_bin,param['miss_search_up'])
+            end=border_finder(param['downstream'],read_bin,param['miss_search_down'])
             
-        elif (upstream is None) & (downstream is not None):
-            end=border_finder(downstream,read_bin,mismatch)
+            if (start is not None) & (end is not None):
+                qual_up = str(qual[start:start+len(param['upstream'])],"utf-8")
+                qual_down = str(qual[end:end+len(param['downstream'])],"utf-8")
+                
+                if (len(param['quality_set_up'].intersection(qual_up)) == 0) &\
+                    (len(param['quality_set_down'].intersection(qual_down)) == 0):
+                    start+=len(param['upstream'])
+
+        elif (param['upstream'] is not None) & (param['downstream'] is None):
+            start=border_finder(param['upstream'],read_bin,param['miss_search_up'])
+            
+            if start is not None:
+                qual_up = str(qual[start:start+len(param['upstream'])],"utf-8")
+                
+                if len(param['quality_set_up'].intersection(qual_up)) == 0:
+                    start+=len(param['upstream'])
+                    end = start + param['length']
+            
+        elif (param['upstream'] is None) & (param['downstream'] is not None):
+            end=border_finder(param['downstream'],read_bin,param['miss_search_down'])
+            
             if end is not None:
-                start = end-lenght
+                qual_down = str(qual[end:end+len(param['downstream'])],"utf-8")
+                
+                if len(param['quality_set_down'].intersection(qual_down)) == 0:
+                    start = end-param['length']
 
         return start,end
     
     def progress_bar(i,o,raw,cpu):
         
         def getuncompressedsize(raw):
+            
+            """ Estimates the total size of a .gz compressed 
+            file for the progress bars """
+            
             def estimate_uncompressed_gz_size(filename):
                 with open(filename, "rb") as gz_in:
                     sample = gz_in.read(1000000)
@@ -192,9 +212,8 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         return tqdm(total=total_file_size,desc=tqdm_text, position=pos,colour="green",leave=False,ascii=True,unit="characters")
     
     def fastq_parser(current,end,start,features,failed_reads,passed_reads,fixed_start):
-        quality_set = param['quality_set']
+        
         reading = []
-    
         mismatch = [n+1 for n in range(param['miss'])]
         perfect_counter, imperfect_counter, reads = 0,0,0
         ram_clearance=ram_lock()
@@ -210,16 +229,19 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
             if len(reading) == 4: #a read always has 4 lines
                 
                 if not fixed_start:
-                    start,end=unfixed_starting_place_parser(str(reading[1],"utf-8"),upstream,downstream,mismatch_search,lenght)
+                    start,end=unfixed_starting_place_parser(str(reading[1],"utf-8"),\
+                                                            reading[3],\
+                                                            param)
+                        
                     if (start is not None) & (end is not None):
                         if end < start: #if the end is not found or found before the start
                             start=None
-                
+
                 if (fixed_start) or (start is not None):
                     seq = str(reading[1][start:end].upper(),"utf-8")
                     quality = str(reading[3][start:end],"utf-8") #convert from bin to str
     
-                    if (len(quality_set.intersection(quality)) == 0):
+                    if len(param['quality_set'].intersection(quality)) == 0:
                         
                         if param['Running Mode']=='C':
                             if seq in features:
@@ -237,7 +259,8 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                                 features[seq] = Features(seq, 1)
                             else:
                                 features[seq].counts += 1
-                                perfect_counter += 1
+                            perfect_counter += 1
+                            
                 reading = []
                 reads += 1
                 
@@ -265,9 +288,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
             param['upstream']=seq2bin(param['upstream'].upper())
         if param['downstream'] is not None:
             param['downstream']=seq2bin(param['downstream'].upper())
-        upstream,downstream,mismatch_search,lenght = \
-        param['upstream'],param['downstream'],param['miss_search'],param['length']
-    
+
     _, ext = os.path.splitext(raw)
 
     if (not preprocess) & (param['Progress bar']):
@@ -446,14 +467,23 @@ def inputs_handler():
         parameters["length"]=int(parameters["length"])
         parameters["miss"]=int(parameters["miss"])
         parameters["phred"]=int(parameters["phred"])
-        parameters["miss_search"]=int(parameters["miss_search"])
+        parameters["miss_search_up"]=int(parameters["miss_search_up"])
+        parameters["miss_search_down"]=int(parameters["miss_search_down"])
+        parameters["qual_up"]=int(parameters["qual_up"])
+        parameters["qual_down"]=int(parameters["qual_down"])
     except Exception:
-        input("\nPlease confirm you have provided the correct parameters.\nOnly numeric values are accepted in the folowing fields:\n-Feature read starting place;\n-Feature length;\n-mismatch;\n-Phred score;\n-mismatches in the search sequence.\n\nPlease try again. Press enter to exit")
+        input("\nPlease confirm you have provided the correct parameters.\nOnly numeric values are accepted in the folowing fields:\n-Feature read starting place;\n-Feature length;\n-mismatch;\n-Phred score.\n\nPlease try again. Press enter to exit")
         raise Exception    
     
     # avoids getting -1 and actually filtering by highest phred score by mistake
     if int(parameters["phred"]) == 0:
         parameters["phred"] = 1
+        
+    if int(parameters["qual_up"]) == 0:
+        parameters["qual_up"] = 1
+        
+    if int(parameters["qual_down"]) == 0:
+        parameters["qual_down"] = 1
     
     if parameters['delete'] == "y":
         parameters['delete'] = True
@@ -477,7 +507,7 @@ def inputs_handler():
         parameters['Running Mode']="C"
         
     if parameters['Running Mode']=='C':
-        if len(parameters) != 14:
+        if len(parameters) != 17:
             input("Please confirm that all the input boxes are filled. Some parameters are missing.\nPress enter to exit")
             raise Exception
             
@@ -491,7 +521,6 @@ def inputs_initializer():
     """ Handles the graphical interface, and all the parameter inputs"""
     
     from tkinter import Entry,LabelFrame,Button,Label,Tk,filedialog,StringVar,OptionMenu
-    separator = "\\" if system() == 'Windows' else "/"
     
     def restart():
         root.quit()
@@ -500,16 +529,18 @@ def inputs_initializer():
         
     def submit():
         for arg in temporary:
-            parameters[arg] = temporary[arg].get()
+            if ("Use the Browse button to navigate, or paste a link" not in temporary[arg].get()) or\
+                ("" not in temporary[arg].get()):
+                parameters[arg] = temporary[arg].get()
         root.quit()
         root.destroy()
     
     def directory(column,row,parameter,frame):
-        filename = filedialog.askdirectory(initialdir = separator, title = "Select a folder")
+        filename = filedialog.askdirectory(title = "Select a folder")
         filing_parser(column,row,filename,parameter,frame)
         
     def file(column,row,parameter,frame):
-        filename = filedialog.askopenfilename(initialdir = separator, title = "Select a file", filetypes = \
+        filename = filedialog.askopenfilename(title = "Select a file", filetypes = \
             (("CSV files","*.csv"),("all files","*.*")) )
         filing_parser(column,row,filename,parameter,frame)
     
@@ -519,7 +550,7 @@ def inputs_initializer():
         place.insert(0, filename)
         parameters[parameter] = filename
 
-    def browsing(keyword,inputs,placeholder="Use the Browse button to navigate"):
+    def browsing(keyword,inputs,placeholder="Use the Browse button to navigate, or paste a link"):
         title1,title2,row,column,function=inputs
         frame=LabelFrame(root,text=title1,padx=5,pady=5)
         frame.grid(row=row,column=column, columnspan=2)
@@ -528,6 +559,7 @@ def inputs_initializer():
         button_place = Entry(frame,borderwidth=5,width=50)
         button_place.grid(row=row,column=column+1)
         button_place.insert(0, placeholder)
+        temporary[keyword]=button_place
         
     def write_menu(keyword,inputs):
         title,row,column,default=inputs
@@ -557,7 +589,7 @@ def inputs_initializer():
         
     root = Tk()
     root.title("2FAST2Q Input Parameters Window")
-    root.minsize(425, 660)
+    root.minsize(425, 770)
     parameters,temporary = {},{}  
 
     browsing_inputs = {"seq_files":["Path to the .fastq(.gz) files folder","Browse",1,0,directory],
@@ -570,9 +602,12 @@ def inputs_initializer():
                       "miss":["Allowed mismatches",9,0,1],
                       "phred":["Minimal feature Phred-score",10,0,30],
                       "delete":["Delete intermediary files [y/n]",12,0,"y"],
-                      "upstream":["upstream search sequence",13,0,"None"],
-                      "downstream":["downstream search sequence",14,0,"None"],
-                      "miss_search":["mismatches in the search sequence",15,0,0],}
+                      "upstream":["Upstream search sequence",13,0,"None"],
+                      "downstream":["Downstream search sequence",16,0,"None"],
+                      "miss_search_up":["Mismatches in the upstream sequence",14,0,0],
+                      "miss_search_down":["Mismatches in the downstream sequence",17,0,0],
+                      "qual_up":["Minimal upstream sequence Phred-score",15,0,30],
+                      "qual_down":["Minimal downstream sequence Phred-score",18,0,30],}
     
     dropdown_options = {"Running Mode":["Counter", "Extractor + Counter",4,0],
                         "Progress bar":["Yes", "No",5,0]}
@@ -587,9 +622,9 @@ def inputs_initializer():
     [write_menu(arg,default_inputs[arg]) for arg in default_inputs]
     
     placeholder(0,1,"",0,0)
-    placeholder(16,0,"",0,0)
-    button_click(17, 0, "OK", submit)
-    button_click(17, 1, "Reset", restart)
+    placeholder(19,0,"",0,0)
+    button_click(20, 0, "OK", submit)
+    button_click(20, 1, "Reset", restart)
 
     root.mainloop()
 
@@ -602,7 +637,7 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
  
-    version = "2.4.2"
+    version = "2.5.0"
     
     print("\nVersion: {}".format(version))
 
@@ -613,6 +648,8 @@ def initializer(cmd):
     quality_list = '!"#$%&' + "'()*+,-/0123456789:;<=>?@ABCDEFGHI" #Phred score
 
     param["quality_set"] = set(quality_list[:int(param['phred'])-1])
+    param["quality_set_up"] = set(quality_list[:int(param['qual_up'])-1])
+    param["quality_set_down"] = set(quality_list[:int(param['qual_down'])-1])
     
     current_time = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     param["directory"] = os.path.join(param['out'], f"2FAST2Q_output_{current_time}")
@@ -630,14 +667,16 @@ def initializer(cmd):
         
         if param['upstream'] is not None:
             print(f"Upstream search sequence: {param['upstream']}\n")
+            print(f"Mismatches allowed in the upstream search sequence: {param['miss_search_up']}\n")
+            print(f"Minimal Phred-score in the upstream search sequence: {param['qual_up']}\n")
+            
         if param['downstream'] is not None:
             print(f"Downstream search sequence: {param['downstream']}\n")
-        
-        if (param['upstream'] is not None) and (param['downstream'] is not None):
-            print(f"Mismatches allowed in the search sequence: {param['miss_search']}\n")
-            
-        elif (param['upstream'] is not None) or (param['downstream'] is not None):
-            print(f"Mismatches allowed in the search sequence: {param['miss_search']}\nReturned feature lenght: {param['length']}\n")
+            print(f"Mismatches allowed in the downstream search sequence: {param['miss_search_down']}\n")
+            print(f"Minimal Phred-score in the downstream search sequence: {param['qual_down']}\n")
+
+        if (param['upstream'] is None) or (param['downstream'] is None):
+            print(f"Finding features with the folowing length: {param['length']}bp\n")
 
     print(f"All data will be saved into {param['directory']}")
 
@@ -675,7 +714,10 @@ def input_parser():
     parser.add_argument("--l",help="Feature length (default=20bp)")
     parser.add_argument("--us",help="Upstream search sequence")
     parser.add_argument("--ds",help="Downstream search sequence")
-    parser.add_argument("--ms",help="mismatches allowed when searching reads with Up/Down stream sequences")
+    parser.add_argument("--msu",help="mismatches allowed when searching reads in the upstream sequence")
+    parser.add_argument("--msd",help="mismatches allowed when searching reads in the downstream sequence")
+    parser.add_argument("--qsu",help="Minimal Phred-score (default=30) in the upstream search sequence")
+    parser.add_argument("--qsd",help="Minimal Phred-score (default=30) in the downstream search sequence")
     parser.add_argument("--mo",help="Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)]")
     parser.add_argument("--cp",help="Number of cpus to be used (default is max(cpu)-2 for >=3 cpus, -1 for >=2 cpus, 1 if 1 cpu")
     parser.add_argument("--k",nargs='?',const=False,help="If enabled, keeps all temporary files (default is disabled)")
@@ -725,9 +767,21 @@ def input_parser():
     if args.ds is not None:
         parameters['downstream']=args.ds
                  
-    parameters['miss_search']=0
-    if args.ms is not None:
-        parameters['miss_search']=int(args.ms)
+    parameters['miss_search_up']=0
+    if args.msu is not None:
+        parameters['miss_search_up']=int(args.msu)
+        
+    parameters['miss_search_down']=0
+    if args.msd is not None:
+        parameters['miss_search_down']=int(args.msd)
+        
+    parameters['qual_up']=30
+    if args.qsu is not None:
+        parameters['qual_up']=int(args.qsu)
+        
+    parameters['qual_down']=30
+    if args.qsd is not None:
+        parameters['qual_down']=int(args.qsd)
         
     parameters['Running Mode']="C"
     if args.mo is not None:
@@ -763,7 +817,11 @@ def compiling(param):
             [f"#Running mode: {param['Running Mode']}"] + \
             [f"#Upstream search sequence: {param['upstream']}"] + \
             [f"#Downstream search sequence: {param['downstream']}"] + \
-            [f"#Mismatches in search sequence: {param['miss_search']}"]
+            [f"#Mismatches in the upstream search sequence: {param['miss_search_up']}"] + \
+            [f"#Mismatches in the downstream search sequence: {param['miss_search_down']}"] + \
+            [f"#Minimal Phred-score in the upstream search sequence: {param['qual_up']}"] + \
+            [f"#Minimal Phred-score in the downstream search sequence: {param['qual_down']}"]
+            
     headers = headers[::-1]
 
     compiled = {} #dictionary with all the reads per feature
@@ -833,7 +891,7 @@ def run_stats(headers, param):
     csv_writer(csvfile, global_stat)
     
     ### plotting
-    header_ofset = 10
+    header_ofset = 13 # change to match number of parameter lines
     fig, ax = plt.subplots()
     width = 0.4
     for i, (a,b,c,d,e,f,g) in enumerate(global_stat[header_ofset:]):   
