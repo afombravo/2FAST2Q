@@ -133,9 +133,9 @@ There are also several optional parameters. For their description and input type
 
 	 `--ds DS     Downstream search sequence `
 
-	 `--msu MSU   mismatches allowed when searching reads in the upstream sequence`
+	 `--msu MSU   mismatches allowed in the upstream sequence`
 
-  	 `--msd MSD   mismatches allowed when searching reads in the downstream sequence`
+  	 `--msd MSD   mismatches allowed in the downstream sequence`
 
   	 `--qsu QSU   Minimal Phred-score (default=30) in the upstream search sequence`
 
