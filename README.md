@@ -20,7 +20,9 @@ And some test data to run the program.
 https://www.nature.com/articles/s41596-021-00639-6
 
 A more in depth description of the program is also available:
+
 Bravo AM, Typas A, Veening J. 2022. 2FAST2Q: a general-purpose sequence search and counting program for FASTQ files. PeerJ 10:e14041
+
 https://peerj.com/articles/14041/
 
 
