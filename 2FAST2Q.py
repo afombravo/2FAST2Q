@@ -4,7 +4,6 @@ try:
     import os
     import gzip
     import multiprocessing as mp
-    from platform import system
     import time
     import matplotlib.pyplot as plt
     import numpy as np
@@ -94,7 +93,8 @@ def features_loader(guides):
                     features[sequence] = Features(line[0], 0)
                     
                 else:
-                    print("\nWarning!!\n{} and {} share the same sequence. Only {} will be considered valid.".format(features[sequence].name, line[0],features[sequence].name))
+                    print(f"\nWarning!!\n{features[sequence].name} and {line[0]} share the same sequence. Only {features[sequence].name} will be considered valid.")
+
     except IndexError:
         input("\nThe given .csv file doesn't seem to be comma separated. Please double check that the file's column separation is ','\nPress enter to exit")
         raise Exception
@@ -175,7 +175,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                     start = end-param['length']
 
         return start,end
-    
+
     def progress_bar(i,o,raw,cpu):
         
         def getuncompressedsize(raw):
@@ -215,7 +215,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         
         reading = []
         mismatch = [n+1 for n in range(param['miss'])]
-        perfect_counter, imperfect_counter, reads = 0,0,0
+        perfect_counter, imperfect_counter, non_aligned_counter, reads,quality_failed = 0,0,0,0,0
         ram_clearance=ram_lock()
         
         if param['miss'] != 0:
@@ -249,11 +249,14 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                                 perfect_counter += 1
                             
                             elif mismatch != []:
-                                features,imperfect_counter,failed_reads,passed_reads=\
+                                features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter=\
                                 mismatch_search_handler(seq,mismatch,\
                                                         failed_reads,binary_features,\
                                                         imperfect_counter,features,\
-                                                        passed_reads,ram_clearance)
+                                                        passed_reads,ram_clearance,non_aligned_counter)
+                                    
+                            else:
+                                non_aligned_counter += 1
                         else:
                             if seq not in features:
                                 features[seq] = Features(seq, 1)
@@ -261,6 +264,9 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                                 features[seq].counts += 1
                             perfect_counter += 1
                             
+                    else:
+                        quality_failed += 1
+
                 reading = []
                 reads += 1
                 
@@ -275,7 +281,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         if (not preprocess) & (param['Progress bar']):
             pbar.close()
 
-        return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads
+        return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads,non_aligned_counter,quality_failed
     
     fixed_start,end,start = True,0,0
     # determining the read trimming starting/ending place
@@ -359,7 +365,7 @@ def features_all_vs_all(binary_features,read,mismatch):
         return found_guide
     return #not needed, but here for peace of mind
 
-def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_counter,features,passed_reads,ram_clearance):
+def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_counter,features,passed_reads,ram_clearance,non_aligned_counter):
     
     """Converts a read into numpy int 8 form. Runs the imperfect alignment 
     function for all number of inputed mismatches."""
@@ -381,11 +387,14 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
             if ram_clearance:
                 if feature is None:
                     failed_reads.add(seq)
+                    non_aligned_counter += 1
                     break
                 else:
                     passed_reads[seq] = feature
+        else:
+            non_aligned_counter += 1
 
-    return features,imperfect_counter,failed_reads,passed_reads
+    return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
 
 def imperfect_alignment(read,binary_features, mismatch, counter, features):
     
@@ -410,7 +419,7 @@ def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
     
     tempo = time.perf_counter()
 
-    reads, perfect_counter, imperfect_counter, features,failed_reads,passed_reads = \
+    reads, perfect_counter, imperfect_counter, features,failed_reads,passed_reads,non_aligned_counter,quality_failed = \
         reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads)
 
     master_list = []
@@ -430,7 +439,7 @@ def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
          name = Path(name).stem
          path,_ = os.path.splitext(path)
 
-    stats_condition = f"#script ran in {timing} for file {name}. {perfect_counter+imperfect_counter} reads out of {reads} were considered valid. {perfect_counter} were perfectly aligned. {imperfect_counter} were aligned with mismatch"
+    stats_condition = f"#script ran in {timing} for file {name}. {perfect_counter+imperfect_counter} reads out of {reads} were aligned. {perfect_counter} were perfectly aligned. {imperfect_counter} were aligned with mismatch. {non_aligned_counter} passed quality filtering but were not aligned. {quality_failed} did not pass quality filtering."
     
     if not param['Progress bar']:
         print(f"Sample {name} was processed in {timing}")
@@ -589,7 +598,7 @@ def inputs_initializer():
         
     root = Tk()
     root.title("2FAST2Q Input Parameters Window")
-    root.minsize(425, 770)
+    root.minsize(425, 730)
     parameters,temporary = {},{}  
 
     browsing_inputs = {"seq_files":["Path to the .fastq(.gz) files folder","Browse",1,0,directory],
@@ -622,9 +631,9 @@ def inputs_initializer():
     [write_menu(arg,default_inputs[arg]) for arg in default_inputs]
     
     placeholder(0,1,"",0,0)
-    placeholder(19,0,"",0,0)
-    button_click(20, 0, "OK", submit)
-    button_click(20, 1, "Reset", restart)
+    #placeholder(19,0,"",0,0)
+    button_click(19, 0, "OK", submit)
+    button_click(19, 1, "Reset", restart)
 
     root.mainloop()
 
@@ -636,9 +645,9 @@ def initializer(cmd):
     Makes sure the path separators, and the input parser function is correct
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
- 
-    version = "2.5.0"
     
+    version = "2.5.1"
+
     print("\nVersion: {}".format(version))
 
     param = inputs_handler() if cmd is None else cmd
@@ -653,10 +662,7 @@ def initializer(cmd):
     
     current_time = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     param["directory"] = os.path.join(param['out'], f"2FAST2Q_output_{current_time}")
-    
-    if not os.path.exists(param["directory"]):
-        os.makedirs(param["directory"])
-    
+
     if psutil.virtual_memory().percent>=75:
         print("\nLow RAM availability detected, file processing may be slow\n")
     
@@ -714,8 +720,8 @@ def input_parser():
     parser.add_argument("--l",help="Feature length (default=20bp)")
     parser.add_argument("--us",help="Upstream search sequence")
     parser.add_argument("--ds",help="Downstream search sequence")
-    parser.add_argument("--msu",help="mismatches allowed when searching reads in the upstream sequence")
-    parser.add_argument("--msd",help="mismatches allowed when searching reads in the downstream sequence")
+    parser.add_argument("--msu",help="mismatches allowed in the upstream sequence")
+    parser.add_argument("--msd",help="mismatches allowed in the downstream sequence")
     parser.add_argument("--qsu",help="Minimal Phred-score (default=30) in the upstream search sequence")
     parser.add_argument("--qsd",help="Minimal Phred-score (default=30) in the downstream search sequence")
     parser.add_argument("--mo",help="Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)]")
@@ -801,7 +807,6 @@ def input_parser():
         
     return parameters
 
-
 def compiling(param):
 
     """ Combines all the individual processed .csv files into one final file.
@@ -849,8 +854,8 @@ def compiling(param):
             if len(compiled[entry])<i+1:
                 compiled[entry] = compiled[entry] + [0]*(i+1-len(compiled[entry]))
 
-    run_stats(headers,param)
-                        
+    run_stats(headers,param,compiled,head)
+
     final = []
     [final.append([feature] + compiled[feature]) for feature in compiled] 
     final.insert(0, head)
@@ -862,10 +867,12 @@ def compiling(param):
         for file in ordered_csv:
             os.remove(file)
 
+    print("\nIf you find 2FAST2Q useful, please consider citing:\nBravo AM, Typas A, Veening J. 2022. \n2FAST2Q: a general-purpose sequence search and counting program for FASTQ files. PeerJ 10:e14041\nDOI: 10.7717/peerj.14041\n")
+    
     if not param["cmd"]:
         input(f"\nAnalysis successfully completed\nAll the reads have been saved into {csvfile}.\nPress enter to exit")
 
-def run_stats(headers, param):
+def run_stats(headers, param, compiled, head):
     
     """ Manipulates the statistics from all the samples into one file that can
     be used for downstream user quality control aplications. Creates a simple
@@ -874,42 +881,150 @@ def run_stats(headers, param):
     ### parsing the stats from the read files
     global_stat = [["#Sample name", "Running Time", "Running Time unit", \
                     "Total number of reads in sample", \
-                    "Total number of reads that passed quality control parameters", \
+                    "Total number of reads that were aligned", \
                     "Number of reads that were aligned without mismatches", \
-                    "Number of reads that were aligned with mismatches"]]
-        
+                    "Number of reads that were aligned with mismatches",\
+                    "Number of reads that passed quality filtering but were not aligned",\
+                    'Number of reads that did not pass quality filtering.']]
+    
+    header_ofset = 1
     for run in headers:
         if "script ran" in run:
             parsed = run.split()
             global_stat.append([parsed[7][:-1]] + [parsed[3]] + [parsed[4]] + \
-                               [parsed[12]] + [parsed[8]] + [parsed[16]] + \
-                               [parsed[20]])
+                               [parsed[12]] + [parsed[8]] + [parsed[15]] + \
+                               [parsed[19]] + [parsed[24]] + [parsed[32]])
         else:
             global_stat.insert(0,[run])
+            header_ofset+=1
             
     csvfile = os.path.join(param["directory"],f"{param['out_file_name']}_stats.csv")
     csv_writer(csvfile, global_stat)
     
-    ### plotting
-    header_ofset = 13 # change to match number of parameter lines
-    fig, ax = plt.subplots()
-    width = 0.4
-    for i, (a,b,c,d,e,f,g) in enumerate(global_stat[header_ofset:]):   
-
-        plt.bar(i+width/2, int(d), width,  capsize=5, color = "#FFD25A", hatch="//",edgecolor = "black", linewidth = .7)
-        plt.bar(i-width/2, int(e), width, capsize=5, color = "#FFAA5A", hatch="\\\\\\",edgecolor = "black", linewidth = .7)
-
-    ax.set_xticks(np.arange(len([n[0] for n in global_stat[header_ofset:]])))
-    ax.set_xticklabels([n[0] for n in global_stat[header_ofset:]])
-    plt.ylabel('Number of reads')
-    plt.xticks(rotation=90)
+    ######## for bar plots with absolute number of reads
+    
+    fig, ax = plt.subplots(figsize=(12, int(len(global_stat)/4)))
+    width = .75
+    for i, (_,_,_,total_reads,aligned,_,_,not_aligned,_) in enumerate(global_stat[header_ofset:]):   
+        
+        plt.barh(i, int(total_reads), width,  capsize=5, color = "#FFD25A", hatch="//",edgecolor = "black", linewidth = .7)
+        plt.barh(i, int(aligned), width,  capsize=5, color = "#FFAA5A", hatch="\\",edgecolor = "black", linewidth = .7)
+        plt.barh(i, int(not_aligned), width, capsize=5, color = "#F56416", hatch="x",edgecolor = "black", linewidth = .7)
+    
+    ax.set_yticks(np.arange(len([n[0] for n in global_stat[header_ofset:]])))
+    ax.set_yticklabels([n[0] for n in global_stat[header_ofset:]])
+    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.tick_params(axis='both', which='minor', labelsize=16)
+    plt.xlabel('Number of reads',size=20)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.legend(["Reads in sample", "Reads that passed quality control parameters"], \
-              loc='upper center', bbox_to_anchor=(0.5, 1.15),ncol=1,prop={'size': 8})
+    #ax.set_xscale('log')
+    ax.set_xlim(xmin=1)
+    ax.legend(["Total reads in sample", "Aligned reads","Reads that passed quality filtering but failed to align"], \
+              loc='right',bbox_to_anchor=(1.1, 1),ncol=3,prop={'size': 12})
     plt.tight_layout()
     file = os.path.join(param["directory"],f"{param['out_file_name']}_reads_plot.png")
     plt.savefig(file, dpi=300, bbox_inches='tight')
+    
+    ######## for bar plots with relative (percentage) number of reads
+    
+    fig, ax = plt.subplots(figsize=(12, int(len(global_stat)/4)))
+    width = .75
+    for i, (_,_,_,total_reads,aligned,_,_,not_aligned,q_failed) in enumerate(global_stat[header_ofset:]):   
+
+        aligned = int(aligned)/int(total_reads)*100
+        not_aligned = int(not_aligned)/int(total_reads)*100
+        q_failed = int(q_failed)/int(total_reads)*100
+        
+        plt.barh(i, aligned, width,  capsize=5, color = "#6290C3", hatch="\\",edgecolor = "black", linewidth = .7)
+        plt.barh(i, not_aligned, width, capsize=5, left=aligned, color = "#F1FFE7", hatch="//",edgecolor = "black", linewidth = .7)
+        plt.barh(i, q_failed, width, capsize=5, left=not_aligned+aligned, color = "#FB5012", hatch="||",edgecolor = "black", linewidth = .7)
+    
+    ax.set_yticks(np.arange(len([n[0] for n in global_stat[header_ofset:]])))
+    ax.set_yticklabels([n[0] for n in global_stat[header_ofset:]])
+    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.tick_params(axis='both', which='minor', labelsize=16)
+    plt.xlabel('% of reads per sample',size=20)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    #ax.set_xscale('log')
+    ax.set_xlim(xmin=1)
+    ax.legend(["Aligned reads","Reads that passed quality filtering but failed to align","Reads that did not pass quality filtering"], \
+              loc='right',bbox_to_anchor=(1.1, 1),ncol=3,prop={'size': 12})
+    plt.tight_layout()
+    file = os.path.join(param["directory"],f"{param['out_file_name']}_reads_plot_percentage.png")
+    plt.savefig(file, dpi=300, bbox_inches='tight')
+    
+    ########
+    """ For plotting a violin plot distribution """
+    
+    distributions = {}
+    for feature in compiled:
+        for i,read in enumerate(compiled[feature]):
+            if head[i+1] in distributions:
+                distributions[head[i+1]].append(read)
+            else:
+                distributions[head[i+1]] = [read]
+    
+    def adjacent_values(vals, q1, q3):
+        upper_adjacent_value = q3 + (q3 - q1) * 1.5
+        upper_adjacent_value = np.clip(upper_adjacent_value, q3, vals[-1])
+    
+        lower_adjacent_value = q1 - (q3 - q1) * 1.5
+        lower_adjacent_value = np.clip(lower_adjacent_value, vals[0], q1)
+        return lower_adjacent_value, upper_adjacent_value
+
+    def set_axis_style(ax, labels):
+        ax.xaxis.set_tick_params(direction='out')
+        ax.xaxis.set_ticks_position('bottom')
+        ax.set_xticks(np.arange(1, len(labels) + 1), labels=labels)
+        ax.set_xlim(0.25, len(labels) + 0.75)
+        ax.set_xlabel('Sample name')
+        
+    def violin(data,head,normalized=False):
+        fig, ax = plt.subplots(figsize=(12, int(len(global_stat))/2))
+        if not normalized:
+            ax.set_title('Reads per feature distribution',size=20)
+        else:
+            ax.set_title('Reads per feature (RPM normalized) distribution',size=20)
+        plt.xlabel('Reads per feature',size=20)
+        parts=ax.violinplot(data, points=200, widths=1, showmeans=False, showmedians=False,showextrema=False,vert=False)
+        
+        for pc in parts['bodies']:
+            pc.set_facecolor('#D43F3A')
+            pc.set_edgecolor('black')
+            pc.set_alpha(1)
+        
+        quartile1, medians, quartile3 = np.percentile(data, [25, 50, 75], axis=1)
+        inds = np.arange(1, len(medians) + 1)
+        ax.scatter(medians,inds, marker='o', color='white', s=40, zorder=3)
+        ax.hlines(inds,quartile1, quartile3, color='k', linestyle='-', lw=8)
+        #ax.hlines(inds,whiskers_min, whiskers_max, color='k', linestyle='-', lw=2.5)
+        ax.set_yticks(np.arange(len(head[1:]))+1)
+        ax.set_yticklabels(head[1:])
+        plt.tick_params(axis='y', which='major', labelsize=20)
+        plt.tick_params(axis='x', which='major', labelsize=20)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        #ax.set_xscale('log')
+        ax.set_xlim(xmin=1)
+        if not normalized:
+            file = os.path.join(param["directory"],f"{param['out_file_name']}_distribution_plot.png")
+        else:
+            file = os.path.join(param["directory"],f"{param['out_file_name']}_distribution_normalized_RPM_plot.png")
+        plt.savefig(file, dpi=300, bbox_inches='tight')
+    
+    data = []
+    for entry in distributions:
+        data.append(distributions[entry])
+    violin(data,head)
+    
+    ## normalized RPM
+    data = np.array(data)
+    data1 = []
+    for i,entry in enumerate(data):
+        data1.append(entry/sum(entry)*1000000) #RPM
+    violin(data1,head,normalized=True)
 
 def ram_lock():
 
@@ -1001,6 +1116,9 @@ def aligner_mp_dispenser(files,features,param):
     
     """ starts and handles the parallel processing of all the samples by calling 
     multiple instances of the "aligner" function (one per sample) """
+    
+    if not os.path.exists(param["directory"]):
+        os.makedirs(param["directory"])
     
     start,failed_reads,passed_reads = 0,set(),{}
     pool,cpu = cpu_counter(param["cpu"])
