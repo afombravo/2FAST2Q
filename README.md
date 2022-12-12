@@ -225,13 +225,15 @@ A completion message should be given at the end. In any case, the program will b
 
 Upon completion, several files should be seen in the indicated output folder (when running in default mode only b, c (only in cmd line mode), and d will be kept):
 
-	a. “*_reads.csv” files corresponding to the read counts per feature per inputted sequencing file;
+	a. 	“*_reads.csv” files corresponding to the read counts per feature per inputted sequencing file; 
 
-	b. A “compiled_stats.csv” containing all the relevant input/output information about the 2FAST2Q analysis;
+	b.	A “compiled_stats.csv” containing all the relevant input/output information about the 2FAST2Q analysis; 
 
-	c. A bar plot "reads_plot.png" representing the total number of reads, and valid reads, per sample;
+	c.	A “compiled.csv” file with the compilation of all the read counts per feature in all the inputted files. Use this latter in the next steps of the data analysis pipeline. 
 
-	d. A “compiled.csv” file with the compilation of all the read counts per feature in all the inputted files. Use this latter in the next steps of the data analysis pipeline.
+	d.	A bar plot "reads_plot.png" with the number of total and quality passed reads (absolute), and in percentage ("reads_plot_percentage.png"), per sample; 
+
+	e. 	2 other violin plots with the distribution of the found features per sample are also presented (normalized for reads per milion, and absolute numbers). The interquartile distribution is also ploted for each sample (25%-75%)
 
 
 ### Short Explanation
