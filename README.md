@@ -113,6 +113,8 @@ There are also several optional parameters. For their description and input type
 	 `-h, --help  show this help message and exit `
 
 	 `-c [C]      cmd line mode`
+	 
+	 `-v [V]      prints the current version`
 
 	 `--s S       The full path to the directory with the sequencing files OR file`
 
