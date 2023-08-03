@@ -234,6 +234,9 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                     if (start is not None) & (end is not None):
                         if end < start: #if the end is not found or found before the start
                             start=None
+                            quality_failed += 1
+                    else:
+                        quality_failed += 1
 
                 if (fixed_start) or (start is not None):
                     seq = str(reading[1][start:end].upper(),"utf-8")
@@ -273,8 +276,8 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                     ram_clearance=ram_lock()
                 
                 if preprocess:
-                    if reads == 200000:
-                        return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads
+                    if reads == 100000:
+                        return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads,0,0
         
         if (not preprocess) & (param['Progress bar']):
             pbar.close()
@@ -337,7 +340,7 @@ def border_finder(seq,read,mismatch):
     s=seq.size
     r=read.size
     fall_over_index = r-s-1
-    for i,bp in enumerate(read): #range doesnt exist in njit
+    for i,bp in enumerate(read): 
         comparison = read[i:s+i]
         finder = binary_subtract(seq,comparison,mismatch)
         if i > fall_over_index:
@@ -361,7 +364,6 @@ def features_all_vs_all(binary_features,read,mismatch):
                 return
     if found==1:
         return found_guide
-    return #not needed, but here for peace of mind
 
 def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_counter,features,passed_reads,ram_clearance,non_aligned_counter):
     
@@ -375,22 +377,23 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
         if seq in passed_reads:
             features[passed_reads[seq]].counts += 1
             imperfect_counter += 1
-            break
+            return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
         
         elif seq not in failed_reads:
             features,imperfect_counter,feature=\
                 imperfect_alignment(read,binary_features,\
                                     miss, imperfect_counter,\
                                     features)
-            if ram_clearance:
-                if feature is None:
+            if feature is None:
+                if ram_clearance:
                     failed_reads.add(seq)
-                    non_aligned_counter += 1
-                    break
-                else:
-                    passed_reads[seq] = feature
-        else:
-            non_aligned_counter += 1
+            else:
+                passed_reads[seq] = feature
+                imperfect_counter += 1
+                return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+    
+    #if function reaches here its because nothing was aligned anywhere
+    non_aligned_counter += 1
 
     return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
 
@@ -452,14 +455,14 @@ def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
     
     csvfile = os.path.join(param["directory"], name+"_reads.csv")
     csv_writer(csvfile, master_list)
-    
+
     return failed_reads,passed_reads
 
 def csv_writer(path, outfile):
     
     """ writes the indicated outfile into an .csv file in the directory"""
         
-    with open(path, "w", newline='') as output: #writes the output
+    with open(path, "w", newline='') as output: 
         writer = csv.writer(output)
         writer.writerows(outfile)
 
@@ -650,7 +653,7 @@ def initializer(cmd):
 
     param["version"] = version
     
-    quality_list = '!"#$%&' + "'()*+,-/0123456789:;<=>?@ABCDEFGHI" #Phred score
+    quality_list = '!"#$%&' + "'()*+,-/0123456789:;<=>?@ABCDEFGHI" #Phred score in order of probabilities
 
     param["quality_set"] = set(quality_list[:int(param['phred'])-1])
     param["quality_set_up"] = set(quality_list[:int(param['qual_up'])-1])
@@ -689,7 +692,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.5.2"
+    version = "2.5.3"
     
     def current_dir_path_handling(param):
         if param[0] is None:
@@ -1100,7 +1103,7 @@ def hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,failed
     for failed,passed in zip(failed_reads_compiled,passed_reads_compiled):
         failed_reads = set.union(failed_reads,failed)
         passed_reads = {**passed_reads,**passed}
-        
+
     return failed_reads,passed_reads
 
 def hash_preprocesser(files,features,param,pool,cpu):
@@ -1112,12 +1115,14 @@ def hash_preprocesser(files,features,param,pool,cpu):
     
     print("\nPlease standby for the initialization procedure.")
     result=[]
+
     for name in files[:cpu]:
         result.append(pool.apply_async(reads_counter, args=(0,0,name,features,param,cpu,set(),{},True)))
     
     compiled = [x.get() for x in result]
-    throw1,throw2,throw3,throw4,failed_reads_compiled,passed_reads_compiled = zip(*compiled)
-    
+
+    _,_,_,_,failed_reads_compiled,passed_reads_compiled,_,_ = zip(*compiled)
+
     return hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,set(),{})
 
 def aligner_mp_dispenser(files,features,param):
@@ -1131,7 +1136,7 @@ def aligner_mp_dispenser(files,features,param):
     start,failed_reads,passed_reads = 0,set(),{}
     pool,cpu = cpu_counter(param["cpu"])
     
-    if (len(files)>cpu) & (param["miss"] != 0):
+    if param["miss"] != 0:
         failed_reads,passed_reads=hash_preprocesser(files,features,param,pool,cpu)
     
     print(f"\nProcessing {len(files)} files. Please hold.")
