@@ -243,19 +243,19 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                     quality = str(reading[3][start:end],"utf-8") #convert from bin to str
 
                     if len(param['quality_set'].intersection(quality)) == 0:
-                        
+
                         if param['Running Mode']=='C':
                             if seq in features:
                                 features[seq].counts += 1
                                 perfect_counter += 1
-                            
+
                             elif mismatch != []:
                                 features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter=\
                                 mismatch_search_handler(seq,mismatch,\
                                                         failed_reads,binary_features,\
                                                         imperfect_counter,features,\
                                                         passed_reads,ram_clearance,non_aligned_counter)
-                                    
+
                             else:
                                 non_aligned_counter += 1
                         else:
@@ -356,12 +356,15 @@ def features_all_vs_all(binary_features,read,mismatch):
     Returns the final mismatch score"""
     
     found = 0
+    r=read.size
     for guide in binary_features:
-        if binary_subtract(binary_features[guide],read,mismatch):
-            found+=1
-            found_guide = guide
-            if found>=2:
-                return
+        g=binary_features[guide].size
+        if g==r:
+            if binary_subtract(binary_features[guide],read,mismatch):
+                found+=1
+                found_guide = guide
+                if found>=2:
+                    return
     if found==1:
         return found_guide
 
@@ -692,7 +695,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.5.3"
+    version = "2.5.4"
     
     def current_dir_path_handling(param):
         if param[0] is None:
