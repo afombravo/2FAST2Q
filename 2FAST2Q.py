@@ -109,7 +109,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
     read increase of 1 (done by calling .counts from the respective feature class 
     from the feature class dictionary).
     If the read doesnt have a perfect match, it is sent for mismatch comparison
-    via the "imperfect_alignment" function.
+    via the "mismatch_search_handler" function.
     """
 
     def binary_converter(features):
@@ -371,47 +371,35 @@ def features_all_vs_all(binary_features,read,mismatch):
 def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_counter,features,passed_reads,ram_clearance,non_aligned_counter):
     
     """Converts a read into numpy int 8 form. Runs the imperfect alignment 
-    function for all number of inputed mismatches."""
+    search for all number of inputed mismatches."""
+    
+    if seq in failed_reads:
+        non_aligned_counter += 1
+        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+    
+    if seq in passed_reads:
+        features[passed_reads[seq]].counts += 1
+        imperfect_counter += 1
+        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
     
     read=seq2bin(seq)                         
     for miss in mismatch:
 
-        # we already know this read is going to pass
-        if seq in passed_reads:
-            features[passed_reads[seq]].counts += 1
-            imperfect_counter += 1
-            return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+        feature = features_all_vs_all(binary_features, read, miss)
         
-        elif seq not in failed_reads:
-            features,imperfect_counter,feature=\
-                imperfect_alignment(read,binary_features,\
-                                    miss, imperfect_counter,\
-                                    features)
-            if feature is None:
+        if feature is not None:
+            features[feature].counts += 1
+            imperfect_counter += 1
+            passed_reads[seq] = feature
+            return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+    
+        else: 
+            if miss == mismatch[-1]:
+                #if function reaches here its because nothing was aligned anywhere
                 if ram_clearance:
                     failed_reads.add(seq)
-            else:
-                passed_reads[seq] = feature
-                imperfect_counter += 1
+                non_aligned_counter += 1
                 return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
-    
-    #if function reaches here its because nothing was aligned anywhere
-    non_aligned_counter += 1
-
-    return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
-
-def imperfect_alignment(read,binary_features, mismatch, counter, features):
-    
-    """ for the inputed read sequence, this compares if there is a feature 
-    with a sequence that is similar to it, to the indicated mismatch degree"""
-
-    feature = features_all_vs_all(binary_features, read, mismatch)
-    
-    if feature is not None:
-        features[feature].counts += 1
-        counter += 1
-
-    return features,counter,feature
 
 def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
 
@@ -695,7 +683,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.5.4"
+    version = "2.5.5"
     
     def current_dir_path_handling(param):
         if param[0] is None:
