@@ -74,6 +74,7 @@ def features_loader(guides):
         raise Exception
     
     features = {}
+    names = set()
     
     try:
         with open(guides) as current: 
@@ -83,12 +84,17 @@ def features_loader(guides):
                 line = line.split(",")
                 sequence = line[1].upper()
                 sequence = sequence.replace(" ", "")
+                name = line[0]
+                
+                if name in names:
+                    print(f"\nWarning!!\nThe name {name} seems to appear at least twice. This MIGHT result in unexpected behaviour. Please have only unique name entries in your features.csv file.")
                 
                 if sequence not in features:
-                    features[sequence] = Features(line[0], 0)
+                    features[sequence] = Features(name, 0)
+                    names.add(name)
                     
                 else:
-                    print(f"\nWarning!!\n{features[sequence].name} and {line[0]} share the same sequence. Only {features[sequence].name} will be considered valid.")
+                    print(f"\nWarning!!\n{features[sequence].name} and {name} share the same sequence. Only {features[sequence].name} will be considered valid. {name} will be ignored.")
 
     except IndexError:
         input("\nThe given .csv file doesn't seem to be comma separated. Please double check that the file's column separation is ','\nPress enter to exit")
@@ -683,7 +689,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.5.5"
+    version = "2.5.6"
     
     def current_dir_path_handling(param):
         if param[0] is None:
