@@ -16,6 +16,7 @@ from pathlib import Path
 from io import SEEK_END
 import zlib
 from colorama import Fore
+import pkg_resources
 
 #####################
 
@@ -654,8 +655,11 @@ def initializer(cmd):
     print(f" {Fore.RED}╚══════╝{Fore.RESET}╚═╝     ╚═╝  ╚═╝╚══════╝   ╚═╝   {Fore.RED}╚══════╝{Fore.RESET} ╚══▀▀═╝ ")
                                                           
     print(f"\n{Fore.GREEN} Version: {Fore.RESET}{version}")
-
+    
     param = inputs_handler() if cmd is None else cmd
+    
+    if "test_mode" in param:
+        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.YELLOW}WARNING{Fore.RESET}] Running test mode!\n")
     
     param["version"] = version
     
@@ -706,7 +710,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.5.7"
+    version = "2.6.0"
     
     def current_dir_path_handling(param):
         if param[0] is None:
@@ -715,7 +719,7 @@ def input_parser():
                 file = path_finder(os.getcwd(), ["*.csv"])
                 if parameters['Running Mode']!="EC":
                     if len(file) > 1:
-                        input("There is more than one .csv in the current directory. If not directly indicating a path for sgRNA.csv, please only have 1 .csv file.") 
+                        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.RED}FATAL{Fore.RESET}] There is more than one .csv in the current directory. If not directly indicating a path for the features .csv, please have only 1 .csv file in the directory.\n")
                         raise Exception
                     if len(file) == 1:
                         parameters[param[1]]=file[0][0]
@@ -725,6 +729,7 @@ def input_parser():
     
     parser = argparse.ArgumentParser()
     parser.add_argument("-c",nargs='?',const=True,help="cmd line mode")
+    parser.add_argument("-t",nargs='?',const=True,help="Runs 2FAST2Q in test mode with example data.")
     parser.add_argument("-v",nargs='?',const=True,help="prints the installed version")
     parser.add_argument("--s",help="The full path to the directory with the sequencing files OR file")
     parser.add_argument("--g",help="The full path to the .csv file with the sgRNAs.")
@@ -756,10 +761,16 @@ def input_parser():
     
     parameters = {}
     parameters["cmd"] = True
-    paths_param = [[args.s,'seq_files'],
-                   [args.g,'feature'],
-                   [args.o,'out']]
-    
+    if args.t is None:
+        paths_param = [[args.s,'seq_files'],
+                       [args.g,'feature'],
+                       [args.o,'out']]
+    else:
+        parameters["test_mode"] = True
+        paths_param = [[pkg_resources.resource_filename(__name__, 'data/example.fastq.gz'),'seq_files'],
+                       [pkg_resources.resource_filename(__name__, 'data/D39V_guides.csv'),'feature'],
+                       [os.getcwd(),'out']]
+       
     parameters['out_file_name'] = "compiled"
     if args.fn is not None:
         parameters['out_file_name'] = args.fn
@@ -891,6 +902,9 @@ def compiling(param):
     print(f"\n {Fore.BLUE}{datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.GREEN}INFO{Fore.RESET}] Analysis successfully completed")
 
     print(f"\n{Fore.GREEN} If you find 2FAST2Q useful, please consider citing:{Fore.MAGENTA}\n Bravo AM, Typas A, Veening J. 2022. \n 2FAST2Q: a general-purpose sequence search and counting program for FASTQ files. PeerJ 10:e14041\n DOI: 10.7717/peerj.14041\n{Fore.RESET}")
+
+    if "test_mode" in param:
+        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.YELLOW}WARNING{Fore.RESET}] Test successful. 2FAST2Q is working as intended!\n")
 
 def run_stats(headers, param, compiled, head):
     
