@@ -36,7 +36,12 @@ Basic working principle behind 2FAST2Q:
 ### 1. Instalation
 Open a terminal with python3 installed, and download and install the 2FAST2Q Python3 module using pip install: 
 
-`pip install fast2q`.
+`pip install fast2q`
+
+It is then possible to test if 2FAST2Q was correctly installed by running a test with demo data. 
+type `python -m fast2q -c -t`
+
+At the end of a successful test, a message displaying "Test successful. 2FAST2Q is working as intended!" should be visible.
 
 ### 2. For starting the graphical interface mode:
 type `python -m fast2q`
