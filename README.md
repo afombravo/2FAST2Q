@@ -33,8 +33,8 @@ Basic working principle behind 2FAST2Q:
 
 
 
-### 1.	
-Download and install the 2FAST2Q Python3 module using pip install: 
+### 1. Instalation
+Open a terminal with python3 installed, and download and install the 2FAST2Q Python3 module using pip install: 
 `pip install fast2q`.
 
 ### 2. For starting the graphical interface mode:
