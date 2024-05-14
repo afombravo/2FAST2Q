@@ -53,7 +53,7 @@ def path_parser(folder_path, extension):
         ordered = [path[0] for path in sorted(pathing, key=lambda e: e[-1])]#[::-1]
 
         if ordered == []:
-            print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.RED}FATAL{Fore.WHITE}] Check the path to the {extension[1:]} files folder. No files of this type found.\n")
+            print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.RED}FATAL{Fore.RESET}] Check the path to the {extension[1:]} files folder. No files of this type found.\n")
             raise Exception
 
     else:
@@ -68,10 +68,10 @@ def features_loader(guides):
     Features class as respective value. If duplicated features sequences exist, 
     this will be caught in here"""
     
-    print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.GREEN}INFO{Fore.WHITE}] Loading Features")
+    print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.GREEN}INFO{Fore.RESET}] Loading Features")
     
     if not os.path.isfile(guides):
-        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.RED}FATAL{Fore.WHITE}] Check the path to the features file.\nNo .csv file found in the following path: {guides}\n")
+        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.RED}FATAL{Fore.RESET}] Check the path to the features file.\nNo .csv file found in the following path: {guides}\n")
         raise Exception
     
     features = {}
@@ -88,20 +88,20 @@ def features_loader(guides):
                 name = line[0]
                 
                 if name in names:   
-                    print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.YELLOW}WARNING{Fore.WHITE}] The name {name} seems to appear at least twice. This MIGHT result in unexpected behaviour. Please have only unique name entries in your features.csv file.")
+                    print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.YELLOW}WARNING{Fore.RESET}] The name {name} seems to appear at least twice. This MIGHT result in unexpected behaviour. Please have only unique name entries in your features.csv file.")
 
                 if sequence not in features:
                     features[sequence] = Features(name, 0)
                     names.add(name)
                     
                 else:
-                    print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.YELLOW}WARNING{Fore.WHITE}] {features[sequence].name} and {name} share the same sequence. Only {features[sequence].name} will be considered valid. {name} will be ignored.")
+                    print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.YELLOW}WARNING{Fore.RESET}] {features[sequence].name} and {name} share the same sequence. Only {features[sequence].name} will be considered valid. {name} will be ignored.")
 
     except IndexError:
-        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.RED}FATAL{Fore.WHITE}] The given .csv file doesn't seem to be comma separated. Please double check that the file's column separation is ','\n")
+        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.RED}FATAL{Fore.RESET}] The given .csv file doesn't seem to be comma separated. Please double check that the file's column separation is ','\n")
         raise Exception
     
-    print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.GREEN}INFO{Fore.WHITE}] {len(features)} different features were provided.")
+    print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.GREEN}INFO{Fore.RESET}] {len(features)} different features were provided.")
     return features
 
 def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preprocess=False):
@@ -441,7 +441,7 @@ def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
     stats_condition = f"#script ran in {timing} for file {name}. {perfect_counter+imperfect_counter} reads out of {reads} were aligned. {perfect_counter} were perfectly aligned. {imperfect_counter} were aligned with mismatch. {non_aligned_counter} passed quality filtering but were not aligned. {quality_failed} did not pass quality filtering."
     
     if not param['Progress bar']:
-        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.GREEN}INFO{Fore.WHITE}] Sample {name} was processed in {timing}")
+        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.GREEN}INFO{Fore.RESET}] Sample {name} was processed in {timing}")
         
     try:
         master_list.sort(key = lambda master_list: int(master_list[0])) #numerical sorting
@@ -480,7 +480,7 @@ def inputs_handler():
         parameters["qual_up"]=int(parameters["qual_up"])
         parameters["qual_down"]=int(parameters["qual_down"])
     except Exception:
-        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.RED}FATAL{Fore.WHITE}] Please confirm you have provided the correct parameters.\nOnly numeric values are accepted in the folowing fields:\n-Feature read starting place;\n-Feature length;\n-mismatch;\n-Phred score.\n")
+        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.RED}FATAL{Fore.RESET}] Please confirm you have provided the correct parameters.\nOnly numeric values are accepted in the folowing fields:\n-Feature read starting place;\n-Feature length;\n-mismatch;\n-Phred score.\n")
         exit()
     
     # avoids getting -1 and actually filtering by highest phred score by mistake
@@ -516,7 +516,7 @@ def inputs_handler():
         
     if parameters['Running Mode']=='C':
         if len(parameters) != 17:
-            print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.RED}FATAL{Fore.WHITE}] Please confirm that all the input boxes are filled. Some parameters are missing.\n")
+            print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.RED}FATAL{Fore.RESET}] Please confirm that all the input boxes are filled. Some parameters are missing.\n")
             exit()
             
     parameters["cmd"] = False
@@ -645,15 +645,15 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
     
-    print(f"\n{Fore.RED} Welcome to:{Fore.WHITE}\n")
-    print(f" {Fore.RED}██████╗{Fore.WHITE} ███████╗ █████╗ ███████╗████████╗{Fore.RED}██████╗{Fore.WHITE}  ██████╗ ")
-    print(f" {Fore.RED}╚════██╗{Fore.WHITE}██╔════╝██╔══██╗██╔════╝╚══██╔══╝{Fore.RED}╚════██╗{Fore.WHITE}██╔═══██╗")
-    print(f" {Fore.RED} █████╔╝{Fore.WHITE}█████╗  ███████║███████╗   ██║    {Fore.RED}█████╔╝{Fore.WHITE}██║   ██║")
-    print(f" {Fore.RED}██╔═══╝ {Fore.WHITE}██╔══╝  ██╔══██║╚════██║   ██║   {Fore.RED}██╔═══╝ {Fore.WHITE}██║▄▄ ██║")
-    print(f" {Fore.RED}███████╗{Fore.WHITE}██║     ██║  ██║███████║   ██║   {Fore.RED}███████╗{Fore.WHITE}╚██████╔╝")
-    print(f" {Fore.RED}╚══════╝{Fore.WHITE}╚═╝     ╚═╝  ╚═╝╚══════╝   ╚═╝   {Fore.RED}╚══════╝{Fore.WHITE} ╚══▀▀═╝ ")
+    print(f"\n{Fore.RED} Welcome to:{Fore.RESET}\n")
+    print(f" {Fore.RED}██████╗{Fore.RESET} ███████╗ █████╗ ███████╗████████╗{Fore.RED}██████╗{Fore.RESET}  ██████╗ ")
+    print(f" {Fore.RED}╚════██╗{Fore.RESET}██╔════╝██╔══██╗██╔════╝╚══██╔══╝{Fore.RED}╚════██╗{Fore.RESET}██╔═══██╗")
+    print(f" {Fore.RED} █████╔╝{Fore.RESET}█████╗  ███████║███████╗   ██║    {Fore.RED}█████╔╝{Fore.RESET}██║   ██║")
+    print(f" {Fore.RED}██╔═══╝ {Fore.RESET}██╔══╝  ██╔══██║╚════██║   ██║   {Fore.RED}██╔═══╝ {Fore.RESET}██║▄▄ ██║")
+    print(f" {Fore.RED}███████╗{Fore.RESET}██║     ██║  ██║███████║   ██║   {Fore.RED}███████╗{Fore.RESET}╚██████╔╝")
+    print(f" {Fore.RED}╚══════╝{Fore.RESET}╚═╝     ╚═╝  ╚═╝╚══════╝   ╚═╝   {Fore.RED}╚══════╝{Fore.RESET} ╚══▀▀═╝ ")
                                                           
-    print(f"\n{Fore.GREEN} Version: {Fore.WHITE}{version}")
+    print(f"\n{Fore.GREEN} Version: {Fore.RESET}{version}")
 
     param = inputs_handler() if cmd is None else cmd
     
@@ -669,35 +669,35 @@ def initializer(cmd):
     param["directory"] = os.path.join(param['out'], f"2FAST2Q_output_{current_time}")
 
     if psutil.virtual_memory().percent>=75:
-        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.YELLOW}WARNING{Fore.WHITE}] Low RAM availability detected, file processing may be slow\n")
+        print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.YELLOW}WARNING{Fore.RESET}] Low RAM availability detected, file processing may be slow\n")
     
-    print(f"\n{Fore.YELLOW} -- Parameters -- {Fore.WHITE}")
+    print(f"\n{Fore.YELLOW} -- Parameters -- {Fore.RESET}")
     
     if param['Running Mode']=='C':
-        print(f"\n {Fore.GREEN}Mode: {Fore.WHITE}Align and count")
-        print(f" {Fore.GREEN}Allowed mismatches per alignement: {Fore.WHITE}{param['miss']}")
-        print(f" {Fore.GREEN}Minimal Phred Score per bp >= {Fore.WHITE}{param['phred']}")
-        print(f" {Fore.GREEN}Feature length: {Fore.WHITE}{param['length']}")
-        print(f" {Fore.GREEN}Read alignment start position: {Fore.WHITE}{param['start']}\n")
+        print(f"\n {Fore.GREEN}Mode: {Fore.RESET}Align and count")
+        print(f" {Fore.GREEN}Allowed mismatches per alignement: {Fore.RESET}{param['miss']}")
+        print(f" {Fore.GREEN}Minimal Phred Score per bp >= {Fore.RESET}{param['phred']}")
+        print(f" {Fore.GREEN}Feature length: {Fore.RESET}{param['length']}")
+        print(f" {Fore.GREEN}Read alignment start position: {Fore.RESET}{param['start']}\n")
     else:
-        print(f"\n {Fore.GREEN}Mode: {Fore.WHITE}Extract and count")
-        print(f" {Fore.GREEN}Minimal Phred Score per bp >= {Fore.WHITE}{param['phred']}")
+        print(f"\n {Fore.GREEN}Mode: {Fore.RESET}Extract and count")
+        print(f" {Fore.GREEN}Minimal Phred Score per bp >= {Fore.RESET}{param['phred']}")
 
         if param['upstream'] is not None:
-            print(f" {Fore.GREEN}Upstream search sequence: {Fore.WHITE}{param['upstream']}")
-            print(f" {Fore.GREEN}Mismatches allowed in the upstream search sequence: {Fore.WHITE}{param['miss_search_up']}")
-            print(f" {Fore.GREEN}Minimal Phred-score in the upstream search sequence: {Fore.WHITE}{param['qual_up']}")
+            print(f" {Fore.GREEN}Upstream search sequence: {Fore.RESET}{param['upstream']}")
+            print(f" {Fore.GREEN}Mismatches allowed in the upstream search sequence: {Fore.RESET}{param['miss_search_up']}")
+            print(f" {Fore.GREEN}Minimal Phred-score in the upstream search sequence: {Fore.RESET}{param['qual_up']}")
             
         if param['downstream'] is not None:
-            print(f" {Fore.GREEN}Downstream search sequence: {Fore.WHITE}{param['downstream']}")
-            print(f" {Fore.GREEN}Mismatches allowed in the downstream search sequence: {Fore.WHITE}{param['miss_search_down']}")
-            print(f" {Fore.GREEN}Minimal Phred-score in the downstream search sequence: {Fore.WHITE}{param['qual_down']}")
+            print(f" {Fore.GREEN}Downstream search sequence: {Fore.RESET}{param['downstream']}")
+            print(f" {Fore.GREEN}Mismatches allowed in the downstream search sequence: {Fore.RESET}{param['miss_search_down']}")
+            print(f" {Fore.GREEN}Minimal Phred-score in the downstream search sequence: {Fore.RESET}{param['qual_down']}")
 
         if (param['upstream'] is None) or (param['downstream'] is None):
-            print(f" {Fore.GREEN}Finding features with the folowing length: {Fore.WHITE}{param['length']}bp\n")
+            print(f" {Fore.GREEN}Finding features with the folowing length: {Fore.RESET}{param['length']}bp\n")
 
-    print(f" {Fore.GREEN}All data will be saved into {Fore.WHITE}{param['directory']}")
-    print(f"\n{Fore.YELLOW} ---- {Fore.WHITE}")
+    print(f" {Fore.GREEN}All data will be saved into {Fore.RESET}{param['directory']}")
+    print(f"\n{Fore.YELLOW} ---- {Fore.RESET}")
     
     return param
 
@@ -888,9 +888,9 @@ def compiling(param):
         for file in ordered_csv:
             os.remove(file)
             
-    print(f"\n {Fore.BLUE}{datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.GREEN}INFO{Fore.WHITE}] Analysis successfully completed")
+    print(f"\n {Fore.BLUE}{datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.GREEN}INFO{Fore.RESET}] Analysis successfully completed")
 
-    print(f"\n{Fore.GREEN} If you find 2FAST2Q useful, please consider citing:{Fore.MAGENTA}\n Bravo AM, Typas A, Veening J. 2022. \n 2FAST2Q: a general-purpose sequence search and counting program for FASTQ files. PeerJ 10:e14041\n DOI: 10.7717/peerj.14041\n{Fore.WHITE}")
+    print(f"\n{Fore.GREEN} If you find 2FAST2Q useful, please consider citing:{Fore.MAGENTA}\n Bravo AM, Typas A, Veening J. 2022. \n 2FAST2Q: a general-purpose sequence search and counting program for FASTQ files. PeerJ 10:e14041\n DOI: 10.7717/peerj.14041\n{Fore.RESET}")
 
 def run_stats(headers, param, compiled, head):
     
@@ -1126,7 +1126,7 @@ def hash_preprocesser(files,features,param,pool,cpu):
     speed advantages, as subsquent files normally share the same reads that dont
     align to anything, or reads with mismatches that indeed align"""
     
-    print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.GREEN}INFO{Fore.WHITE}] Please standby for the initialization procedure.")
+    print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.GREEN}INFO{Fore.RESET}] Please standby for the initialization procedure.")
     result=[]
 
     for name in files[:cpu]:
@@ -1152,7 +1152,7 @@ def aligner_mp_dispenser(files,features,param):
     if param["miss"] != 0:
         failed_reads,passed_reads=hash_preprocesser(files,features,param,pool,cpu)
     
-    print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.WHITE} [{Fore.GREEN}INFO{Fore.WHITE}] Processing {len(files)} files. Please hold.")
+    print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.GREEN}INFO{Fore.RESET}] Processing {len(files)} files. Please hold.")
 
     for start in range(0,len(files),cpu):
         failed_reads,passed_reads = \
