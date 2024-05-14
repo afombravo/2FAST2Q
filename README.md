@@ -1,14 +1,11 @@
 # Welcome to 2FAST2Q
-A Python3 program that counts sequence occurrences in raw FASTQ files. 
-2FAST2Q is ideal for CRISPRi-Seq, and for extracting and counting any kind of information from Illumina reads, such as barcodes.
-2FAST2Q can work with sequence mismatches, and can be used to find sequences delimited by known sequences in unaligned reads.  
+A Python3 program that counts sequence occurrences in FASTQ files. 
+2FAST2Q is ideal for CRISPRi-Seq, and for extracting and counting any kind of information from reads in the fastq format, such as barcodes in Bar-seq experiments.
+2FAST2Q can work with sequence mismatches, Phred-score, and can be used to find and extract unknown sequences delimited by known sequences.  
 
-2FAST2Q requires absolutely no installation whatsoever, and can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
+2FAST2Q can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
 
-The program is available as a standalone executable on MSwindows and MacOS, and can be downloaded from Zenodo by accessing the following link: 
-https://zenodo.org/record/5521996. MacOS users see instructions below ("Using the executable files" section)
-
-2FAST2Q is also available as a python package (https://pypi.org/project/fast2q/)
+2FAST2Q is primarily available as a python package (https://pypi.org/project/fast2q/) and can be installed with the following comand:
 
 `pip install fast2q `
 
@@ -31,42 +28,18 @@ Bravo AM, Typas A, Veening J. 2022. 2FAST2Q: a general-purpose sequence search a
 There are two versions of the program, with and without a basic user interface. 
 
 
-There is a graphical interface version for Windows, MacOS, and Linux.
-If for some reason the compiled version fails, please use the souce Python code from PyPI 
-
 Basic working principle behind 2FAST2Q:
 ![](https://github.com/afombravo/2FAST2Q/blob/main/graphical_workings.png)
 
 
-## Using the executable files:
 
 ### 1.	
-Download the 2FAST2Q software version appropriate to the intended operating system.
+Download and install the 2FAST2Q Python3 module using pip install: 
+`pip install fast2q`.
 
-### 2. 
-Double click the program icon. 
+### 2. For starting the graphical interface mode:
+type `python -m fast2q`
 
-
-
-### If using the linux or the MacOS version:
-
-
-
-Open a new terminal and change directory to the folder with the downloaded file
-
-`cd /user/etc/Downloads/`
-
-make the file executable by typing and entering:
-
-`chmod +x ./2FAST2Q` (change to match the correct file name) 
-
-type and enter:
-
-`./2FAST2Q` (change to match the correct file name) 
-
-
-
-### 3.
 The program will initialize after a few seconds, poping open the folowing window, and starting when 'OK' is selected. See the "inputs" section below for an explanation on these inputs.
 
 ![](https://github.com/afombravo/2FAST2Q/blob/main/C_mode.gif)
@@ -76,17 +49,6 @@ The default running mode is in "Counter" mode, however the user might want to ru
 
 ![](https://github.com/afombravo/2FAST2Q/blob/main/EC_mode.gif)
 
-
-
-## Using the non executable files (recommendable if the executable file is buggy)
-	
-
-### 1.	
-Download the 2FAST2Q Python3 module using pip install: 
-`pip install fast2q`.
-
-### 2. For starting the graphical interface mode:
-type `python -m fast2q`
 
 ### 2.1 For starting the non-graphical interface mode:
 type `python -m fast2q -c`
@@ -159,7 +121,7 @@ To run the program, three input paths are required:
 
 ### 1  Directory containing the sequencing files (assumed to be the current directory when using the cmd line version and no inputs are given)
 
-A path to the folder with the sequencing files (it doesn´t matter if in .gz or .fastq.gz format as 2fast2q auto determines the correct one)
+A path to the folder with the sequencing files (it doesn´t matter if in .gz or .fastq.gz format as 2fast2q auto determines the correct one). 2FAST2Q will automatically process all the .fastq files that exist in the indicated folder.
 
 ### 2  The path to the feature .csv file (optional) (assumed to be the only .csv file in the current directory when using the cmd line version and no inputs are given)
 Only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment.
@@ -212,7 +174,7 @@ In this case, it is allowed to input the following:
 
 2FAST2Q is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavily use the computer while 2FAST2Q is running to avoid constraining the processor.
 
-When running 2FAST2Q in the executable form, the initialization sequence might take up to a minute. 2FAST2Q will be operational when "Version X.X.X" appears on the window.
+2FAST2Q will be operational when its logo appears on the window.
 Depending on the used computer, 2FAST2Q might take a few minutes to run, especially with large datasets and when using mismatch finding. If no errors are shown, 2FAST2Q is still running. GIVE IT TIME! 
 
 
