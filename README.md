@@ -79,6 +79,8 @@ There are also several optional parameters. For their description and input type
 	 
 	 `-v [V]      prints the current version`
 
+  	 `-t [T]      Runs 2FAST2Q in test mode with example data. `
+
 	 `--s S       The full path to the directory with the sequencing files OR file`
 
 	 `--g G       The full path to the .csv file with the features.`
