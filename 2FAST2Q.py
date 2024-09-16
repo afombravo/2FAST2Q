@@ -136,7 +136,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
             container[sequence] = seq2bin(sequence)
         return container
     
-    def unfixed_starting_place_parser(read,qual,param):
+    def unfixed_starting_place_parser(read,qual,param,i):
         
         """ Determines the starting place of a read trimming based on the
         inputed parameters for upstream/downstream sequence matching. 
@@ -145,38 +145,36 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
 
         read_bin=seq2bin(read)
         start,end = None,None
-        
-        #CONVERT TO upstream_bin
-        
+
         if (param['upstream'] is not None) & (param['downstream'] is not None):
-            start=border_finder(param['upstream'],read_bin,param['miss_search_up'])
-            end=border_finder(param['downstream'],read_bin,param['miss_search_down'])
-            
+            start=border_finder(param['upstream_bin'][i],read_bin,param['miss_search_up'])
+            end=border_finder(param['downstream_bin'][i],read_bin,param['miss_search_down'])
+
             if (start is not None) & (end is not None):
-                qual_up = str(qual[start:start+len(param['upstream'])],"utf-8")
-                qual_down = str(qual[end:end+len(param['downstream'])],"utf-8")
+                qual_up = str(qual[start:start+len(param['upstream_bin'][i])],"utf-8")
+                qual_down = str(qual[end:end+len(param['downstream_bin'][i])],"utf-8")
                 
                 if (len(param['quality_set_up'].intersection(qual_up)) == 0) &\
                     (len(param['quality_set_down'].intersection(qual_down)) == 0):
-                    start+=len(param['upstream'])
+                    start+=len(param['upstream_bin'][i])
                     return start,end
 
         elif (param['upstream'] is not None) & (param['downstream'] is None):
-            start=border_finder(param['upstream'],read_bin,param['miss_search_up'])
+            start=border_finder(param['upstream_bin'],read_bin,param['miss_search_up'])
             
             if start is not None:
-                qual_up = str(qual[start:start+len(param['upstream'])],"utf-8")
+                qual_up = str(qual[start:start+len(param['upstream_bin'][i])],"utf-8")
                 
                 if len(param['quality_set_up'].intersection(qual_up)) == 0:
-                    start+=len(param['upstream'])
+                    start+=len(param['upstream_bin'][i])
                     end = start + param['length']
                     return start,end
             
         elif (param['upstream'] is None) & (param['downstream'] is not None):
-            end=border_finder(param['downstream'],read_bin,param['miss_search_down'])
+            end=border_finder(param['downstream_bin'],read_bin,param['miss_search_down'])
             
             if end is not None:
-                qual_down = str(qual[end:end+len(param['downstream'])],"utf-8")
+                qual_down = str(qual[end:end+len(param['downstream_bin'][i])],"utf-8")
                 
                 if len(param['quality_set_down'].intersection(qual_down)) == 0:
                     start = end-param['length']
@@ -243,7 +241,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                     if not fixed_start:
                         start,end=unfixed_starting_place_parser(str(reading[1],"utf-8"),\
                                                                 reading[3],\
-                                                                param)
+                                                                param,i)
                             
                         if (start is not None) & (end is not None):
                             if end < start: #if the end is not found or found before the start
