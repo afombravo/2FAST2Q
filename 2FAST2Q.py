@@ -246,7 +246,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                         if (start is not None) & (end is not None):
                             if end < start: #if the end is not found or found before the start
                                 start=None
-                                quality_failed_flag[i] = 1
+                                quality_failed_flag[i] = 1 #this includes reads without search sequences as failed at quality
                         else:
                             quality_failed_flag[i] = 1
     
@@ -263,22 +263,24 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                         else:
                             quality_failed_flag[i] = 1          
                 
-                if quality_failed_flag.any() == False:
+                if full_feature != "":
                     seq = full_feature[1:] #remove the first :
                     if param['Running Mode']=='C':
                         if seq in features:
                             features[seq].counts += 1
                             perfect_counter += 1
-    
+                            aligned = True
+                            
                         elif mismatch != []:
-                            features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter=\
+                            features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter,aligned=\
                             mismatch_search_handler(seq,mismatch,\
                                                     failed_reads,binary_features,\
                                                     imperfect_counter,features,\
                                                     passed_reads,ram_clearance,non_aligned_counter)
-    
+
                         else:
                             non_aligned_counter += 1
+
                     else:
                         if seq not in features:
                             features[seq] = Features(seq, 1)
@@ -286,7 +288,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                             features[seq].counts += 1
                         perfect_counter += 1
                     
-                else:
+                if quality_failed_flag.all():
                     quality_failed += 1
                 
                 reading = []
@@ -407,12 +409,12 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
     
     if seq in failed_reads:
         non_aligned_counter += 1
-        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter,False
     
     if seq in passed_reads:
         features[passed_reads[seq]].counts += 1
         imperfect_counter += 1
-        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter,True
     
     read=seq2bin(seq)                         
     for miss in mismatch:
@@ -423,7 +425,7 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
             features[feature].counts += 1
             imperfect_counter += 1
             passed_reads[seq] = feature
-            return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+            return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter,True
     
         else: 
             if miss == mismatch[-1]:
@@ -431,7 +433,7 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
                 if ram_clearance:
                     failed_reads.add(seq)
                 non_aligned_counter += 1
-                return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+                return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter,False
 
 def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
 
@@ -1090,6 +1092,7 @@ def run_stats(headers, param, compiled, head):
     
     fig, ax = plt.subplots(figsize=(12, int(len(global_stat)/4)))
     width = .75
+
     for i, (_,_,_,total_reads,aligned,_,_,not_aligned,q_failed) in enumerate(global_stat[header_ofset:]):   
 
         aligned = int(aligned)/int(total_reads)*100
