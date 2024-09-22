@@ -239,10 +239,11 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                 for i in range(param['search_iterations']):
             
                     if not fixed_start:
+
                         start,end=unfixed_starting_place_parser(str(reading[1],"utf-8"),\
                                                                 reading[3],\
                                                                 param,i)
-                            
+
                         if (start is not None) & (end is not None):
                             if end < start: #if the end is not found or found before the start
                                 start=None
@@ -365,7 +366,7 @@ def binary_subtract(array1,array2,mismatch):
     return 1
 
 @njit
-def border_finder(seq,read,mismatch): 
+def border_finder(seq,read,mismatch,start_place=0): 
     
     """ Matches 2 sequences (after converting to int8 format)
     based on the allowed mismatches. Used for sequencing searching
@@ -374,8 +375,8 @@ def border_finder(seq,read,mismatch):
     s=seq.size
     r=read.size
     fall_over_index = r-s-1
-    for i,bp in enumerate(read): 
-        comparison = read[i:s+i]
+    for i,bp in enumerate(read[start_place:]): 
+        comparison = read[start_place+i:s+i]
         finder = binary_subtract(seq,comparison,mismatch)
         if i > fall_over_index:
             return
@@ -808,7 +809,7 @@ def initializer(cmd):
         print(f"\n {Fore.GREEN}Mode: {Fore.RESET}Align and count")
         print(f" {Fore.GREEN}Allowed mismatches per alignement: {Fore.RESET}{param['miss']}")
         print(f" {Fore.GREEN}Minimal Phred Score per bp >= {Fore.RESET}{param['phred']}")
-        if (param['downstream'] is not None) or (param['upstream'] is not None):
+        if (param['downstream'] is None) or (param['upstream'] is None):
             print(f" {Fore.GREEN}Feature length: {Fore.RESET}{param['length']}")
             print(f" {Fore.GREEN}Read alignment start position: {Fore.RESET}{param['start']}\n")
     else:
@@ -838,7 +839,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.7"
+    version = "2.7.0"
     
     def current_dir_path_handling(param):
         if param[0] is None:
