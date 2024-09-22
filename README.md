@@ -164,7 +164,7 @@ A path to the output folder (for safety, a subfolder will always be created on t
 
 ### 4 Parameters
 
-For extracting all sequences at a certain position in the read select the extractor + Counter (EC) mode. The default is Counter (C) mode only.
+For extracting all sequences at a certain position in the read select the extractor + Counter (`--mo EC`) mode. The default is Counter (`--mo C`) mode only.
 
 Progress Bar. (Default is enabled)
 
@@ -192,7 +192,7 @@ In this case, it is allowed to input the following:
 
 When searching a read for multiple sequences, one can either do so by:
   1) confirguring different fixed positions by separating all start locations with a ",". For example: "0,20,50" - the program will search for 3 sequences per read, starting at position 0,20, and 50, with the predefided sequence length.
-  2) configuring different 5' and 3' search sequences, also separated by "," and inputted as pairs: For example: upstream (`--us`) ATCG,GGTGG & downstream (`--ds`) AATC,GCACAC will initiate, per read, searches for any features between the ATCG * AATC and GGTGG * GCACAC sequences. If found, these 2 sequences will be merged separated by ":" and either try to be aligned against any found features in the .csv file (default), or returned as they are if in "extract and count" mode (`--mo EC`)
+  2) configuring different 5' and 3' search sequences, also separated by "," and inputted as pairs: For example: upstream (`--us`) ATCG,GGTGG & downstream (`--ds`) AATC,GCACAC will initiate, per read, searches for any features between the ATCG * AATC and GGTGG * GCACAC sequences. If found, these 2 sequences will be merged separated by ":" and either try to be aligned against any found features in the .csv file (default), or returned as they are if in "extract and count" mode (`--mo EC`). Keep in mind that when multiple feature sequences are delimited by the same search sequences, only the first instance of any sequence passing the criteria will be returned. Multiple sequences per read can only be retrieved when using different search sequences.
  
 
 ## While Running
