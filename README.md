@@ -1,7 +1,7 @@
 # Welcome to 2FAST2Q
 A Python3 program that counts sequence occurrences in FASTQ files. 
 2FAST2Q is ideal for CRISPRi-Seq, and for extracting and counting any kind of information from reads in the fastq format, such as barcodes in Bar-seq experiments.
-2FAST2Q can work with sequence mismatches, Phred-score, and can be used to find and extract unknown sequences delimited by known sequences.  
+2FAST2Q can work with sequence mismatches, Phred-score, and be used to find and extract unknown sequences delimited by known sequences.  
 2FAST2Q can extract multiple features per read using either fixed positions or delimiting search sequences.
 
 2FAST2Q can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
