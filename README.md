@@ -141,6 +141,7 @@ A path to the .csv file (this format can be obtained using the "save as" option 
 | sgRNA0002 | AGTGTTGATTTACCAACGTT |
 
 
+
 #### 2.1
 
 2FATS2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
@@ -157,9 +158,11 @@ For extracting all possible combinations in a file, one can use the "extract and
 
 
 
+
 ### 3 the output directory
 
 A path to the output folder (for safety, a subfolder will always be created on this directory) (2fast2q automatically creates a subdirectory within the current directory when using the cmd line version and no inputs are given)
+
 
 
 ### 4 Parameters
@@ -194,6 +197,7 @@ When searching a read for multiple sequences, one can either do so by:
   1) confirguring different fixed positions by separating all start locations with a ",". For example: "0,20,50" - the program will search for 3 sequences per read, starting at position 0,20, and 50, with the predefided sequence length.
   2) configuring different 5' and 3' search sequences, also separated by "," and inputted as pairs: For example: upstream (`--us`) ATCG,GGTGG & downstream (`--ds`) AATC,GCACAC will initiate, per read, searches for any features between the ATCG * AATC and GGTGG * GCACAC sequences. If found, these 2 sequences will be merged separated by ":" and either try to be aligned against any found features in the .csv file (default), or returned as they are if in "extract and count" mode (`--mo EC`). Keep in mind that when multiple feature sequences are delimited by the same search sequences, only the first instance of any sequence passing the criteria will be returned. Multiple sequences per read can only be retrieved when using different search sequences.
  
+
 
 ## While Running
 
