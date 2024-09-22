@@ -142,7 +142,7 @@ A path to the .csv file (this format can be obtained using the "save as" option 
 
 
 
-#### 2.1
+### 2.1
 
 2FATS2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
 
