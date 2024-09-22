@@ -184,13 +184,19 @@ For extracting all sequences at a certain position in the read select the extrac
 
 If the starting position varies within the read, it is possible to search for a delimiting known sequence, and then extract the sequence before/after it.
 In this case, it is allowed to input the following: 
+
  	1) A 5' end search sequence, and the amount of bp the program should inventory after.
+  
  	2) A 3' end search sequence, and the amount of bp the program should inventory before.
+  
  	3) A 5' and 3' end search sequence, the program will return and count everything in between these two.
+  
  	4) How many mismatches are allowed in the search sequence
 
 When searching a read for multiple sequences, one can either do so by:
+
 	1) confirguring different fixed positions by separating all start locations with a ",". For example: "0,20,50" - the program will search for 3 sequences per read, starting at position 0,20, and 50, with the predefided sequence length.
+ 
  	2) configuring different 5' and 3' search sequences, also separated by "," and inputted as pairs: For example: upstream (`--us`) ATCG,GGTGG & downstream (`--ds`) AATC,GCACAC will initiate, per read, searches for any features between the ATCG * AATC and GGTGG * GCACAC sequences. If found, these 2 sequences will be merged separated by ":" and either try to be aligned against any found features in the .csv file (default), or returned as they are if in "extract and count" mode (`--mo EC`)
  
 
