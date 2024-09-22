@@ -2,6 +2,7 @@
 A Python3 program that counts sequence occurrences in FASTQ files. 
 2FAST2Q is ideal for CRISPRi-Seq, and for extracting and counting any kind of information from reads in the fastq format, such as barcodes in Bar-seq experiments.
 2FAST2Q can work with sequence mismatches, Phred-score, and can be used to find and extract unknown sequences delimited by known sequences.  
+2FAST2Q can extract multiple features per read using either fixed positions or delimiting search sequences.
 
 2FAST2Q can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
 
@@ -140,7 +141,20 @@ A path to the .csv file (this format can be obtained using the "save as" option 
 | sgRNA0002 | AGTGTTGATTTACCAACGTT |
 
 
-Leave empty if you want to run the program in extract and count mode (extract all found features without alignements)
+#### 2.1
+
+2FATS2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
+
+| sgRNA0001.1 | AATAGCATAGAAATCATACA:GATTACA |
+|-----------|----------------------|
+| sgRNA0001 | AATAGCATAGAAATCATACA |
+
+
+In this case, sgRNA0001.1 corresponds to a double sequence. Only reads containing BOTH sequences will be aligned to this sgRNA. If only the first sequence of the 2 is found, it will align to sgRNA0001, if only the second sequence is found, it will fail to align anywhere. Only the combinations presente in the .csv file will be considered. 
+See section 4 for instructions on how to perform multiple sequence searches per read.
+
+For extracting all possible combinations in a file, one can use the "extract and count" mode (extract all found features without alignments) (`--mo EC`). In this case, no .csv is required as input.
+
 
 
 ### 3 the output directory
@@ -170,10 +184,14 @@ For extracting all sequences at a certain position in the read select the extrac
 
 If the starting position varies within the read, it is possible to search for a delimiting known sequence, and then extract the sequence before/after it.
 In this case, it is allowed to input the following: 
- 1) A 5' end search sequence, and the amount of bp the program should inventory after.
- 2) A 3' end search sequence, and the amount of bp the program should inventory before.
- 3) A 5'and 3' end search sequence, the program will return and count everything in between these two.
- 4) How many mismatches are allowed in the search sequence
+ 	1) A 5' end search sequence, and the amount of bp the program should inventory after.
+ 	2) A 3' end search sequence, and the amount of bp the program should inventory before.
+ 	3) A 5' and 3' end search sequence, the program will return and count everything in between these two.
+ 	4) How many mismatches are allowed in the search sequence
+
+When searching a read for multiple sequences, one can either do so by:
+	1) confirguring different fixed positions by separating all start locations with a ",". For example: "0,20,50" - the program will search for 3 sequences per read, starting at position 0,20, and 50, with the predefided sequence length.
+ 	2) configuring different 5' and 3' search sequences, also separated by "," and inputted as pairs: For example: upstream (`--us`) ATCG,GGTGG & downstream (`--ds`) AATC,GCACAC will initiate, per read, searches for any features between the ATCG * AATC and GGTGG * GCACAC sequences. If found, these 2 sequences will be merged separated by ":" and either try to be aligned against any found features in the .csv file (default), or returned as they are if in "extract and count" mode (`--mo EC`)
  
 
 ## While Running
