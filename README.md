@@ -1,6 +1,8 @@
 <div align="center">
+	
 ![PyPI](https://img.shields.io/pypi/v/fast2q.svg)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/fast2q.svg)
+
 </div>
 
 # Welcome to 2FAST2Q
