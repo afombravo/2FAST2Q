@@ -54,7 +54,7 @@ def path_parser(folder_path, extension):
         ordered = [path[0] for path in sorted(pathing, key=lambda e: e[-1])]#[::-1]
 
         if ordered == []:
-            print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.RED}FATAL{Fore.RESET}] Check the path to the {extension[1:]} files folder. No files of this type found.\n")
+            print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.RED}FATAL{Fore.RESET}] Check the path to the {extension} files folder. No files of this type found.\n")
             raise Exception
 
     else:
@@ -160,7 +160,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                     return start,end
 
         elif (param['upstream'] is not None) & (param['downstream'] is None):
-            start=border_finder(param['upstream_bin'],read_bin,param['miss_search_up'])
+            start=border_finder(param['upstream_bin'][i],read_bin,param['miss_search_up'])
             
             if start is not None:
                 qual_up = str(qual[start:start+len(param['upstream_bin'][i])],"utf-8")
@@ -171,7 +171,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                     return start,end
             
         elif (param['upstream'] is None) & (param['downstream'] is not None):
-            end=border_finder(param['downstream_bin'],read_bin,param['miss_search_down'])
+            end=border_finder(param['downstream_bin'][i],read_bin,param['miss_search_down'])
             
             if end is not None:
                 qual_down = str(qual[end:end+len(param['downstream_bin'][i])],"utf-8")
@@ -243,7 +243,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                         start,end=unfixed_starting_place_parser(str(reading[1],"utf-8"),\
                                                                 reading[3],\
                                                                 param,i)
-
+                            
                         if (start is not None) & (end is not None):
                             if end < start: #if the end is not found or found before the start
                                 start=None
@@ -316,6 +316,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         param['search_iterations'] = len(param['end_positioning'])
         
     else:
+        len_up,len_down = 0,0
         fixed_start = False
         if param['upstream'] is not None:
             param['upstream_bin'] = [seq2bin(n.upper()) for n in param['upstream'].split(",")]
@@ -330,7 +331,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                 exit()
                 
         param['search_iterations'] = max(len_up,len_down)
-        
+
     _, ext = os.path.splitext(raw)
     
     if (not preprocess) & (param['Progress bar']):
@@ -371,7 +372,7 @@ def border_finder(seq,read,mismatch,start_place=0):
     """ Matches 2 sequences (after converting to int8 format)
     based on the allowed mismatches. Used for sequencing searching
     a start/end place in a read"""
-    
+
     s=seq.size
     r=read.size
     fall_over_index = r-s-1
@@ -839,7 +840,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.7.0"
+    version = "2.7.1"
     
     def current_dir_path_handling(param):
         if param[0] is None:
