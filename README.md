@@ -1,3 +1,6 @@
+![PyPI](https://img.shields.io/pypi/v/fast2q.svg)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/fast2q.svg)
+
 # Welcome to 2FAST2Q
 A Python3 program that counts sequence occurrences in FASTQ files. 
 
