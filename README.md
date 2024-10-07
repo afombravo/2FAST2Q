@@ -55,14 +55,14 @@ pip install fast2q
 
 It is then possible to test if 2FAST2Q was correctly installed by running a test with demo data. 
 ```bash
-python -m fast2q -c -t`
+python -m fast2q -c -t
 ```
 
 At the end of a successful test, a message displaying "Test successful. 2FAST2Q is working as intended!" should be visible.
 
 ### 2. For starting the graphical interface mode:
 ```bash
-python -m fast2q`
+python -m fast2q
 ```
 
 The program will initialize after a few seconds, poping open the folowing window, and starting when 'OK' is selected. See the "inputs" section below for an explanation on these inputs.
@@ -77,7 +77,7 @@ The default running mode is in "Counter" mode, however the user might want to ru
 
 ### 2.1 For starting the non-graphical interface mode:
 ```bash
-python -m fast2q -c`
+python -m fast2q -c
 ```
 
 When running without specified parameters, 2FAST2Q will assume the current running directory has all the required files:
