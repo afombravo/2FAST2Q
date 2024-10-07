@@ -270,14 +270,19 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                         if seq in features:
                             features[seq].counts += 1
                             perfect_counter += 1
-                            aligned = True
-                            
+
                         elif mismatch != []:
-                            features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter,aligned=\
-                            mismatch_search_handler(seq,mismatch,\
-                                                    failed_reads,binary_features,\
-                                                    imperfect_counter,features,\
-                                                    passed_reads,ram_clearance,non_aligned_counter)
+                            features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter=\
+                            mismatch_search_handler(seq,
+                                                    mismatch,
+                                                    failed_reads,
+                                                    binary_features,
+                                                    imperfect_counter,
+                                                    features,
+                                                    passed_reads,
+                                                    ram_clearance,
+                                                    non_aligned_counter
+                                                    )
 
                         else:
                             non_aligned_counter += 1
@@ -411,12 +416,12 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
     
     if seq in failed_reads:
         non_aligned_counter += 1
-        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter,False
+        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
     
     if seq in passed_reads:
         features[passed_reads[seq]].counts += 1
         imperfect_counter += 1
-        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter,True
+        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
     
     read=seq2bin(seq)                         
     for miss in mismatch:
@@ -427,7 +432,7 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
             features[feature].counts += 1
             imperfect_counter += 1
             passed_reads[seq] = feature
-            return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter,True
+            return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
     
         else: 
             if miss == mismatch[-1]:
@@ -435,7 +440,7 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
                 if ram_clearance:
                     failed_reads.add(seq)
                 non_aligned_counter += 1
-                return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter,False
+                return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
 
 def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
 
@@ -500,14 +505,25 @@ def inputs_handler():
     parameters=inputs_initializer()
 
     try:
-        parameters["start"]=int(parameters["start"])
+
         parameters["length"]=int(parameters["length"])
         parameters["miss"]=int(parameters["miss"])
         parameters["phred"]=int(parameters["phred"])
-        parameters["miss_search_up"]=int(parameters["miss_search_up"])
-        parameters["miss_search_down"]=int(parameters["miss_search_down"])
-        parameters["qual_up"]=int(parameters["qual_up"])
-        parameters["qual_down"]=int(parameters["qual_down"])
+        
+        if parameters['Search Features'] == "Custom":
+            parameters["miss_search_up"]=int(parameters["miss_search_up"])
+            parameters["miss_search_down"]=int(parameters["miss_search_down"])
+            parameters["qual_up"]=int(parameters["qual_up"])
+            parameters["qual_down"]=int(parameters["qual_down"])
+        else:
+            parameters["start"]="0"
+            parameters["miss_search_up"]=0
+            parameters["miss_search_down"]=0
+            parameters["qual_up"]=30
+            parameters["qual_down"]=30
+            parameters['upstream'] = None
+            parameters['downstream'] = None
+            
     except Exception:
         print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.RED}FATAL{Fore.RESET}] Please confirm you have provided the correct parameters.\nOnly numeric values are accepted in the folowing fields:\n-Feature read starting place;\n-Feature length;\n-mismatch;\n-Phred score.\n")
         exit()
@@ -515,7 +531,7 @@ def inputs_handler():
     # avoids getting -1 and actually filtering by highest phred score by mistake
     if int(parameters["phred"]) == 0:
         parameters["phred"] = 1
-        
+
     if int(parameters["qual_up"]) == 0:
         parameters["qual_up"] = 1
         
@@ -543,11 +559,6 @@ def inputs_handler():
     else:
         parameters['Running Mode']="C"
         
-    if parameters['Running Mode']=='C':
-        if len(parameters) != 17:
-            print(f"\n{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{Fore.RED}FATAL{Fore.RESET}] Please confirm that all the input boxes are filled. Some parameters are missing.\n")
-            exit()
-            
     parameters["cmd"] = False
     parameters['cpu'] = False
 
@@ -840,7 +851,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.7.1"
+    version = "2.7.2"
     
     def current_dir_path_handling(param):
         if param[0] is None:
