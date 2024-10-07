@@ -28,7 +28,11 @@ setup(
                            "dataclasses",\
                            "tk-tools >= 0.1",
                            "colorama"],
-        
+        entry_points={
+        'console_scripts': [
+            '2fast2q=fast2q.fast2q:main',  # Replace `2fast2q` with the command name you want to use
+            ],
+        },
         keywords=['CRISPRi', 'CRISPRi-Seq', 'essentiality', "gene fitness","fastq","screening"],
         classifiers= [
             "Development Status :: 6 - Mature",
