@@ -18,7 +18,9 @@ A Python3 program that counts sequence occurrences in FASTQ files.
 
 2FAST2Q is primarily available as a python package (https://pypi.org/project/fast2q/) and can be installed with the following comand:
 
-`pip install fast2q `
+```bash
+pip install fast2q
+```
 
 In here I share the original Python3 source code, fast2q.py;
 The instructions on how to use 2FAST2Q;
@@ -47,15 +49,21 @@ Basic working principle behind 2FAST2Q:
 ### 1. Instalation
 Open a terminal with python3 installed, and download and install the 2FAST2Q Python3 module using pip install: 
 
-`pip install fast2q`
+```bash
+pip install fast2q
+```
 
 It is then possible to test if 2FAST2Q was correctly installed by running a test with demo data. 
-type `python -m fast2q -c -t`
+```bash
+python -m fast2q -c -t`
+```
 
 At the end of a successful test, a message displaying "Test successful. 2FAST2Q is working as intended!" should be visible.
 
 ### 2. For starting the graphical interface mode:
-type `python -m fast2q`
+```bash
+python -m fast2q`
+```
 
 The program will initialize after a few seconds, poping open the folowing window, and starting when 'OK' is selected. See the "inputs" section below for an explanation on these inputs.
 
@@ -68,7 +76,9 @@ The default running mode is in "Counter" mode, however the user might want to ru
 
 
 ### 2.1 For starting the non-graphical interface mode:
-type `python -m fast2q -c`
+```bash
+python -m fast2q -c`
+```
 
 When running without specified parameters, 2FAST2Q will assume the current running directory has all the required files:
 
