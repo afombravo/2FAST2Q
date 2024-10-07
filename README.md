@@ -67,7 +67,7 @@ At the end of a successful test, a message displaying "Test successful. 2FAST2Q 
 
 The program will initialize after a few seconds, poping open the folowing window, and starting when 'OK' is selected. See the "inputs" section below for an explanation on these inputs.
 
-![](https://github.com/afombravo/2FAST2Q/blob/main/command_interface.gif)
+![](https://github.com/afombravo/2FAST2Q/blob/main/graphical_interface.gif)
 
 
 The default running mode is in "Counter" mode, however the user might want to run 2FAST2Q in 'Extract and Counter' mode where features are not aligned to a reference, but *de novo* extracted from the file based on indicated search sequences. 
@@ -85,7 +85,7 @@ When running without specified parameters, 2FAST2Q will assume the current runni
 
 How it looks when running in the default 'Counter' mode:
 
-![](https://github.com/afombravo/2FAST2Q/blob/main/graphical_interface.gif)
+![](https://github.com/afombravo/2FAST2Q/blob/main/command_interface.gif)
 
 
 There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
