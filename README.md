@@ -55,29 +55,26 @@ pip install fast2q
 
 It is then possible to test if 2FAST2Q was correctly installed by running a test with demo data. 
 ```bash
-python -m fast2q -c -t
+2fast2q -c -t
 ```
 
 At the end of a successful test, a message displaying "Test successful. 2FAST2Q is working as intended!" should be visible.
 
 ### 2. For starting the graphical interface mode:
 ```bash
-python -m fast2q
+2fast2q
 ```
 
 The program will initialize after a few seconds, poping open the folowing window, and starting when 'OK' is selected. See the "inputs" section below for an explanation on these inputs.
 
-![](https://github.com/afombravo/2FAST2Q/blob/main/C_mode.gif)
+![](https://github.com/afombravo/2FAST2Q/blob/main/graphical_interface.mp4)
 
 
-The default running mode is in "Counter" mode, however the user might want to run 2FAST2Q in 'Extract and Counter' mode where features are not aligned to a reference, but *de novo* extracted from the file based on indicated search sequences. Consider the folowing example:
-
-![](https://github.com/afombravo/2FAST2Q/blob/main/EC_mode.gif)
-
+The default running mode is in "Counter" mode, however the user might want to run 2FAST2Q in 'Extract and Counter' mode where features are not aligned to a reference, but *de novo* extracted from the file based on indicated search sequences. 
 
 ### 2.1 For starting the non-graphical interface mode:
 ```bash
-python -m fast2q -c
+2fast2q -c
 ```
 
 When running without specified parameters, 2FAST2Q will assume the current running directory has all the required files:
@@ -88,11 +85,7 @@ When running without specified parameters, 2FAST2Q will assume the current runni
 
 How it looks when running in the default 'Counter' mode:
 
-![](https://github.com/afombravo/2FAST2Q/blob/main/C_mode_cmd.gif)
-
-How it looks when running in the 'Extract and Counter' mode:
-
-![](https://github.com/afombravo/2FAST2Q/blob/main/Ec_mode_cmd.gif)
+![](https://github.com/afombravo/2FAST2Q/blob/main/graphical_interface.mp4)
 
 
 There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
