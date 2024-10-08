@@ -155,14 +155,14 @@ A path to the .csv file (this format can be obtained using the "save as" option 
 
 
 
-### 2.1  2FATS2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
+### 2.1  2FAST2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
 
 | sgRNA0001.1 | AATAGCATAGAAATCATACA:GATTACA |
 |-----------|----------------------|
 | sgRNA0001 | AATAGCATAGAAATCATACA |
 
 
-In this case, sgRNA0001.1 corresponds to a double sequence. Only reads containing BOTH sequences will be aligned to this sgRNA. If only the first sequence of the 2 is found, it will align to sgRNA0001, if only the second sequence is found, it will fail to align anywhere. Only the combinations presente in the .csv file will be considered. 
+In this case, sgRNA0001.1 corresponds to a double sequence. Only reads containing BOTH sequences will be aligned to this sgRNA. If only the first sequence of the 2 is found, it will align to sgRNA0001, if only the second sequence is found, it will fail to align anywhere. Only the combinations present in the .csv file will be considered. 
 See section 4 for instructions on how to perform multiple sequence searches per read.
 
 For extracting all possible combinations in a file, one can use the "extract and count" mode (extract all found features without alignments) (`--mo EC`). In this case, no .csv is required as input.
