@@ -180,7 +180,7 @@ A path to the output folder (for safety, a subfolder will always be created on t
 
 For extracting all sequences at a certain position in the read select the extractor + Counter (`--mo EC`) mode. The default is Counter (`--mo C`) mode only.
 
-Progress Bar. (Default is enabled)
+Progress Bar (`--v`). (Default is enabled)
 
 The minimal sequencing phred-score for each nucleotide (default = 30)
 
@@ -193,8 +193,6 @@ The number of allowed mismatches per feature (default = 1). When in extract + Co
 
 Keep temporary files mode (default = no).
 When enabled, deletes all temporary files. To keep all files, change to "n" in the graphical mode, or input the parameter `--k` in the cmd lines.
-
-For extracting all sequences at a certain position in the read select the extractor + Counter (EC) mode. The default is Counter (C) mode only.
 
 If the starting position varies within the read, it is possible to search for a delimiting known sequence, and then extract the sequence before/after it.
 In this case, it is allowed to input the following: 
