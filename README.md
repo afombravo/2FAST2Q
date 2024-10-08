@@ -90,7 +90,7 @@ How it looks when running in the default 'Counter' mode:
 
 There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
 
-	 `python -m fast2q -h`
+	 `2fast2q -h`
 
 	 `-h, --help  show this help message and exit `
 
