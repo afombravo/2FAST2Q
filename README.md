@@ -34,7 +34,7 @@ A more in depth description of the program is also available:
 
 Bravo AM, Typas A, Veening J. 2022. 2FAST2Q: a general-purpose sequence search and counting program for FASTQ files. PeerJ 10:e14041 : https://peerj.com/articles/14041/
 
-
+Despite still performing as advertised, keep in mind that 2FAST2Q is a bit like the ship of theseus and has changed over time under the same script. Some functionalities and interfaces are different from what is published. This github page is always up-to-date though. 
 
 ## How to use it
 
