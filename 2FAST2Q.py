@@ -147,20 +147,26 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         start,end = None,None
 
         if (param['upstream'] is not None) & (param['downstream'] is not None):
-            start=border_finder(param['upstream_bin'][i],read_bin,param['miss_search_up'])
-            end=border_finder(param['downstream_bin'][i],read_bin,param['miss_search_down'])
-
-            if (start is not None) & (end is not None):
-                qual_up = str(qual[start:start+len(param['upstream_bin'][i])],"utf-8")
-                qual_down = str(qual[end:end+len(param['downstream_bin'][i])],"utf-8")
-                
-                if (len(param['quality_set_up'].intersection(qual_up)) == 0) &\
-                    (len(param['quality_set_down'].intersection(qual_down)) == 0):
-                    start+=len(param['upstream_bin'][i])
-                    return start,end
+            start=border_finder(param['upstream_bin'][i],
+                                read_bin,param['miss_search_up'])
+            
+            if start is not None:
+                end=border_finder(param['downstream_bin'][i],
+                                  read_bin,param['miss_search_down'],
+                                  start_place=start+1)
+    
+                if end is not None:
+                    qual_up = str(qual[start:start+len(param['upstream_bin'][i])],"utf-8")
+                    qual_down = str(qual[end:end+len(param['downstream_bin'][i])],"utf-8")
+                    
+                    if (len(param['quality_set_up'].intersection(qual_up)) == 0) &\
+                        (len(param['quality_set_down'].intersection(qual_down)) == 0):
+                        start+=len(param['upstream_bin'][i])
+                        return start,end
 
         elif (param['upstream'] is not None) & (param['downstream'] is None):
-            start=border_finder(param['upstream_bin'][i],read_bin,param['miss_search_up'])
+            start=border_finder(param['upstream_bin'][i],
+                                read_bin,param['miss_search_up'])
             
             if start is not None:
                 qual_up = str(qual[start:start+len(param['upstream_bin'][i])],"utf-8")
@@ -171,7 +177,8 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                     return start,end
             
         elif (param['upstream'] is None) & (param['downstream'] is not None):
-            end=border_finder(param['downstream_bin'][i],read_bin,param['miss_search_down'])
+            end=border_finder(param['downstream_bin'][i],
+                              read_bin,param['miss_search_down'])
             
             if end is not None:
                 qual_down = str(qual[end:end+len(param['downstream_bin'][i])],"utf-8")
@@ -186,27 +193,10 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         
         def getuncompressedsize(raw):
             
-            """ Estimates the total size of a .gz compressed 
-            file for the progress bars """
-            
-            def estimate_uncompressed_gz_size(filename):
-                with open(filename, "rb") as gz_in:
-                    sample = gz_in.read(1000000)
-                    gz_in.seek(-4, SEEK_END)
-                    file_size = os.fstat(gz_in.fileno()).st_size
-
-                dobj = zlib.decompressobj(31)
-                d_sample = dobj.decompress(sample)
-            
-                compressed_len = len(sample) - len(dobj.unconsumed_tail)
-                decompressed_len = len(d_sample)
-            
-                return int(file_size * decompressed_len / compressed_len)
-            
             if ext == ".gz":
-                return estimate_uncompressed_gz_size(raw)
+                return sum(1 for _ in gzip.open(raw, 'rt'))
             else:
-                return os.path.getsize(raw)
+                return sum(1 for _ in open(raw, 'rt'))
 
         if o > cpu:
             current = mp.current_process()
@@ -215,7 +205,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
             pos = i+1
         total_file_size = getuncompressedsize(raw)
         tqdm_text = f"Processing file {i+1} out of {o}"
-        return tqdm(total=total_file_size,desc=tqdm_text, position=pos,colour="green",leave=False,ascii=True,unit="characters")
+        return tqdm(total=total_file_size,desc=tqdm_text, position=pos,colour="green",leave=False,ascii=True,unit="lines")
     
     def fastq_parser(current,features,failed_reads,passed_reads,fixed_start):
         
@@ -230,7 +220,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         for line in current:
             quality_failed_flag = np.zeros(param['search_iterations'])
             if (not preprocess) & (param['Progress bar']):
-                pbar.update(len(line))
+                pbar.update(1)
             reading.append(line[:-1])
             
             if len(reading) == 4: #a read always has 4 lines
@@ -382,7 +372,7 @@ def border_finder(seq,read,mismatch,start_place=0):
     r=read.size
     fall_over_index = r-s-1
     for i,bp in enumerate(read[start_place:]): 
-        comparison = read[start_place+i:s+i]
+        comparison = read[start_place+i:s+start_place+i]
         finder = binary_subtract(seq,comparison,mismatch)
         if i > fall_over_index:
             return
@@ -734,7 +724,7 @@ def inputs_initializer():
     }
     
     default_inputs = {
-        "out_file_name": ["Output File Name", 4, 0, "count_matrix"],
+        "out_file_name": ["Output File Name", 4, 0, "compiled"],
         "length": ["Feature length", 8, 0, 20],
         "miss": ["Allowed mismatches in features", 5, 0, 1],
         "phred": ["Minimal feature Phred-score in features", 6, 0, 30]}
@@ -851,7 +841,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.7.2"
+    version = "2.7.3 - DEV"
     
     def current_dir_path_handling(param):
         if param[0] is None:
