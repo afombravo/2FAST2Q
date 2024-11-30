@@ -1,5 +1,6 @@
 <div align="center">
-	
+
+![Maintenance](https://img.shields.io/maintenance/yes/2024)
 ![PyPI](https://img.shields.io/pypi/v/fast2q.svg)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/fast2q.svg)
 
