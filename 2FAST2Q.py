@@ -377,7 +377,7 @@ def border_finder(seq,read,mismatch,start_place=0):
         if i > fall_over_index:
             return
         if finder != 0:
-            return i
+            return i+start_place
 
 @njit
 def features_all_vs_all(binary_features,read,mismatch):
