@@ -1,6 +1,6 @@
 <div align="center">
 
-![Maintenance](https://img.shields.io/maintenance/yes/2024)
+[![Actively Maintained](https://img.shields.io/badge/Maintenance%20Level-Actively%20Maintained-green.svg)](https://gist.github.com/cheerfulstoic/d107229326a01ff0f333a1d3476e068d)
 ![PyPI](https://img.shields.io/pypi/v/fast2q.svg)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/fast2q.svg)
 
