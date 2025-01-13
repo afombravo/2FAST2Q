@@ -1,6 +1,7 @@
 <div align="center">
 
 [![Actively Maintained](https://img.shields.io/badge/Maintenance%20Level-Actively%20Maintained-green.svg)](https://gist.github.com/cheerfulstoic/d107229326a01ff0f333a1d3476e068d)
+[![Anaconda-Server Badge](https://anaconda.org/bioconda/fast2q/badges/version.svg)](https://anaconda.org/bioconda/fast2q)
 ![PyPI](https://img.shields.io/pypi/v/fast2q.svg)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/fast2q.svg)
 
@@ -17,10 +18,16 @@ A Python3 program that counts sequence occurrences in FASTQ files.
 
 2FAST2Q can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
 
-2FAST2Q is primarily available as a python package (https://pypi.org/project/fast2q/) and can be installed with the following comand:
+2FAST2Q is available as a python package (https://pypi.org/project/fast2q/) and can be installed with the following comand:
 
 ```bash
 pip install fast2q
+```
+
+2FAST2Q also exists as a bioconda package here: https://anaconda.org/bioconda/fast2q
+
+```bash
+conda install bioconda::fast2q
 ```
 
 In here I share the original Python3 source code, fast2q.py;
