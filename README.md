@@ -187,7 +187,7 @@ A path to the output folder (for safety, a subfolder will always be created on t
 
 
 
-### 4 Parameters
+## 4 Some parameter explanation
 
 For extracting all sequences at a certain position in the read select the extractor + Counter (`--mo EC`) mode. The default is Counter (`--mo C`) mode only.
 
@@ -221,7 +221,6 @@ When searching a read for multiple sequences, one can either do so by:
 
 ## While Running
 
-=================================
 
 2FAST2Q is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavily use the computer while 2FAST2Q is running to avoid constraining the processor.
 
