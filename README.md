@@ -1,12 +1,7 @@
 <div align="center">
 
 [![Actively Maintained](https://img.shields.io/badge/Maintenance%20Level-Actively%20Maintained-green.svg)](https://gist.github.com/cheerfulstoic/d107229326a01ff0f333a1d3476e068d)
-
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
-[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
-[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
-
-[![Anaconda-Server Badge](https://anaconda.org/bioconda/fast2q/badges/version.svg)](https://anaconda.org/bioconda/fast2q)
 ![PyPI](https://img.shields.io/pypi/v/fast2q.svg)
 
 </div>
@@ -22,21 +17,6 @@ A Python3 program that counts sequence occurrences in FASTQ files.
 
 2FAST2Q can work with any classic CRISPRi experimental setup, or be used for any kind of sequence extraction from FASTQ files.
 
-2FAST2Q is available as a python package (https://pypi.org/project/fast2q/) and can be installed with the following comand:
-
-```bash
-pip install fast2q
-```
-
-2FAST2Q also exists as a bioconda package here: https://anaconda.org/bioconda/fast2q
-
-```bash
-conda install bioconda::fast2q
-```
-
-If you are into nextflow, 2FAST2Q also exists as a nf-core module!
-Search for FAST2Q in the module section.
-
 In here I share the original Python3 source code, fast2q.py;
 The instructions on how to use 2FAST2Q;
 And some test data to run the program.
@@ -51,7 +31,28 @@ Bravo AM, Typas A, Veening J. 2022. 2FAST2Q: a general-purpose sequence search a
 
 Despite still performing as advertised, keep in mind that 2FAST2Q is a bit like the ship of theseus and has changed over time under the same script. Some functionalities and interfaces are different from what is published. This github page is always up-to-date though. 
 
-## How to use it
+# 1. Instalation
+
+## PyPI
+2FAST2Q is available as a python package (https://pypi.org/project/fast2q/) and can be installed with the following comand:
+
+```bash
+pip install fast2q
+```
+
+## Bioconda
+2FAST2Q also exists as a bioconda package here: https://anaconda.org/bioconda/fast2q
+
+```bash
+conda install bioconda::fast2q
+```
+
+## Nextflow
+
+If you are into nextflow, 2FAST2Q also exists as a nf-core module!
+Search for FAST2Q in the module section.
+
+# How to use it
 
 There are two versions of the program, with and without a basic user interface. 
 
@@ -61,12 +62,7 @@ Basic working principle behind 2FAST2Q:
 
 
 
-### 1. Instalation
-Open a terminal with python3 installed, and download and install the 2FAST2Q Python3 module using pip install: 
-
-```bash
-pip install fast2q
-```
+# 2. Use
 
 It is then possible to test if 2FAST2Q was correctly installed by running a test with demo data. 
 ```bash
@@ -75,7 +71,7 @@ It is then possible to test if 2FAST2Q was correctly installed by running a test
 
 At the end of a successful test, a message displaying "Test successful. 2FAST2Q is working as intended!" should be visible.
 
-### 2. For starting the graphical interface mode:
+## For starting the graphical interface mode:
 ```bash
 2fast2q
 ```
@@ -87,7 +83,7 @@ The program will initialize after a few seconds, poping open the folowing window
 
 The default running mode is in "Counter" mode, however the user might want to run 2FAST2Q in 'Extract and Counter' mode where features are not aligned to a reference, but *de novo* extracted from the file based on indicated search sequences. 
 
-### 2.1 For starting the non-graphical interface mode:
+## For starting the non-graphical interface mode you always need to append "-c":
 ```bash
 2fast2q -c
 ```
@@ -152,7 +148,7 @@ There are also several optional parameters. For their description and input type
 	 ` --k K       If enabled, keeps all temporary files (default is disabled) `
 
 
-## Inputs
+# 3. Inputs
 
 To run the program, three input paths are required:
 
@@ -271,6 +267,7 @@ To avoid a too highly stringent cutoff. Allowing a mismatch allows the alignment
 However, there is a safe mechanism in place to prevent 2 or more features with mismatches from being aligned to the same read (the read is discarded in this case, as there is no way of knowing to which feature the read aligns to)
 
 2FAST2Q mismatch feature calculates HAMMING distance ONLY
+
 
 ## Troubleshooting
 
