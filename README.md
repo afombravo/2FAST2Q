@@ -21,13 +21,9 @@ In here I share the original Python3 source code, fast2q.py;
 The instructions on how to use 2FAST2Q;
 And some test data to run the program.
 
-2FAST2Q is published as part of a CRISPRi-seq protocol:
-https://www.nature.com/articles/s41596-021-00639-6
+You can reference 2FAST2Q [here](https://peerj.com/articles/14041/).
 
-A more in depth description of the program is also available:
-
-
-Bravo AM, Typas A, Veening J. 2022. 2FAST2Q: a general-purpose sequence search and counting program for FASTQ files. PeerJ 10:e14041 : https://peerj.com/articles/14041/
+But if you are using it as part of a CRISPRi-seq protocol, see [here](https://www.nature.com/articles/s41596-021-00639-6) instead.
 
 Despite still performing as advertised, keep in mind that 2FAST2Q is a bit like the ship of theseus and has changed over time under the same script. Some functionalities and interfaces are different from what is published. This github page is always up-to-date though. 
 
@@ -49,7 +45,7 @@ conda install bioconda::fast2q
 
 ## Nextflow
 
-If you are into nextflow, 2FAST2Q also exists as a [nf-core module](https://nf-co.re/modules/fast2q/)!
+If you are into nextflow, 2FAST2Q also has its own [nf-core module](https://nf-co.re/modules/fast2q/)!
 
 ```bash
 nf-core modules install fast2q
