@@ -50,7 +50,11 @@ conda install bioconda::fast2q
 ## Nextflow
 
 If you are into nextflow, 2FAST2Q also exists as a nf-core module!
-Search for FAST2Q in the module section.
+[Search for FAST2Q in the module section.](https://nf-co.re/modules/fast2q/)
+
+```bash
+nf-core modules install fast2q
+```
 
 # How to use it
 
