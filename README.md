@@ -34,14 +34,14 @@ Despite still performing as advertised, keep in mind that 2FAST2Q is a bit like 
 # 1. Instalation
 
 ## PyPI
-2FAST2Q is available as a python package (https://pypi.org/project/fast2q/) and can be installed with the following comand:
+2FAST2Q is available as a [python package](https://pypi.org/project/fast2q/) and can be installed with the following comand:
 
 ```bash
 pip install fast2q
 ```
 
 ## Bioconda
-2FAST2Q also exists as a bioconda package here: https://anaconda.org/bioconda/fast2q
+2FAST2Q also exists as a bioconda package [here](https://anaconda.org/bioconda/fast2q)!
 
 ```bash
 conda install bioconda::fast2q
@@ -49,8 +49,7 @@ conda install bioconda::fast2q
 
 ## Nextflow
 
-If you are into nextflow, 2FAST2Q also exists as a nf-core module!
-[Search for FAST2Q in the module section.](https://nf-co.re/modules/fast2q/)
+If you are into nextflow, 2FAST2Q also exists as a [nf-core module](https://nf-co.re/modules/fast2q/)!
 
 ```bash
 nf-core modules install fast2q
