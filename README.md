@@ -151,11 +151,11 @@ There are also several optional parameters. For their description and input type
 
 To run the program, three input paths are required:
 
-### 1  Directory containing the sequencing files (assumed to be the current directory when using the cmd line version and no inputs are given)
+## 1.  Directory containing the sequencing files (assumed to be the current directory when using the cmd line version and no inputs are given)
 
 A path to the folder with the sequencing files (it doesn´t matter if in .gz or .fastq.gz format as 2fast2q auto determines the correct one). 2FAST2Q will automatically process all the .fastq files that exist in the indicated folder.
 
-### 2  The path to the feature .csv file (optional) (assumed to be the only .csv file in the current directory when using the cmd line version and no inputs are given)
+## 2.  The path to the feature .csv file (optional) (assumed to be the only .csv file in the current directory when using the cmd line version and no inputs are given)
 Only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment.
 A path to the .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used features, and their respective names (any name can be given, as long as it doesn’t repeat). See the provided "D39V_guides.csv" sample file. (Optional, only required when running in Counting mode)	
 
@@ -165,7 +165,7 @@ A path to the .csv file (this format can be obtained using the "save as" option 
 
 
 
-### 2.1  2FAST2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
+## 2.1.  2FAST2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
 
 | sgRNA0001.1 | AATAGCATAGAAATCATACA:GATTACA |
 |-----------|----------------------|
@@ -180,26 +180,26 @@ For extracting all possible combinations in a file, one can use the "extract and
 
 
 
-### 3 the output directory
+## 3. the output directory
 
 A path to the output folder (for safety, a subfolder will always be created on this directory) (2fast2q automatically creates a subdirectory within the current directory when using the cmd line version and no inputs are given)
 
 
 
-## 4 Some parameter explanation
+# Some parameter explanation
 
 For extracting all sequences at a certain position in the read select the extractor + Counter (`--mo EC`) mode. The default is Counter (`--mo C`) mode only.
 
 Progress Bar (`--v`). (Default is enabled)
 
-The minimal sequencing phred-score for each nucleotide (default = 30)
+The minimal sequencing phred-score for each nucleotide (default = 30) (`--ph`)
 
-The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence)
+The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence) (`--st`)
 
-The length of the feature in bp (default = 20)
+The length of the feature in bp (default = 20) (`--l`)
 
-The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned.
-2FAST2Q mismatch feature calculates HAMMING distance ONLY
+The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned. (`--m`)
+2FAST2Q mismatch feature calculates HAMMING distance ONLY 
 
 Keep temporary files mode (default = no).
 When enabled, deletes all temporary files. To keep all files, change to "n" in the graphical mode, or input the parameter `--k` in the cmd lines.
@@ -207,10 +207,10 @@ When enabled, deletes all temporary files. To keep all files, change to "n" in t
 If the starting position varies within the read, it is possible to search for a delimiting known sequence, and then extract the sequence before/after it.
 In this case, it is allowed to input the following: 
 
- 1) A 5' end search sequence, and the amount of bp the program should inventory after.
- 2) A 3' end search sequence, and the amount of bp the program should inventory before.
- 3) A 5' and 3' end search sequence, the program will return and count everything in between these two.
- 4) How many mismatches are allowed in the search sequence
+ 1) A 5' end search sequence, and the amount of bp the program should inventory after. (example: `--us XXX --l 100`)
+ 2) A 3' end search sequence, and the amount of bp the program should inventory before. (example:`--ds YYY --l 100`)
+ 3) A 5' and 3' end search sequence, the program will return and count everything in between these two. (example:`--ds XXX --us YYY`)
+ 4) How many mismatches are allowed in the search sequence (example: `--m 2`)
 
 When searching a read for multiple sequences, one can either do so by:
   1) confirguring different fixed positions by separating all start locations with a ",". For example: "0,20,50" - the program will search for 3 sequences per read, starting at position 0,20, and 50, with the predefided sequence length.
@@ -249,7 +249,7 @@ Upon completion, several files should be seen in the indicated output folder (wh
 	e. 	2 other violin plots with the distribution of the found features per sample are also presented (normalized for reads per milion, and absolute numbers). The interquartile distribution is also ploted for each sample (25%-75%)
 
 
-### Short Explanation
+# Short Explanation on default filters
 
 2FAST2Q will return the read counts for all the features present in the input file. A read will be aligned to its features if the minimum quality score in each nucleotide is >= the indicated phred-score, and if there is less than the indicated allowed mismatches. Like said before, these parameters can be modified by the user.
 
