@@ -850,7 +850,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.7.3"
+    version = "2.7.4"
     
     def current_dir_path_handling(param):
         if param[0] is None:
