@@ -374,7 +374,7 @@ def border_finder(seq,read,mismatch,start_place=0):
     for i,bp in enumerate(read[start_place:]): 
         comparison = read[start_place+i:s+start_place+i]
         finder = binary_subtract(seq,comparison,mismatch)
-        if i > fall_over_index:
+        if i+start_place > fall_over_index:
             return
         if finder != 0:
             return i+start_place
