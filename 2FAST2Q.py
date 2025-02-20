@@ -14,7 +14,7 @@ from tqdm import tqdm
 from dataclasses import dataclass
 from pathlib import Path
 from colorama import Fore
-import pkg_resources
+import importlib.resources as resources
 
 #####################
 
@@ -1092,9 +1092,9 @@ def input_parser():
                        [args.o,'out']]
     else:
         parameters["test_mode"] = True
-        paths_param = [[pkg_resources.resource_filename(__name__, 'data/example.fastq.gz'),'seq_files'],
-                       [pkg_resources.resource_filename(__name__, 'data/D39V_guides.csv'),'feature'],
-                       [os.getcwd(),'out']]
+        paths_param = [[resources.files(__name__).joinpath('data/example.fastq.gz'), 'seq_files'],
+                        [resources.files(__name__).joinpath('data/D39V_guides.csv'), 'feature'],
+                        [os.getcwd(), 'out']]
        
     parameters['out_file_name'] = "compiled"
     if args.fn is not None:
