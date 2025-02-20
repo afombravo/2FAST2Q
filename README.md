@@ -126,7 +126,7 @@ There are also several optional parameters. For their description and input type
 
 	 `--st ST     Feature start position in the read (default is 0==1st bp)`
 
-	 `--l L       Feature length`
+	 `--l L       Feature length (only used when not using dual sequence search)`
 
 	 `--us US     Upstream search sequence `
 
@@ -142,7 +142,7 @@ There are also several optional parameters. For their description and input type
 
 	 `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)] `
 	 
-	 `--cp CP     Number of cpus to be used (default is max(cpu)-2 for >=3 cpus, -1 for >=2 cpus, 1 if 1 cpu `
+	 `--cp CP     Number of cpus to be used (default is max(cpu)-2 for >=3 cpus, -1 for >=2 cpus, 1 if 1 cpu) `
 
 	 ` --k K       If enabled, keeps all temporary files (default is disabled) `
 

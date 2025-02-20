@@ -13,8 +13,6 @@ import datetime
 from tqdm import tqdm
 from dataclasses import dataclass
 from pathlib import Path
-from io import SEEK_END
-import zlib
 from colorama import Fore
 import pkg_resources
 
@@ -22,15 +20,44 @@ import pkg_resources
 
 @dataclass
 class Features:
-    
-    """ Each feature will have its own class instance, where the read counts will be kept.
-    Each feature class is stored in a dictionary with the name as its key. 
-    See the "guides loader" function """   
-    
+    """
+    Data class for storing feature information and read counts.
+
+    Attributes
+    ----------
+    name : str
+        The name of the feature (e.g., guide RNA or sequence identifier).
+    counts : int
+        The count of reads associated with this feature.
+
+    Usage
+    -----
+    Each feature instance represents a unique sequence, with its associated read 
+    counts stored for tracking occurrences. Instances of this class are typically 
+    stored in a dictionary where the sequence serves as the key.
+
+    See Also
+    --------
+    features_loader : Function that creates instances of this class and stores them in a dictionary.
+    """
     name: str
     counts: int
 
 def colourful_errors(warning_type,error):
+    """
+    Print a color-coded error message with a timestamp.
+
+    Parameters
+    ----------
+    warning_type : str
+        Type of warning (e.g., "FATAL", "WARNING").
+    error : str
+        Error message to be displayed.
+
+    Returns
+    -------
+    None
+    """
     warning_colour = Fore.GREEN
     if warning_type == "FATAL":
         warning_colour = Fore.RED
@@ -40,10 +67,21 @@ def colourful_errors(warning_type,error):
     print(f"{Fore.BLUE} {datetime.datetime.now().strftime('%c')}{Fore.RESET} [{warning_colour}{warning_type}{Fore.RESET}] {error}")
 
 def path_finder(folder_path,extension):
-    
-    """ Finds the correct file paths from the indicated directories,
-    and parses the file names into a list for later use"""
-    
+    """
+    Find files with a given extension in a directory and retrieve their sizes.
+
+    Parameters
+    ----------
+    folder_path : str
+        Path to the folder where files should be searched.
+    extension : list of str
+        List of file extensions (e.g., ["*.csv", "*.txt"]) to search for.
+
+    Returns
+    -------
+    list of list
+        A list where each entry is [file_path, file_size].
+    """
     pathing = []
     for exten in extension:
         for filename in glob.glob(os.path.join(folder_path, exten)):
@@ -51,32 +89,61 @@ def path_finder(folder_path,extension):
     return pathing
 
 def path_parser(folder_path, extension): 
-    
-    """ parses the file names and paths into an ordered list for later use"""
+    """
+    Retrieve and sort file paths based on their size or filename.
 
+    Parameters
+    ----------
+    folder_path : str
+        Path to the folder where files should be searched.
+    extension : list of str
+        List of file extensions (e.g., ["*.csv", "*.txt"]) to search for.
+
+    Returns
+    -------
+    list of str
+        List of sorted file paths, either by size or by filename.
+
+    Raises
+    ------
+    SystemExit
+        If no files matching the given extension are found.
+    """
     pathing=path_finder(folder_path,extension)
-    if extension != '*reads.csv':
-        
-        """sorting by size makes multiprocessing more efficient 
-            as the bigger files will be ran first, thus maximizing processor queing """
-        
-        ordered = [path[0] for path in sorted(pathing, key=lambda e: e[-1])]#[::-1]
+    if extension != ['*reads.csv']:
+        ordered = [path[0] for path in sorted(pathing, key=lambda e: e[-1])]
 
         if ordered == []:
             colourful_errors("FATAL",f"Check the path to the {extension} files folder. No files of this type found.\n")
             exit()
 
     else:
-        ordered = [path[0] for path in sorted(pathing, reverse = False)]
+        ordered = [path[0] for path in sorted(pathing)]
 
     return ordered
 
 def features_loader(guides):
     
-    """ parses the features names and sequences from the indicated features .csv file.
-    Creates a dictionary using the feature sequence as key, with an instace of the 
-    Features class as respective value. If duplicated features sequences exist, 
-    this will be caught in here"""
+    """
+    Load and parse feature names and sequences from a CSV file.
+
+    Parameters
+    ----------
+    guides : str
+        Path to the CSV file containing feature names and sequences.
+
+    Returns
+    -------
+    dict
+        Dictionary where keys are unique feature sequences (str),
+        and values are instances of the `Features` class.
+
+    Raises
+    ------
+    SystemExit
+        If the file is missing or improperly formatted.
+        If duplicate sequence entries are found, a warning is issued.
+    """
     
     colourful_errors("INFO","Loading Features")
     
@@ -114,9 +181,109 @@ def features_loader(guides):
     colourful_errors("INFO",f"{len(features)} different features were provided.")
     return features
 
+def binary_converter(features):
+
+    """
+    Convert DNA sequences into a Numba dictionary with int8 binary arrays for faster computation.
+
+    Parameters
+    ----------
+    features : dict
+        Dictionary of DNA sequences to be converted into binary format.
+
+    Returns
+    -------
+    numba.typed.Dict
+        A Numba dictionary where keys are sequence strings and values are 
+        numpy arrays of type int8 representing the binary sequence.
+    """
+    
+    from numba import types
+    from numba.typed import Dict
+    
+    container = Dict.empty(key_type=types.unicode_type,
+                            value_type=types.int8[:])
+
+    for sequence in features:
+        container[sequence] = seq2bin(sequence)
+    return container
+
+def sequence_tinder(read_bin,qual,param,i=0):
+    
+    """
+    Extract barcode positions from a binary-encoded sequencing read based on sequence 
+    matching and quality thresholds.
+
+    Parameters
+    ----------
+    read_bin : numpy.ndarray
+        Binary-encoded sequence read (converted using `seq2bin`)
+    qual : bytes
+        ASCII-encoded quality scores for the read.
+    param : dict
+        Dictionary containing upstream and downstream sequences (binary format),
+        mismatch thresholds, quality filters, and read length constraints.
+    i : int, optional
+        Index for selecting an upstream/downstream sequence when multiple options exist (default is 0).
+
+    Returns
+    -------
+    tuple[int, int] or tuple[None, None]
+        (start, end) indices for trimming the read, or (None, None) if no valid positions are found.
+    """
+
+    start,end = None,None
+    if (param['upstream'] is not None) & (param['downstream'] is not None):
+        start=border_finder(param['upstream_bin'][i],
+                            read_bin,
+                            param['miss_search_up'])
+        
+        if start is not None:
+            end=border_finder(param['downstream_bin'][i],
+                                read_bin,
+                                param['miss_search_down'],
+                                start_place=start+len(param['upstream_bin'][i]))
+
+            if end is not None:
+                qual_up = str(qual[start:start+len(param['upstream_bin'][i])],"utf-8")
+                qual_down = str(qual[end:end+len(param['downstream_bin'][i])],"utf-8")
+                
+                if (len(param['quality_set_up'].intersection(qual_up)) == 0) &\
+                    (len(param['quality_set_down'].intersection(qual_down)) == 0):
+                    start+=len(param['upstream_bin'][i])
+                    return start,end
+
+    elif (param['upstream'] is not None) & (param['downstream'] is None):
+        start=border_finder(param['upstream_bin'][i],
+                            read_bin,
+                            param['miss_search_up'])
+        
+        if start is not None:
+            qual_up = str(qual[start:start+len(param['upstream_bin'][i])],"utf-8")
+            
+            if len(param['quality_set_up'].intersection(qual_up)) == 0:
+                start+=len(param['upstream_bin'][i])
+                end = start + param['length']
+                return start,end
+        
+    elif (param['upstream'] is None) & (param['downstream'] is not None):
+        end=border_finder(param['downstream_bin'][i],
+                            read_bin,
+                            param['miss_search_down'])
+        
+        if end is not None:
+            qual_down = str(qual[end:end+len(param['downstream_bin'][i])],"utf-8")
+            
+            if len(param['quality_set_down'].intersection(qual_down)) == 0:
+                start = end-param['length']
+                return start,end
+
+    return None,None
+
+
 def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preprocess=False):
     
-    """ Reads the fastq file on the fly to avoid RAM issues. 
+    """ Reads the fastq file on the fly. 
     Each read is assumed to be composed of 4 lines, with the sequence being 
     on line 2, and the basepair quality on line 4. 
     Every read is trimmed based on the indicated feature positioning. 
@@ -128,84 +295,19 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
     If the read doesnt have a perfect match, it is sent for mismatch comparison
     via the "mismatch_search_handler" function.
     """
-
-    def binary_converter(features):
-
-        """ Parses the input features into numba dictionaries with int8 layout. 
-        Converts all DNA sequences to their respective binary array forms. 
-        This gives some computing speed advantages with mismatches."""
-        
-        from numba import types
-        from numba.typed import Dict
-        
-        container = Dict.empty(key_type=types.unicode_type,
-                               value_type=types.int8[:])
-
-        for sequence in features:
-            container[sequence] = seq2bin(sequence)
-        return container
     
-    def unfixed_starting_place_parser(read,qual,param,i):
-        
-        """ Determines the starting place of a read trimming based on the
-        inputed parameters for upstream/downstream sequence matching. 
-        Also takes into consideration the quality of that search sequence,
-        and mismatches it might have"""
-
-        read_bin=seq2bin(read)
-        start,end = None,None
-
-        if (param['upstream'] is not None) & (param['downstream'] is not None):
-            start=border_finder(param['upstream_bin'][i],
-                                read_bin,param['miss_search_up'])
-            
-            if start is not None:
-                end=border_finder(param['downstream_bin'][i],
-                                  read_bin,param['miss_search_down'],
-                                  start_place=start+1)
-    
-                if end is not None:
-                    qual_up = str(qual[start:start+len(param['upstream_bin'][i])],"utf-8")
-                    qual_down = str(qual[end:end+len(param['downstream_bin'][i])],"utf-8")
-                    
-                    if (len(param['quality_set_up'].intersection(qual_up)) == 0) &\
-                        (len(param['quality_set_down'].intersection(qual_down)) == 0):
-                        start+=len(param['upstream_bin'][i])
-                        return start,end
-
-        elif (param['upstream'] is not None) & (param['downstream'] is None):
-            start=border_finder(param['upstream_bin'][i],
-                                read_bin,param['miss_search_up'])
-            
-            if start is not None:
-                qual_up = str(qual[start:start+len(param['upstream_bin'][i])],"utf-8")
-                
-                if len(param['quality_set_up'].intersection(qual_up)) == 0:
-                    start+=len(param['upstream_bin'][i])
-                    end = start + param['length']
-                    return start,end
-            
-        elif (param['upstream'] is None) & (param['downstream'] is not None):
-            end=border_finder(param['downstream_bin'][i],
-                              read_bin,param['miss_search_down'])
-            
-            if end is not None:
-                qual_down = str(qual[end:end+len(param['downstream_bin'][i])],"utf-8")
-                
-                if len(param['quality_set_down'].intersection(qual_down)) == 0:
-                    start = end-param['length']
-                    return start,end
-
-        return None,None
-
     def progress_bar(i,o,raw,cpu):
-        
         def getuncompressedsize(raw):
-            
-            if ext == ".gz":
-                return sum(1 for _ in gzip.open(raw, 'rt'))
-            else:
-                return sum(1 for _ in open(raw, 'rt'))
+            try:
+                ext = os.path.splitext(raw)[1]
+                if ext == ".gz":
+                    with gzip.open(raw, 'rt') as f:
+                        return sum(1 for _ in f)
+                else:
+                    with open(raw, 'rt') as f:
+                        return sum(1 for _ in f)
+            except EOFError:
+                return 0
 
         if o > cpu:
             current = mp.current_process()
@@ -215,9 +317,9 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         total_file_size = getuncompressedsize(raw)
         tqdm_text = f"Processing file {i+1} out of {o}"
         return tqdm(total=total_file_size,desc=tqdm_text, position=pos,colour="green",leave=False,ascii=True,unit="lines")
-    
+
     def fastq_parser(current,features,failed_reads,passed_reads,fixed_start):
-        
+    
         reading = []
         mismatch = [n+1 for n in range(param['miss'])]
         perfect_counter, imperfect_counter, non_aligned_counter, reads,quality_failed = 0,0,0,0,0
@@ -226,92 +328,97 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
         if param['miss'] != 0:
             binary_features = binary_converter(features)
 
-        for line in current:
-            quality_failed_flag = np.zeros(param['search_iterations'])
-            if (not preprocess) & (param['Progress bar']):
-                pbar.update(1)
-            reading.append(line[:-1])
-            
-            if len(reading) == 4: #a read always has 4 lines
+        try:
+            for line in current:
+                quality_failed_flag = np.zeros(param['search_iterations'])
+                if (not preprocess) & (param['Progress bar']):
+                    pbar.update(1)
+                reading.append(line[:-1])
                 
-                full_feature = ""
-                for i in range(param['search_iterations']):
-            
-                    if not fixed_start:
-
-                        start,end=unfixed_starting_place_parser(str(reading[1],"utf-8"),\
-                                                                reading[3],\
-                                                                param,i)
-                            
-                        if (start is not None) & (end is not None):
-                            if end < start: #if the end is not found or found before the start
-                                start=None
-                                quality_failed_flag[i] = 1 #this includes reads without search sequences as failed at quality
-                        else:
-                            quality_failed_flag[i] = 1
-    
-                    if fixed_start:
-                        start = param['start_positioning'][i]
-                        end = param['end_positioning'][i]
-    
-                    if (fixed_start) or (start is not None):
-                        seq = str(reading[1][start:end].upper(),"utf-8")
-                        quality = str(reading[3][start:end],"utf-8") #convert from bin to str
-    
-                        if len(param['quality_set'].intersection(quality)) == 0:
-                            full_feature += f":{seq}"
-                        else:
-                            quality_failed_flag[i] = 1          
-                
-                if full_feature != "":
-                    seq = full_feature[1:] #remove the first :
-                    if param['Running Mode']=='C':
-                        if seq in features:
-                            features[seq].counts += 1
-                            perfect_counter += 1
-
-                        elif mismatch != []:
-                            features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter=\
-                            mismatch_search_handler(seq,
-                                                    mismatch,
-                                                    failed_reads,
-                                                    binary_features,
-                                                    imperfect_counter,
-                                                    features,
-                                                    passed_reads,
-                                                    ram_clearance,
-                                                    non_aligned_counter
-                                                    )
-
-                        else:
-                            non_aligned_counter += 1
-
-                    else:
-                        if seq not in features:
-                            features[seq] = Features(seq, 1)
-                        else:
-                            features[seq].counts += 1
-                        perfect_counter += 1
+                if len(reading) == 4:
                     
-                if quality_failed_flag.all():
-                    quality_failed += 1
+                    full_feature = ""
+                    for i in range(param['search_iterations']):
                 
-                reading = []
-                reads += 1
-                
-                # keeps RAM under control by avoiding overflow
-                if reads % 1000000 == 0:
-                    ram_clearance=ram_lock()
-                
-                if preprocess:
-                    if reads == 10000:
-                        return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads,0,0
-        
-        if (not preprocess) & (param['Progress bar']):
-            pbar.close()
+                        if not fixed_start:
+
+                            start,end=sequence_tinder(seq2bin(str(reading[1],"utf-8")),
+                                                        reading[3],
+                                                        param,
+                                                        i)
+                                
+                            if (start is not None) & (end is not None):
+                                if end < start: #if the end is not found or found before the start
+                                    start=None
+                                    quality_failed_flag[i] = 1 #this includes reads without search sequences as failed at quality
+                            else:
+                                quality_failed_flag[i] = 1
+
+                        if fixed_start:
+                            start = param['start_positioning'][i]
+                            end = param['end_positioning'][i]
+
+                        if (fixed_start) or (start is not None):
+                            seq = str(reading[1][start:end].upper(),"utf-8")
+                            quality = str(reading[3][start:end],"utf-8") #convert from bin to str
+
+                            if len(param['quality_set'].intersection(quality)) == 0:
+                                full_feature += f":{seq}"
+                            else:
+                                quality_failed_flag[i] = 1          
+                    
+                    if full_feature != "":
+                        seq = full_feature[1:] #remove the first :
+                        if param['Running Mode']=='C':
+                            if seq in features:
+                                features[seq].counts += 1
+                                perfect_counter += 1
+
+                            elif mismatch != []:
+                                features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter=\
+                                mismatch_search_handler(seq,
+                                                        mismatch,
+                                                        failed_reads,
+                                                        binary_features,
+                                                        imperfect_counter,
+                                                        features,
+                                                        passed_reads,
+                                                        ram_clearance,
+                                                        non_aligned_counter
+                                                        )
+
+                            else:
+                                non_aligned_counter += 1
+
+                        else:
+                            if seq not in features:
+                                features[seq] = Features(seq, 1)
+                            else:
+                                features[seq].counts += 1
+                            perfect_counter += 1
+                        
+                    if quality_failed_flag.all():
+                        quality_failed += 1
+                    
+                    reading = []
+                    reads += 1
+                    
+                    if reads % 1000000 == 0:
+                        ram_clearance=ram_lock()
+                    
+                    if preprocess:
+                        if reads == 10000:
+                            return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads,0,0
+            
+            if (not preprocess) & (param['Progress bar']):
+                pbar.close()
+            
+        except EOFError:
+            colourful_errors("WARNING",f"{raw} is an incomplete or corrupted gzip file. Only partial processing might have occurred.")
+            pass
 
         return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads,non_aligned_counter,quality_failed
-    
+
     fixed_start = True
     # determining the read trimming starting/ending place
     if (param['upstream'] is None) & (param['downstream'] is None):
@@ -341,27 +448,53 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
     if (not preprocess) & (param['Progress bar']):
         pbar = progress_bar(i,o,raw,cpu)
     
-    if ext == ".gz":
-        with gzip.open(raw, "rb") as current:
-            return fastq_parser(current,features,failed_reads,passed_reads,fixed_start)
-    else:
-        with open(raw, "rb")  as current:
-            return fastq_parser(current,features,failed_reads,passed_reads,fixed_start)
+    try:
+        if ext == ".gz":
+            with gzip.open(raw, "rb") as current:
+                return fastq_parser(current,features,failed_reads,passed_reads,fixed_start)
+        else:
+            with open(raw, "rb")  as current:
+                return fastq_parser(current,features,failed_reads,passed_reads,fixed_start)
+    except EOFError:
+        colourful_errors("WARNING",f"{raw} is an incomplete or corrupted gzip file.")
+        return None
 
 def seq2bin(sequence):
-    
-    """ Converts a string to binary, and then to 
-    a numpy array in int8 format"""
-    
+    """
+    Convert a string sequence into a binary numpy array.
+
+    Parameters
+    ----------
+    sequence : str
+        Input string sequence.
+
+    Returns
+    -------
+    numpy array
+        Binary representation of the sequence in int8 format.
+    """
     sequence = bytearray(sequence,'utf8')
     return np.array((sequence), dtype=np.int8)
 
 @njit
 def binary_subtract(array1,array2,mismatch):
-    
-    """ Used for matching 2 sequences based on the allowed mismatches.
-    Requires the sequences to be in numerical form"""
-    
+    """
+    Compare two binary sequences and check if they match (Hamming distance) within a given mismatch threshold.
+
+    Parameters
+    ----------
+    array1 : numpy array
+        First sequence in numerical (binary) format.
+    array2 : numpy array
+        Second sequence in numerical (binary) format.
+    mismatch : int
+        Maximum number of mismatches allowed.
+
+    Returns
+    -------
+    int
+        1 if the sequences match within the allowed mismatches, otherwise 0.
+    """
     miss=0
     for arr1,arr2 in zip(array1,array2):
         if arr1-arr2 != 0:
@@ -372,11 +505,25 @@ def binary_subtract(array1,array2,mismatch):
 
 @njit
 def border_finder(seq,read,mismatch,start_place=0): 
-    
-    """ Matches 2 sequences (after converting to int8 format)
-    based on the allowed mismatches. Used for sequencing searching
-    a start/end place in a read"""
+    """
+    Find the position where a sequence matches a read within a mismatch threshold.
 
+    Parameters
+    ----------
+    seq : numpy array
+        Sequence to search for (converted to int8 format). Make sure the letters' capitalization matches the one from read.
+    read : numpy array
+        Read in which the sequence should be found (converted to int8 format).
+    mismatch : int
+        Maximum number of mismatches allowed.
+    start_place : int, optional
+        Start index for the search (default is 0).
+
+    Returns
+    -------
+    int or None
+        Index position where the sequence is found, or None if not found.
+    """
     s=seq.size
     r=read.size
     fall_over_index = r-s-1
@@ -390,11 +537,23 @@ def border_finder(seq,read,mismatch,start_place=0):
 
 @njit
 def features_all_vs_all(binary_features,read,mismatch):
-    
-    """ Runs the loop of the read vs all sgRNA comparison.
-    Sends individually the sgRNAs for comparison.
-    Returns the final mismatch score"""
-    
+    """
+    Compare a read against all sgRNA sequences to find a match within a mismatch threshold.
+
+    Parameters
+    ----------
+    binary_features : dict
+        Dictionary containing sgRNA sequences in binary format.
+    read : numpy array
+        Read sequence in binary format.
+    mismatch : int
+        Maximum number of mismatches allowed.
+
+    Returns
+    -------
+    str or None
+        The matching guide if exactly one match is found, otherwise None.
+    """    
     found = 0
     r=read.size
     for guide in binary_features:
@@ -409,10 +568,36 @@ def features_all_vs_all(binary_features,read,mismatch):
         return found_guide
 
 def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_counter,features,passed_reads,ram_clearance,non_aligned_counter):
-    
-    """Converts a read into numpy int 8 form. Runs the imperfect alignment 
-    search for all number of inputed mismatches."""
-    
+    """
+    Perform an imperfect alignment search on a sequencing read and update feature counts.
+
+    Parameters
+    ----------
+    seq : str
+        The input sequencing read.
+    mismatch : list of int
+        List of mismatch tolerance values to search against.
+    failed_reads : set
+        Set of previously failed reads to avoid redundant processing.
+    binary_features : dict
+        Dictionary of feature sequences in binary format.
+    imperfect_counter : int
+        Counter for reads that align imperfectly.
+    features : dict
+        Dictionary mapping feature sequences to `Features` class instances.
+    passed_reads : dict
+        Dictionary storing successfully aligned reads and their matched features.
+    ram_clearance : bool
+        If True, failed reads will be stored to conserve memory.
+    non_aligned_counter : int
+        Counter for non-aligned reads.
+
+    Returns
+    -------
+    tuple
+        (features, imperfect_counter, failed_reads, passed_reads, non_aligned_counter)
+        Updated data structures and counters after processing the read.
+    """
     if seq in failed_reads:
         non_aligned_counter += 1
         return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
@@ -850,7 +1035,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.7.3"
+    version = "2.7.5"
     
     def current_dir_path_handling(param):
         if param[0] is None:
@@ -1141,21 +1326,6 @@ def run_stats(headers, param, compiled, head):
             else:
                 distributions[head[i+1]] = [read]
     
-    def adjacent_values(vals, q1, q3):
-        upper_adjacent_value = q3 + (q3 - q1) * 1.5
-        upper_adjacent_value = np.clip(upper_adjacent_value, q3, vals[-1])
-    
-        lower_adjacent_value = q1 - (q3 - q1) * 1.5
-        lower_adjacent_value = np.clip(lower_adjacent_value, vals[0], q1)
-        return lower_adjacent_value, upper_adjacent_value
-
-    def set_axis_style(ax, labels):
-        ax.xaxis.set_tick_params(direction='out')
-        ax.xaxis.set_ticks_position('bottom')
-        ax.set_xticks(np.arange(1, len(labels) + 1), labels=labels)
-        ax.set_xlim(0.25, len(labels) + 0.75)
-        ax.set_xlabel('Sample name')
-        
     def violin(data,head,normalized=False):
         fig, ax = plt.subplots(figsize=(12, int(len(global_stat))/2))
         if not normalized:
@@ -1206,19 +1376,34 @@ def run_stats(headers, param, compiled, head):
         pass
 
 def ram_lock():
+    """
+    Check system memory usage and prevent excessive RAM consumption.
 
-    """ stops increasing the hash tables (failed and passed reads) 
-    size to avoid using RAM that isnt there """
-
+    Returns
+    -------
+    bool
+        False if system memory usage is at or above 95%, otherwise True.
+    """
     if psutil.virtual_memory().percent >= 95:
         return False
     return True
 
 def cpu_counter(cpu):
-    
-    """ counts the available cpu cores, required for spliting the processing
-    of the files """
-    
+    """
+    Determine the number of available CPU cores and create a multiprocessing pool.
+
+    Parameters
+    ----------
+    cpu : int or None
+        Desired number of CPU cores for processing. If not provided or invalid, 
+        the function automatically selects an optimal number.
+
+    Returns
+    -------
+    tuple
+        (mp.Pool, int) - A multiprocessing pool configured with the selected number of CPUs, 
+        and the final CPU count used.
+    """
     available_cpu = mp.cpu_count()
     if type(cpu) is not int:
         cpu = available_cpu
@@ -1257,12 +1442,12 @@ def multiprocess_merger(start,failed_reads,passed_reads,files,features,param,poo
     if param["miss"] != 0:
         compiled = [x.get() for x in result]
         failed_reads_compiled,passed_reads_compiled = zip(*compiled)
-        return hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,failed_reads,passed_reads)
+        return hash_reads_parsing(failed_reads_compiled,passed_reads_compiled,failed_reads,passed_reads)
     
     else:
         return failed_reads,passed_reads
 
-def hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,failed_reads,passed_reads):
+def hash_reads_parsing(failed_reads_compiled,passed_reads_compiled,failed_reads,passed_reads):
     
     """ parsed the results from all the processes, merging the individual failed and
     passed reads into one master file, that will be subsquently used for the new
@@ -1291,7 +1476,7 @@ def hash_preprocesser(files,features,param,pool,cpu):
 
     _,_,_,_,failed_reads_compiled,passed_reads_compiled,_,_ = zip(*compiled)
 
-    return hash_reads_parsing(result,failed_reads_compiled,passed_reads_compiled,set(),{})
+    return hash_reads_parsing(failed_reads_compiled,passed_reads_compiled,set(),{})
 
 def aligner_mp_dispenser(files,features,param):
     
