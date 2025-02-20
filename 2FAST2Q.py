@@ -1035,7 +1035,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.7.5"
+    version = "2.7.6"
     
     def current_dir_path_handling(param):
         if param[0] is None:
@@ -1092,8 +1092,8 @@ def input_parser():
                        [args.o,'out']]
     else:
         parameters["test_mode"] = True
-        paths_param = [[resources.files(__name__).joinpath('data/example.fastq.gz'), 'seq_files'],
-                        [resources.files(__name__).joinpath('data/D39V_guides.csv'), 'feature'],
+        paths_param = [[resources.files("fast2q").joinpath('data/example.fastq.gz'), 'seq_files'],
+                        [resources.files("fast2q").joinpath('data/D39V_guides.csv'), 'feature'],
                         [os.getcwd(), 'out']]
        
     parameters['out_file_name'] = "compiled"
