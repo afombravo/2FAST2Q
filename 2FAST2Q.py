@@ -157,9 +157,7 @@ def features_loader(guides):
     try:
         with open(guides) as current: 
             for line in current:
-                if "\n" in line:
-                    line = line[:-1]
-                line = line.split(",")
+                line = line.rstrip().split(",")
                 sequence = line[1].upper()
                 sequence = sequence.replace(" ", "")
                 name = line[0]
@@ -333,7 +331,7 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
                 quality_failed_flag = np.zeros(param['search_iterations'])
                 if (not preprocess) & (param['Progress bar']):
                     pbar.update(1)
-                reading.append(line[:-1])
+                reading.append(line.rstrip())
                 
                 if len(reading) == 4:
                     
@@ -513,7 +511,7 @@ def border_finder(seq,read,mismatch,start_place=0):
     seq : numpy array
         Sequence to search for (converted to int8 format). Make sure the letters' capitalization matches the one from read.
     read : numpy array
-        Read in which the sequence should be found (converted to int8 format).
+        Read in which the sequence should be found (converted to int8 format). Needs to larger than seq.
     mismatch : int
         Maximum number of mismatches allowed.
     start_place : int, optional
@@ -526,7 +524,7 @@ def border_finder(seq,read,mismatch,start_place=0):
     """
     s=seq.size
     r=read.size
-    fall_over_index = r-s-1
+    fall_over_index = r-s
     for i,bp in enumerate(read[start_place:]): 
         comparison = read[start_place+i:s+start_place+i]
         finder = binary_subtract(seq,comparison,mismatch)
@@ -1035,7 +1033,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.7.6"
+    version = "2.7.7"
     
     def current_dir_path_handling(param):
         if param[0] is None:
@@ -1195,7 +1193,7 @@ def compiling(param):
         head.append(path)
         with open(file) as current:
             for line in current:
-                line = line[:-1].split(",")
+                line = line.rstrip().split(",")
                 if "#" not in line[0]:
                     
                     if line[0] in compiled: 
