@@ -282,9 +282,9 @@ The expected example output file is given: "compiled.csv"
 
 # Performing sequences searches using 2FAST2Q
 
-## It is possible to import and use the current sequence search functions from 2FAST2Q as follows:
+It is possible to import and use the current sequence search functions from 2FAST2Q as follows:
 
-### To find the index, given mismatches m (determined using the Hamming distance), at which one smaller sequence exists within another.
+To find the index, given mismatches m (determined using the Hamming distance), at which one smaller sequence exists within another.
 
 ```python
 from fast2q.fast2q import border_finder,seq2bin
@@ -297,7 +297,7 @@ match_location_index = border_finder(a,b,m)
 print(match_location_index)
 ```
 
-### To find the start and end index, given mismatches m (determined using the Hamming distance) and a Phred-quality p, at which a barcode exist within a sequence.
+To find the start and end index, at which a barcode exist within a sequence.
 
 ```python
 from fast2q.fast2q import sequence_tinder,seq2bin
@@ -313,10 +313,11 @@ barcode_info = {'upstream':barcode_search_upstream,
                 'downstream':barcode_search_downstream,
                 'upstream_bin':[seq2bin(barcode_search_upstream)],
                 'downstream_bin':[seq2bin(barcode_search_downstream)],
-                'miss_search_up':1,
-                'miss_search_down':1,
-                'quality_set_up':set(""),
-                'quality_set_down':set("")}
+                'miss_search_up':1, #mismatches allowed on the found downstream search sequence
+                'miss_search_down':1, #mismatches allowed on the found upstream search sequence
+                'quality_set_up':set(""), #quality symbols that cannot be found on the read quality on the found upstream search sequence
+                'quality_set_down':set("") #quality symbols that cannot be found on the read quality on the found downstream search sequence
+				}
 
 start,end=sequence_tinder(read_sequence_bin,read_quality,barcode_info)
 print(start,end)
