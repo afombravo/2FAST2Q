@@ -267,23 +267,60 @@ However, there is a safe mechanism in place to prevent 2 or more features with m
 2FAST2Q mismatch feature calculates HAMMING distance ONLY
 
 
-## Troubleshooting
+# Troubleshooting
 
-Running 2FAST2Q with example data :
+Running 2FAST2Q with manually inputed example data:
 
 Download the "D39V_guides.csv" file
 Download the "example.fastq.gz"
 Run 2FAST2Q
 
-
 In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appear as a warning message.
-
-
-=======
-
 
 The expected example output file is given: "compiled.csv"
 
+
+# Performing sequences searches using 2FAST2Q
+
+## It is possible to import and use the current sequence search functions from 2FAST2Q as follows:
+
+### To find the index, given mismatches m (determined using the Hamming distance), at which one smaller sequence exists within another.
+
+```python
+from fast2q.fast2q import border_finder,seq2bin
+
+a = seq2bin("GATTACA")
+b = seq2bin("TACTGATTACAGCAC")
+m = 1
+match_location_index = border_finder(a,b,m)
+
+print(match_location_index)
+```
+
+### To find the start and end index, given mismatches m (determined using the Hamming distance) and a Phred-quality p, at which a barcode exist within a sequence.
+
+```python
+from fast2q.fast2q import sequence_tinder,seq2bin
+
+read_sequence = "TACTGATTACAGCAC"
+read_sequence_bin = seq2bin(read_sequence)
+read_quality = "AAII$%&#III/(&/".encode("utf-8")
+
+barcode_search_upstream = "TACT"
+barcode_search_downstream = "GCAC"
+
+barcode_info = {'upstream':barcode_search_upstream,
+                'downstream':barcode_search_downstream,
+                'upstream_bin':[seq2bin(barcode_search_upstream)],
+                'downstream_bin':[seq2bin(barcode_search_downstream)],
+                'miss_search_up':1,
+                'miss_search_down':1,
+                'quality_set_up':set(""),
+                'quality_set_down':set("")}
+
+start,end=sequence_tinder(read_sequence_bin,read_quality,barcode_info)
+print(start,end)
+```
 
 # License
 
