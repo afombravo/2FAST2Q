@@ -98,64 +98,43 @@ How it looks when running in the default 'Counter' mode:
 ![](https://github.com/afombravo/2FAST2Q/blob/main/command_interface.gif)
 
 
-There are also several optional parameters. For their description and input type. A more in-depth description is provided below:
+There are also several optional parameters. Their description is provided below:
 
-	 `2fast2q -h`
-
-	 `-h, --help  show this help message and exit `
-
-	 `-c [C]      cmd line mode`
-	 
-	 `-v [V]      prints the current version`
-
-  	 `-t [T]      Runs 2FAST2Q in test mode with example data. `
-
-	 `--s S       The full path to the directory with the sequencing files OR file`
-
-	 `--g G       The full path to the .csv file with the features.`
-
-	 `--o O       The full path to the output directory`
-	 
-	 `--fn FN     Specify an output compiled file name (default is called compiled)`
-	 
-	 `--v V       Adds progress bars (default is enabled)`
-
-	 `--m M       number of allowed mismatches (default=1)`
-
-	 `--ph PH     Minimal Phred-score (default=30)`
-
-	 `--st ST     Feature start position in the read (default is 0==1st bp)`
-
-	 `--l L       Feature length (only used when not using dual sequence search)`
-
-	 `--us US     Upstream search sequence `
-
-	 `--ds DS     Downstream search sequence `
-
-	 `--msu MSU   mismatches allowed in the upstream sequence`
-
-  	 `--msd MSD   mismatches allowed in the downstream sequence`
-
-  	 `--qsu QSU   Minimal Phred-score (default=30) in the upstream search sequence`
-
-  	 `--qsd QSD   Minimal Phred-score (default=30) in the downstream search sequence`
-
-	 `--mo MO     Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)] `
-	 
-	 `--cp CP     Number of cpus to be used (default is max(cpu)-2 for >=3 cpus, -1 for >=2 cpus, 1 if 1 cpu) `
-
-	 ` --k K       If enabled, keeps all temporary files (default is disabled) `
+Flag | Description
+--- | ---
+`-h` | Show all parameters and their description.
+`-c` | cmd line mode.
+`-v` | Prints the current version.
+`-t` | Runs 2FAST2Q in test mode with example data.
+`--s` | The full path to the directory with the sequencing files OR file.
+`--g` | The full path to the .csv file with the features.
+`--o` | The full path to the output directory.
+`--fn` | Specify an output compiled file name (default is called compiled).
+`--v` | Adds progress bars (default is enabled).
+`--m` | The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned. 
+`--ph` | Minimal Phred-score (default=30).
+`--st` | The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence)). This parameter is ignored when using sequence searches with known delimiting sequences.
+`--l` | The length of the feature in bp (default = 20). It is only used when not using dual sequence search. 
+`--us` | Upstream search sequence.
+`--ds` | Downstream search sequence.
+`--msu` | Mismatches allowed in the upstream sequence.
+`--msd` | Mismatches allowed in the downstream sequence.
+`--qsu` | Minimal Phred-score (default=30) in the upstream search sequence.
+`--qsd` | Minimal Phred-score (default=30) in the downstream search sequence.
+`--mo` | Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)].
+`--cp` | Number of cpus to be used (default is max(cpu)-2 for >=3 cpus, -1 for >=2 cpus, 1 if 1 cpu).
+`--k` |  If passed, keeps all temporary files (default is disabled: deletes all temporary files).
 
 
 # 3. Inputs
 
 To run the program, three input paths are required:
 
-### a.  Directory containing the sequencing files (assumed to be the current directory when using the cmd line version and no inputs are given)
+#### a.  Directory containing the sequencing files (assumed to be the current directory when using the cmd line version and no inputs are given)
 
 A path to the folder with the sequencing files (it doesn´t matter if in .gz or .fastq.gz format as 2fast2q auto determines the correct one). 2FAST2Q will automatically process all the .fastq files that exist in the indicated folder.
 
-### b.  The path to the feature .csv file (optional) (assumed to be the only .csv file in the current directory when using the cmd line version and no inputs are given)
+#### b.  The path to the feature .csv file (optional) (assumed to be the only .csv file in the current directory when using the cmd line version and no inputs are given)
 Only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment.
 A path to the .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used features, and their respective names (any name can be given, as long as it doesn’t repeat). See the provided "D39V_guides.csv" sample file. (Optional, only required when running in Counting mode)	
 
@@ -165,7 +144,7 @@ A path to the .csv file (this format can be obtained using the "save as" option 
 
 
 
-### b.1.  2FAST2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
+#### b.1.  2FAST2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
 
 | sgRNA0001.1 | AATAGCATAGAAATCATACA:GATTACA |
 |-----------|----------------------|
@@ -179,30 +158,17 @@ For extracting all possible combinations in a file, one can use the "extract and
 
 
 
-
-## 3. the output directory
+#### c. the output directory
 
 A path to the output folder (for safety, a subfolder will always be created on this directory) (2fast2q automatically creates a subdirectory within the current directory when using the cmd line version and no inputs are given)
 
 
 
-# 4. Some parameter explanation
+# 4. Some further explanations
 
 For extracting all sequences at a certain position in the read select the extractor + Counter (`--mo EC`) mode. The default is Counter (`--mo C`) mode only.
 
-Progress Bar (`--v`). (Default is enabled)
-
-The minimal sequencing phred-score for each nucleotide (default = 30) (`--ph`)
-
-The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence) (`--st`)
-
-The length of the feature in bp (default = 20) (`--l`)
-
-The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned. (`--m`)
 2FAST2Q mismatch feature calculates HAMMING distance ONLY 
-
-Keep temporary files mode (default = no).
-When enabled, deletes all temporary files. To keep all files, change to "n" in the graphical mode, or input the parameter `--k` in the cmd lines.
 
 If the starting position varies within the read, it is possible to search for a delimiting known sequence, and then extract the sequence before/after it.
 In this case, it is allowed to input the following: 
@@ -212,7 +178,7 @@ In this case, it is allowed to input the following:
  3) A 5' and 3' end search sequence, the program will return and count everything in between these two. (example:`--ds XXX --us YYY`)
  4) How many mismatches are allowed in the search sequence (example: `--m 2`)
 
-When searching a read for multiple sequences, one can either do so by:
+#### When searching a read for multiple sequences, one can do so by either:
   1) confirguring different fixed positions by separating all start locations with a ",". For example: "0,20,50" - the program will search for 3 sequences per read, starting at position 0,20, and 50, with the predefided sequence length.
   2) configuring different 5' and 3' search sequences, also separated by "," and inputted as pairs: For example: upstream (`--us`) ATCG,GGTGG & downstream (`--ds`) AATC,GCACAC will initiate, per read, searches for any features between the ATCG * AATC and GGTGG * GCACAC sequences. If found, these 2 sequences will be merged separated by ":" and either try to be aligned against any found features in the .csv file (default), or returned as they are if in "extract and count" mode (`--mo EC`). Keep in mind that when multiple feature sequences are delimited by the same search sequences, only the first instance of any sequence passing the criteria will be returned. Multiple sequences per read can only be retrieved when using different search sequences.
  
