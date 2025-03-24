@@ -151,11 +151,11 @@ There are also several optional parameters. For their description and input type
 
 To run the program, three input paths are required:
 
-## 1.  Directory containing the sequencing files (assumed to be the current directory when using the cmd line version and no inputs are given)
+### a.  Directory containing the sequencing files (assumed to be the current directory when using the cmd line version and no inputs are given)
 
 A path to the folder with the sequencing files (it doesn´t matter if in .gz or .fastq.gz format as 2fast2q auto determines the correct one). 2FAST2Q will automatically process all the .fastq files that exist in the indicated folder.
 
-## 2.  The path to the feature .csv file (optional) (assumed to be the only .csv file in the current directory when using the cmd line version and no inputs are given)
+### b.  The path to the feature .csv file (optional) (assumed to be the only .csv file in the current directory when using the cmd line version and no inputs are given)
 Only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment.
 A path to the .csv file (this format can be obtained using the "save as" option in excel) with the nucleotide sequences of all used features, and their respective names (any name can be given, as long as it doesn’t repeat). See the provided "D39V_guides.csv" sample file. (Optional, only required when running in Counting mode)	
 
@@ -165,7 +165,7 @@ A path to the .csv file (this format can be obtained using the "save as" option 
 
 
 
-## 2.1.  2FAST2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
+### b.1.  2FAST2Q can be used for finding multiple features per read. When such is desirable, the features must be separated by ":", as illustrated here:
 
 | sgRNA0001.1 | AATAGCATAGAAATCATACA:GATTACA |
 |-----------|----------------------|
@@ -186,7 +186,7 @@ A path to the output folder (for safety, a subfolder will always be created on t
 
 
 
-# Some parameter explanation
+# 4. Some parameter explanation
 
 For extracting all sequences at a certain position in the read select the extractor + Counter (`--mo EC`) mode. The default is Counter (`--mo C`) mode only.
 
