@@ -22,4 +22,6 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest tests/test_mainfunctions.py
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          pytest tests/test_mainfunctions.py
+  
