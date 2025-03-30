@@ -25,7 +25,7 @@ def test_2fast2q_cli_creates_expected_output(tmp_path):
     assert output_file.exists(), f"compiled.csv not found in output folder {output_dir}"
 
     import difflib
-
+    expected_file = Path("tests/compiled.csv")
     if not filecmp.cmp(output_file, expected_file, shallow=False):
         with open(output_file) as f1, open(expected_file) as f2:
             diff = difflib.unified_diff(
@@ -36,5 +36,4 @@ def test_2fast2q_cli_creates_expected_output(tmp_path):
             print(''.join(diff))
         assert False, "compiled.csv does not match expected output"
 
-    expected_file = Path("tests/compiled.csv")
     assert filecmp.cmp(output_file, expected_file), "Output file does not match expected result"
