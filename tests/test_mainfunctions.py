@@ -1,10 +1,9 @@
-from fast2q.fast2q import border_finder,seq2bin,sequence_tinder
 import numpy as np
 
 def test_seq2bin():
     a = seq2bin("GATTACA")
     expected = np.array([71, 65, 84, 84, 65, 67, 65], dtype=np.int8)
-    
+
     assert np.array_equal(a, expected)
 
 def test_borderFinder():
