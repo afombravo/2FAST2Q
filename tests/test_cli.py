@@ -33,7 +33,7 @@ def test_2fast2q_cli_creates_expected_output(tmp_path):
                 fromfile='actual compiled.csv',
                 tofile='expected compiled.csv',
             )
-            print(''.join(diff))
+            sys.stdout.writelines(diff) 
         assert False, "compiled.csv does not match expected output"
 
     assert filecmp.cmp(output_file, expected_file), "Output file does not match expected result"
