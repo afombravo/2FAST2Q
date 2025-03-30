@@ -1,4 +1,4 @@
-from fast2q.fast2q import seq2bin, border_finder, sequence_tinder
+from fast2q import seq2bin, border_finder, sequence_tinder
 import numpy as np
 
 def test_seq2bin():
