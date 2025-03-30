@@ -37,3 +37,31 @@ def test_sequenceTinder():
 
     assert start == 4
     assert end == 11
+
+def test_sequenceTinderMultiSearch():
+    read_sequence = "AAAAAACACACACACACACACATTCAGGGGGGCCAAAAATAGAGAGAGAGAGACCGAGAGGGGGTTAGCATCG"
+    read_sequence_bin = seq2bin(read_sequence)
+    read_quality = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB".encode("utf-8")
+
+    barcode_search_upstream1 = "CACACATT"
+    barcode_search_downstream1 = "TAGAGAGA"
+    barcode_search_upstream2 = "GAGACCGA"
+    barcode_search_downstream2 = "TAGCATCG"
+
+    barcode_info = {'upstream':barcode_search_upstream1,
+                    'downstream':barcode_search_downstream1,
+                    'upstream_bin':[seq2bin(barcode_search_upstream1),seq2bin(barcode_search_upstream2)],
+                    'downstream_bin':[seq2bin(barcode_search_downstream1),seq2bin(barcode_search_downstream2)],
+                    'miss_search_up':0,
+                    'miss_search_down':0,
+                    'quality_set_up':set(""), 
+                    'quality_set_down':set("") 
+                    }
+
+    barcodes = []
+    for i in range(2):
+        start,end=sequence_tinder(read_sequence_bin,read_quality,barcode_info,i)
+        barcodes.append(read_sequence[start:end])
+
+    assert barcodes[0] == "CAGGGGGGCCAAAAA"
+    assert barcodes[1] == "GAGGGGGT"
