@@ -112,13 +112,13 @@ Flag | Description
 `--fn` | Specify an output compiled file name (default is called compiled).
 `--v` | Adds progress bars (default is enabled).
 `--m` | The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned. 
-`--ph` | Minimal Phred-score (default=30).
-`--st` | The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence)). This parameter is ignored when using sequence searches with known delimiting sequences.
+`--ph` | The used format is Sanger ASCII 33 up to the character 94: 0x21 (lowest quality; '!' in ASCII) to 0x7e (highest quality; '~' in ASCII).
+`--st` | The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence). This parameter is ignored when using sequence searches with known delimiting sequences.
 `--l` | The length of the feature in bp (default = 20). It is only used when not using dual sequence search. 
-`--us` | Upstream search sequence.
-`--ds` | Downstream search sequence.
-`--msu` | Mismatches allowed in the upstream sequence.
-`--msd` | Mismatches allowed in the downstream sequence.
+`--us` | Upstream search sequence. This will return any --l X sequence downstream of the input sequence.
+`--ds` | Downstream search sequence. This will return any --l X sequence upwnstream of the input sequence.
+`--msu` | Upstream search sequence delimiting search sequence mismatches (default is 0).
+`--msd` | Downstream search sequence delimiting search sequence mismatches (default is 0).
 `--qsu` | Minimal Phred-score (default=30) in the upstream search sequence.
 `--qsd` | Minimal Phred-score (default=30) in the downstream search sequence.
 `--mo` | Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)].
@@ -283,7 +283,7 @@ barcode_info = {'upstream':barcode_search_upstream,
                 'miss_search_down':1, #mismatches allowed on the found upstream search sequence
                 'quality_set_up':set(""), #quality symbols that cannot be found on the read quality on the found upstream search sequence
                 'quality_set_down':set("") #quality symbols that cannot be found on the read quality on the found downstream search sequence
-				}
+				        }
 
 start,end=sequence_tinder(read_sequence_bin,read_quality,barcode_info)
 print(start,end)

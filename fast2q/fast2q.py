@@ -985,7 +985,10 @@ def initializer(cmd):
         
     param["version"] = version
     
-    quality_list = '!"#$%&' + "'()*+,-/0123456789:;<=>?@ABCDEFGHI" #Phred score in order of probabilities
+    quality_list = ""
+    base = 33 # if the phred-score base is different, place the right base value here
+    for q in range(94): # all the Sanger format quality ranges by order from lowest to highest
+        quality_list += chr(q+base) #Phred score in order of probabilities
 
     param["quality_set"] = set(quality_list[:int(param['phred'])-1])
     param["quality_set_up"] = set(quality_list[:int(param['qual_up'])-1])
@@ -1033,7 +1036,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.7.7"
+    version = "2.7.8"
     
     def current_dir_path_handling(param):
         if param[0] is None:
@@ -1051,25 +1054,25 @@ def input_parser():
         return parameters
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c",nargs='?',const=True,help="cmd line mode")
+    parser.add_argument("-c",nargs='?',const=True,help="cmd line mode.")
     parser.add_argument("-t",nargs='?',const=True,help="Runs 2FAST2Q in test mode with example data.")
-    parser.add_argument("-v",nargs='?',const=True,help="prints the installed version")
-    parser.add_argument("--s",help="The full path to the directory with the sequencing files OR file")
+    parser.add_argument("-v",nargs='?',const=True,help="Prints the current version.")
+    parser.add_argument("--s",help="The full path to the directory with the sequencing files OR file.")
     parser.add_argument("--g",help="The full path to the .csv file with the sgRNAs.")
     parser.add_argument("--o",help="The full path to the output directory")
     parser.add_argument("--fn",nargs='?',const="compiled",help="Specify an output compiled file name (default is called compiled)")
     parser.add_argument("--pb",nargs='?',const=False,help="Adds progress bars (default is enabled)")
-    parser.add_argument("--m",help="number of allowed mismatches (default=1)")
-    parser.add_argument("--ph",help="Minimal Phred-score (default=30)")
-    parser.add_argument("--st",help="Feauture start position in the read (default is 0==1st bp)")
-    parser.add_argument("--l",help="Feature length (default=20bp)")
-    parser.add_argument("--us",help="Upstream search sequence")
-    parser.add_argument("--ds",help="Downstream search sequence")
-    parser.add_argument("--msu",help="mismatches allowed in the upstream sequence")
-    parser.add_argument("--msd",help="mismatches allowed in the downstream sequence")
+    parser.add_argument("--m",help="The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned.")
+    parser.add_argument("--ph",help="Minimal Phred-score (default=30). The used format is Sanger ASCII 33 up to the character 94: 0x21 (lowest quality; '!' in ASCII) to 0x7e (highest quality; '~' in ASCII).")
+    parser.add_argument("--st",help="The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence)). This parameter is ignored when using sequence searches with known delimiting sequences.")
+    parser.add_argument("--l",help="The length of the feature in bp (default = 20). It is only used when not using dual sequence search.")
+    parser.add_argument("--us",help="Upstream search sequence. This will return any --l X sequence downstream of the input sequence.")
+    parser.add_argument("--ds",help="Downstream search sequence. This will return any --l X sequence upwnstream of the input sequence.")
+    parser.add_argument("--msu",help="Upstream search sequence delimiting search sequence mismatches (default is 0).")
+    parser.add_argument("--msd",help="Downstream search sequence delimiting search sequence mismatches (default is 0).")
     parser.add_argument("--qsu",help="Minimal Phred-score (default=30) in the upstream search sequence")
     parser.add_argument("--qsd",help="Minimal Phred-score (default=30) in the downstream search sequence")
-    parser.add_argument("--mo",help="Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)]")
+    parser.add_argument("--mo",help="Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)].")
     parser.add_argument("--cp",help="Number of cpus to be used (default is max(cpu)-2 for >=3 cpus, -1 for >=2 cpus, 1 if 1 cpu")
     parser.add_argument("--k",nargs='?',const=False,help="If enabled, keeps all temporary files (default is disabled)")
     args = parser.parse_args()
