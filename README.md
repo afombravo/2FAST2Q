@@ -112,7 +112,7 @@ Flag | Description
 `--fn` | Specify an output compiled file name (default is called compiled).
 `--v` | Adds progress bars (default is enabled).
 `--m` | The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned. 
-`--ph` | Minimal Phred-score (default=30). The used format is Sanger ASCII 33 up to the character 94: 0x21 (lowest quality; '!' in ASCII) to 0x7e (highest quality; '~' in ASCII).
+`--ph` | Minimal Phred-score (default=30). Reads with nucleotides having < than the indidacted Phred-score score will be discarded. The used format is Sanger ASCII 33 up to the character 94: 0x21 (lowest quality; '!' in ASCII) to 0x7e (highest quality; '~' in ASCII).
 `--st` | The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence). This parameter is ignored when using sequence searches with known delimiting sequences.
 `--l` | The length of the feature in bp (default = 20). It is only used when not using dual sequence search. 
 `--us` | Upstream search sequence. This will return any --l X sequence downstream of the input sequence.
@@ -176,11 +176,11 @@ In this case, it is allowed to input the following:
  1) A 5' end search sequence, and the amount of bp the program should inventory after. (example: `--us XXX --l 100`)
  2) A 3' end search sequence, and the amount of bp the program should inventory before. (example:`--ds YYY --l 100`)
  3) A 5' and 3' end search sequence, the program will return and count everything in between these two. (example:`--ds XXX --us YYY`)
- 4) How many mismatches are allowed in the search sequence (example: `--m 2`)
+ 4) How many mismatches are allowed in the search sequence (example: `--msu 2`)
 
 #### When searching a read for multiple sequences, one can do so by either:
   1) confirguring different fixed positions by separating all start locations with a ",". For example: "0,20,50" - the program will search for 3 sequences per read, starting at position 0,20, and 50, with the predefided sequence length.
-  2) configuring different 5' and 3' search sequences, also separated by "," and inputted as pairs: For example: upstream (`--us`) ATCG,GGTGG & downstream (`--ds`) AATC,GCACAC will initiate, per read, searches for any features between the ATCG * AATC and GGTGG * GCACAC sequences. If found, these 2 sequences will be merged separated by ":" and either try to be aligned against any found features in the .csv file (default), or returned as they are if in "extract and count" mode (`--mo EC`). Keep in mind that when multiple feature sequences are delimited by the same search sequences, only the first instance of any sequence passing the criteria will be returned. Multiple sequences per read can only be retrieved when using different search sequences.
+  2) configuring different 5' and 3' search sequences, also separated by "," and inputted as pairs. For example: upstream (`--us ATCG,GGTGG --ds AATC,GCACAC`) will initiate, per read, searches for any features between the ATCG * AATC and GGTGG * GCACAC sequences. If found, these 2 sequences will be merged separated by ":" and either try to be aligned against any found features in the .csv file (default), or returned as they are if in "extract and count" mode (`--mo EC`). Keep in mind that when multiple feature sequences are delimited by the same search sequences, only the first instance of any sequence passing the criteria will be returned. Multiple sequences per read can only be retrieved when using different search sequences.
  
 
 
