@@ -112,7 +112,7 @@ Flag | Description
 `--fn` | Specify an output compiled file name (default is called compiled).
 `--v` | Adds progress bars (default is enabled).
 `--m` | The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned. 
-`--ph` | The used format is Sanger ASCII 33 up to the character 94: 0x21 (lowest quality; '!' in ASCII) to 0x7e (highest quality; '~' in ASCII).
+`--ph` | Minimal Phred-score (default=30). The used format is Sanger ASCII 33 up to the character 94: 0x21 (lowest quality; '!' in ASCII) to 0x7e (highest quality; '~' in ASCII).
 `--st` | The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence). This parameter is ignored when using sequence searches with known delimiting sequences.
 `--l` | The length of the feature in bp (default = 20). It is only used when not using dual sequence search. 
 `--us` | Upstream search sequence. This will return any --l X sequence downstream of the input sequence.
