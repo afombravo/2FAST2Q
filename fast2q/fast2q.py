@@ -1200,8 +1200,8 @@ def input_parser():
     
     parameters = {}
     parameters["cmd"] = True
-    param['big_file_split'] = False
-    
+    parameters['big_file_split'] = False
+
     if args.t is None:
         paths_param = [[args.s,'seq_files'],
                        [args.g,'feature'],
