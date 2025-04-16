@@ -89,7 +89,7 @@ The default running mode is in "Counter" mode, however the user might want to ru
 
 When running without specified parameters, 2FAST2Q will assume the current running directory has all the required files:
 
-* one .csv corresponding to features file (not required in 'Extract and Count' mode)
+* one .csv corresponding to features file (can be either comma, semicolon, or tab separated) (not required in 'Extract and Count' mode)
 	
 * the .FASTQ files
 
@@ -110,9 +110,9 @@ Flag | Description
 `--g` | The full path to the .csv file with the features.
 `--o` | The full path to the output directory.
 `--fn` | Specify an output compiled file name (default is called compiled).
-`--v` | Adds progress bars (default is enabled).
+`--pb` | Adds progress bars (default is enabled).
 `--m` | The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned. 
-`--ph` | Minimal Phred-score (default=30). Reads with nucleotides having < than the indidacted Phred-score score will be discarded. The used format is Sanger ASCII 33 up to the character 94: 0x21 (lowest quality; '!' in ASCII) to 0x7e (highest quality; '~' in ASCII).
+`--ph` | Minimal Phred-score (default=30). Reads with nucleotides having < than the indicated Phred-score will be discarded. The used format is Sanger ASCII 33 up to the character 94: 0x21 (lowest quality; '!' in ASCII) to 0x7e (highest quality; '~' in ASCII).
 `--st` | The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence). This parameter is ignored when using sequence searches with known delimiting sequences.
 `--l` | The length of the feature in bp (default = 20). It is only used when not using dual sequence search. 
 `--us` | Upstream search sequence. This will return any --l X sequence downstream of the input sequence.
@@ -132,7 +132,7 @@ To run the program, three input paths are required:
 
 #### a.  Directory containing the sequencing files (assumed to be the current directory when using the cmd line version and no inputs are given)
 
-A path to the folder with the sequencing files (it doesn´t matter if in .gz or .fastq.gz format as 2fast2q auto determines the correct one). 2FAST2Q will automatically process all the .fastq files that exist in the indicated folder.
+A path to the folder with the sequencing files (it doesn´t matter if in .gz or .fastq.gz format as 2fast2q auto determines the correct one). 2FAST2Q will automatically process all the FASTQ files that exist in the indicated folder.
 
 #### b.  The path to the feature .csv file (optional) (assumed to be the only .csv file in the current directory when using the cmd line version and no inputs are given)
 Only needed when searching the fastq file for known sequences, such as with a CRISPRi-Seq experiment.
@@ -221,7 +221,7 @@ Upon completion, several files should be seen in the indicated output folder (wh
 
 However, why these parameters?
 
-Base quality filtering using Q>=30 means there is a 0.01% chance of a given nucleotide being miss-sequenced. To assure alignment quality, the program filters out by default any reads that have nucleotides with a Q < 30.
+Base quality filtering using Q>=30 means there is a 0.01% chance of a given nucleotide being miss-sequenced. To assure alignment quality, the program filters out by default any reads that have nucleotides with Q < 30.
 
 
 Why the mismatch?
@@ -231,19 +231,6 @@ To avoid a too highly stringent cutoff. Allowing a mismatch allows the alignment
 However, there is a safe mechanism in place to prevent 2 or more features with mismatches from being aligned to the same read (the read is discarded in this case, as there is no way of knowing to which feature the read aligns to)
 
 2FAST2Q mismatch feature calculates HAMMING distance ONLY
-
-
-# Troubleshooting
-
-Running 2FAST2Q with manually inputed example data:
-
-Download the "D39V_guides.csv" file
-Download the "example.fastq.gz"
-Run 2FAST2Q
-
-In this example, sgRNA0850 and sgRNA867 share the same sequence; this will appear as a warning message.
-
-The expected example output file is given: "compiled.csv"
 
 
 # Performing sequences searches using 2FAST2Q
@@ -281,8 +268,8 @@ barcode_info = {'upstream':barcode_search_upstream,
                 'downstream_bin':[seq2bin(barcode_search_downstream)],
                 'miss_search_up':1, #mismatches allowed on the found downstream search sequence
                 'miss_search_down':1, #mismatches allowed on the found upstream search sequence
-                'quality_set_up':set(""), #quality symbols that cannot be found on the read quality on the found upstream search sequence
-                'quality_set_down':set("") #quality symbols that cannot be found on the read quality on the found downstream search sequence
+                'quality_set_up':set(""), #quality symbols that CANNOT be found on the read quality on the found upstream search sequence
+                'quality_set_down':set("") #quality symbols that CANNOT be found on the read quality on the found downstream search sequence
 				        }
 
 start,end=sequence_tinder(read_sequence_bin,read_quality,barcode_info)

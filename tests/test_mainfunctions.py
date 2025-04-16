@@ -38,6 +38,16 @@ def test_sequenceTinder():
     assert start == 4
     assert end == 11
 
+    barcode_info['quality_set_down'] = set("&/")
+    start,end=sequence_tinder(read_sequence_bin,read_quality,barcode_info)
+
+    assert end is None
+
+    barcode_info['miss_search_down'] = 3
+    start,end=sequence_tinder(read_sequence_bin,read_quality,barcode_info)
+
+    assert end == 1
+
 def test_sequenceTinderMultiSearch():
     read_sequence = "AAAAAACACACACACACACACATTCAGGGGGGCCAAAAATAGAGAGAGAGAGACCGAGAGGGGGTTAGCATCG"
     read_sequence_bin = seq2bin(read_sequence)

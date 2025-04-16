@@ -111,8 +111,8 @@ def path_parser(folder_path, extension):
     """
     pathing=path_finder(folder_path,extension)
     if extension != ['*reads.csv']:
-        ordered = [path[0] for path in sorted(pathing, key=lambda e: e[-1])]
-
+        ordered = [path for path in sorted(pathing, key=lambda e: e[-1])]
+        
         if ordered == []:
             colourful_errors("FATAL",f"Check the path to the {extension} files folder. No files of this type found.\n")
             exit()
@@ -145,19 +145,11 @@ def features_loader(guides):
         If duplicate sequence entries are found, a warning is issued.
     """
     
-    colourful_errors("INFO","Loading Features")
-    
-    if not os.path.isfile(guides):
-        colourful_errors("FATAL",f"Check the path to the features file.\nNo .csv file found in the following path: {guides}\n")
-        exit()
-    
-    features = {}
-    names = set()
-    
-    try:
+    def features_file_loader_check(guides,separator,features):
+        names = set()
         with open(guides) as current: 
             for line in current:
-                line = line.rstrip().split(",")
+                line = line.rstrip().split(separator)
                 sequence = line[1].upper()
                 sequence = sequence.replace(" ", "")
                 name = line[0]
@@ -171,9 +163,23 @@ def features_loader(guides):
                     
                 else:
                     colourful_errors("WARNING",f"{features[sequence].name} and {name} share the same sequence. Only {features[sequence].name} will be considered valid. {name} will be ignored.")
+        return features
+    
+    colourful_errors("INFO","Loading Features")
+    
+    if not os.path.isfile(guides):
+        colourful_errors("FATAL",f"Check the path to the features file.\nNo .csv file found in the following path: {guides}\n")
+        exit()
 
-    except IndexError:
-        colourful_errors("FATAL","The given .csv file doesn't seem to be comma separated. Please double check that the file's column separation is ','\n")
+    features = {}
+    for sep in [",",";","\t"]:
+        try:
+            features = features_file_loader_check(guides,sep,features)
+        except IndexError:
+            pass
+        
+    if features == {}:
+        colourful_errors("FATAL","The given .csv file doesn't seem to be comma, semicolon, or tab separated. Please double check that the file's column separation\n")
         exit()
     
     colourful_errors("INFO",f"{len(features)} different features were provided.")
@@ -278,145 +284,240 @@ def sequence_tinder(read_bin,qual,param,i=0):
 
     return None,None
 
+def getuncompressedsize(raw,lines=0):
+    try:
+        ext = os.path.splitext(raw)[1]
+        if ext == ".gz":
+            with gzip.open(raw, 'rt') as f:
+                lines = sum(1 for _ in f)
+                return lines
+        else:
+            with open(raw, 'rt') as f:
+                lines = sum(1 for _ in f)
+                return lines
+    except EOFError:
+        return lines
+     
+def progress_bar(i,o,raw,cpu):
+    if o > cpu:
+        current = mp.current_process()
+        pos = current._identity[0]#-1
+    else:
+        pos = i+1
+    total_file_size = getuncompressedsize(raw)
+    tqdm_text = f"Processing file {i+1} out of {o}"
+    return tqdm(total=total_file_size,desc=tqdm_text, position=pos,colour="green",leave=False,ascii=True,unit="lines")
 
-def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preprocess=False):
+def fastq_parser(current,features,reads_stats,fixed_start,param,preprocess,pbar,raw):
+
+    reading = []
+    mismatch = [n+1 for n in range(param['miss'])]
+    local_read_stats = {}
+    local_read_stats["reads"] = 0
+    local_read_stats["perfect_counter"] = 0
+    local_read_stats["imperfect_counter"] = 0
+    local_read_stats["non_aligned_counter"] = 0
+    local_read_stats["quality_failed"] = 0
+    ram_clearance=ram_lock()
+
+    if param['miss'] != 0:
+        binary_features = binary_converter(features)
+
+    try:
+        for line in current:
+            quality_failed_flag = np.zeros(param['search_iterations'])
+            if (not preprocess) & (param['Progress bar']) & (not param['big_file_split']):
+                pbar.update(1)
+            reading.append(line.rstrip())
+            
+            if len(reading) == 4:
+                
+                full_feature = ""
+                for i in range(param['search_iterations']):
+
+                    if not fixed_start:
+
+                        start,end=sequence_tinder(seq2bin(str(reading[1],"utf-8")),
+                                                    reading[3],
+                                                    param,
+                                                    i)
+                            
+                        if (start is not None) & (end is not None):
+                            if end < start: #if the end is found before the start
+                                start=None
+                                quality_failed_flag[i] = 1 #this includes reads without search sequences as failed at quality
+                        else:
+                            quality_failed_flag[i] = 1
+
+                    if fixed_start:
+                        start = param['start_positioning'][i]
+                        end = param['end_positioning'][i]
+
+                    if (fixed_start) or (start is not None):
+                        seq = str(reading[1][start:end].upper(),"utf-8")
+                        quality = str(reading[3][start:end],"utf-8") #convert from bin to str
+
+                        if len(param['quality_set'].intersection(quality)) == 0:
+                            full_feature += f":{seq}"
+                        else:
+                            quality_failed_flag[i] = 1          
+                
+                if full_feature != "":
+                    seq = full_feature[1:] #remove the first :
+                    if param['Running Mode']=='C':
+                        if seq in features:
+                            features[seq].counts += 1
+                            local_read_stats["perfect_counter"] += 1
+
+                        elif mismatch != []:
+                            features,reads_stats,local_read_stats=\
+                            mismatch_search_handler(seq,
+                                                    mismatch,
+                                                    reads_stats,
+                                                    binary_features,
+                                                    features,
+                                                    ram_clearance,
+                                                    local_read_stats
+                                                    )
+                        else:
+                            local_read_stats["non_aligned_counter"] += 1
+
+                    else:
+                        if seq not in features:
+                            features[seq] = Features(seq, 1)
+                        else:
+                            features[seq].counts += 1
+                        local_read_stats["perfect_counter"] += 1
+                    
+                if quality_failed_flag.all():
+                    local_read_stats["quality_failed"] += 1
+                
+                reading = []
+                local_read_stats["reads"]  += 1
+                
+                if local_read_stats["reads"]  % 1000000 == 0:
+                    ram_clearance=ram_lock()
+                
+                if preprocess:
+                    if local_read_stats["reads"]  == 10000:
+                        return features,reads_stats,local_read_stats
+        
+        if (not preprocess) & (param['Progress bar']) & (not param['big_file_split']):
+            pbar.close()
+        
+    except EOFError:
+        colourful_errors("WARNING",f"{raw} is an incomplete or corrupted gzip file. Only partial processing might have occurred.")
+        pass
+
+    return features,reads_stats,local_read_stats
+
+def single_file_reads_binner(current,features,reads_stats,fixed_start,param,preprocess,raw,i,o):
     
-    """ Reads the fastq file on the fly. 
-    Each read is assumed to be composed of 4 lines, with the sequence being 
-    on line 2, and the basepair quality on line 4. 
-    Every read is trimmed based on the indicated feature positioning. 
-    The quality of the obtained trimmed read is crossed against the indicated
-    Phred score for quality control.
-    If the read has a perfect match with a feature, the respective feature gets a 
-    read increase of 1 (done by calling .counts from the respective feature class 
-    from the feature class dictionary).
-    If the read doesnt have a perfect match, it is sent for mismatch comparison
-    via the "mismatch_search_handler" function.
+    """
+    Splits a FASTQ file into chunks and processes them in parallel to count matching reads.
+
+    Reads are grouped and distributed across multiple CPUs. Each chunk is parsed to:
+    - Trim and quality-check reads
+    - Match reads to known features (perfect or imperfect)
+    - Update counters and read tracking
+
+    Results from all chunks are merged, including feature counts and read classification data.
+    A progress bar tracks processing based on uncompressed file size.
+
+    Parameters:
+    - current: File object (opened FASTQ stream)
+    - features: Feature objects with counting logic
+    - failed_reads, passed_reads: Sets/dicts tracking read classification
+    - fixed_start: Whether trimming positions are fixed
+    - param: Dictionary of processing parameters
+    - preprocess: Preprocessing mode toggle
+    - raw: Path to the FASTQ(.gz) file
+    - i, o: Index and total number of files (for progress display)
+
+    Returns:
+    - Tuple of total counts: (reads, perfect matches, imperfect matches, feature counts, 
+      failed reads, passed reads, non-aligned reads, quality failures)
+    """
+
+    def merge_feature_dicts(merged,unique):
+        for key, feat in unique.items():
+            if key in merged:
+                merged[key].counts += feat.counts
+            else:
+                merged[key] = Features(name=feat.name, counts=feat.counts)
+        return merged
+    
+    read_bucket=[]
+    divider = 100000 #number of lines per CPU per iteration
+    sample_read_stats = {}
+    sample_read_stats["reads"] = 0
+    sample_read_stats["perfect_counter"] = 0
+    sample_read_stats["imperfect_counter"] = 0
+    sample_read_stats["non_aligned_counter"] = 0
+    sample_read_stats["quality_failed"] = 0
+    features_total = {}
+    pool = mp.Pool(processes = param["cpu"], initargs=(mp.RLock(),), initializer=tqdm.set_lock)
+    
+    total_file_size = getuncompressedsize(raw)
+    end_file = total_file_size-1
+    tqdm_text = f"Processing file {i+1} out of {o}"
+    pbar = tqdm(total=total_file_size,desc=tqdm_text, position=0,colour="green",leave=False,ascii=True,unit="lines")
+    
+    for i,line in enumerate(current):
+        read_bucket.append(line)
+
+        if ((len(read_bucket)>=param["cpu"]*divider) & (not param["cpu"]*divider%4)) or (i == end_file):
+            chunks = [read_bucket[i * divider:(i + 1) * divider] for i in range(param["cpu"])]
+            read_bucket.clear()
+
+            async_results = [
+                pool.apply_async(
+                    fastq_parser,
+                    args=(chunk, features, reads_stats, fixed_start, 
+                          param, preprocess, None, raw)
+                ) for chunk in chunks
+            ]
+
+            for res in async_results:
+                sub_features,reads_stats_new,local_read_stats = res.get()
+                reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],reads_stats_new["failed_reads"])
+                reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**reads_stats_new["passed_reads"]}
+                sample_read_stats["reads"] += local_read_stats["reads"]
+                sample_read_stats["perfect_counter"] += local_read_stats["perfect_counter"]
+                sample_read_stats["imperfect_counter"] += local_read_stats["imperfect_counter"]
+                sample_read_stats["non_aligned_counter"] += local_read_stats["non_aligned_counter"]
+                sample_read_stats["quality_failed"] += local_read_stats["quality_failed"]
+                features_total = merge_feature_dicts(features_total, sub_features)
+                pbar.update(int(local_read_stats["reads"]*4))
+                
+    pbar.close()
+    pool.close()
+    pool.join()
+
+    return features_total,reads_stats,sample_read_stats
+
+def reads_counter(i,o,raw,features,param,reads_stats,preprocess=False):
+    
+    """
+    Parses a FASTQ (or .gz) file and counts reads matching predefined features.
+
+    Each read (4 lines) is trimmed based on fixed positions or upstream/downstream markers. 
+    Quality is assessed via Phred scores
+
+    Handles large files, optional preprocessing, and shows a progress bar if enabled.
+
+    Parameters:
+    - i, o: Input/output identifiers
+    - raw: FASTQ file path
+    - features: Feature objects with counting logic
+    - param: Processing parameters (trimming, quality, etc.)
+    - failed_reads, passed_reads: Trackers for read classification
+    - preprocess: Run in preprocessing mode if True
+
+    Returns:
+    - Output from the selected parsing or binning method
     """
     
-    def progress_bar(i,o,raw,cpu):
-        def getuncompressedsize(raw):
-            try:
-                ext = os.path.splitext(raw)[1]
-                if ext == ".gz":
-                    with gzip.open(raw, 'rt') as f:
-                        return sum(1 for _ in f)
-                else:
-                    with open(raw, 'rt') as f:
-                        return sum(1 for _ in f)
-            except EOFError:
-                return 0
-
-        if o > cpu:
-            current = mp.current_process()
-            pos = current._identity[0]#-1
-        else:
-            pos = i+1
-        total_file_size = getuncompressedsize(raw)
-        tqdm_text = f"Processing file {i+1} out of {o}"
-        return tqdm(total=total_file_size,desc=tqdm_text, position=pos,colour="green",leave=False,ascii=True,unit="lines")
-
-    def fastq_parser(current,features,failed_reads,passed_reads,fixed_start):
-    
-        reading = []
-        mismatch = [n+1 for n in range(param['miss'])]
-        perfect_counter, imperfect_counter, non_aligned_counter, reads,quality_failed = 0,0,0,0,0
-        ram_clearance=ram_lock()
-
-        if param['miss'] != 0:
-            binary_features = binary_converter(features)
-
-        try:
-            for line in current:
-                quality_failed_flag = np.zeros(param['search_iterations'])
-                if (not preprocess) & (param['Progress bar']):
-                    pbar.update(1)
-                reading.append(line.rstrip())
-                
-                if len(reading) == 4:
-                    
-                    full_feature = ""
-                    for i in range(param['search_iterations']):
-                
-                        if not fixed_start:
-
-                            start,end=sequence_tinder(seq2bin(str(reading[1],"utf-8")),
-                                                        reading[3],
-                                                        param,
-                                                        i)
-                                
-                            if (start is not None) & (end is not None):
-                                if end < start: #if the end is not found or found before the start
-                                    start=None
-                                    quality_failed_flag[i] = 1 #this includes reads without search sequences as failed at quality
-                            else:
-                                quality_failed_flag[i] = 1
-
-                        if fixed_start:
-                            start = param['start_positioning'][i]
-                            end = param['end_positioning'][i]
-
-                        if (fixed_start) or (start is not None):
-                            seq = str(reading[1][start:end].upper(),"utf-8")
-                            quality = str(reading[3][start:end],"utf-8") #convert from bin to str
-
-                            if len(param['quality_set'].intersection(quality)) == 0:
-                                full_feature += f":{seq}"
-                            else:
-                                quality_failed_flag[i] = 1          
-                    
-                    if full_feature != "":
-                        seq = full_feature[1:] #remove the first :
-                        if param['Running Mode']=='C':
-                            if seq in features:
-                                features[seq].counts += 1
-                                perfect_counter += 1
-
-                            elif mismatch != []:
-                                features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter=\
-                                mismatch_search_handler(seq,
-                                                        mismatch,
-                                                        failed_reads,
-                                                        binary_features,
-                                                        imperfect_counter,
-                                                        features,
-                                                        passed_reads,
-                                                        ram_clearance,
-                                                        non_aligned_counter
-                                                        )
-
-                            else:
-                                non_aligned_counter += 1
-
-                        else:
-                            if seq not in features:
-                                features[seq] = Features(seq, 1)
-                            else:
-                                features[seq].counts += 1
-                            perfect_counter += 1
-                        
-                    if quality_failed_flag.all():
-                        quality_failed += 1
-                    
-                    reading = []
-                    reads += 1
-                    
-                    if reads % 1000000 == 0:
-                        ram_clearance=ram_lock()
-                    
-                    if preprocess:
-                        if reads == 10000:
-                            return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads,0,0
-            
-            if (not preprocess) & (param['Progress bar']):
-                pbar.close()
-            
-        except EOFError:
-            colourful_errors("WARNING",f"{raw} is an incomplete or corrupted gzip file. Only partial processing might have occurred.")
-            pass
-
-        return reads,perfect_counter,imperfect_counter,features,failed_reads,passed_reads,non_aligned_counter,quality_failed
-
     fixed_start = True
     # determining the read trimming starting/ending place
     if (param['upstream'] is None) & (param['downstream'] is None):
@@ -443,16 +544,24 @@ def reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads,preproces
 
     _, ext = os.path.splitext(raw)
     
-    if (not preprocess) & (param['Progress bar']):
-        pbar = progress_bar(i,o,raw,cpu)
-    
+    pbar = None
+    if (not preprocess) & (param['Progress bar']) & (not param['big_file_split']):
+        pbar = progress_bar(i,o,raw,param["cpu"])
+
     try:
         if ext == ".gz":
             with gzip.open(raw, "rb") as current:
-                return fastq_parser(current,features,failed_reads,passed_reads,fixed_start)
+                if (not param['big_file_split']) or (preprocess):
+                    return fastq_parser(current,features,reads_stats,fixed_start,param,preprocess,pbar,raw)
+                else:
+                    return single_file_reads_binner(current,features,reads_stats,fixed_start,param,preprocess,raw,i,o)
         else:
-            with open(raw, "rb")  as current:
-                return fastq_parser(current,features,failed_reads,passed_reads,fixed_start)
+            with open(raw, "rb") as current:
+                if (not param['big_file_split']) or (preprocess):
+                    return fastq_parser(current,features,reads_stats,fixed_start,param,preprocess,pbar,raw)
+                else:
+                    return single_file_reads_binner(current,features,reads_stats,fixed_start,param,preprocess,raw,i,o)
+                    
     except EOFError:
         colourful_errors("WARNING",f"{raw} is an incomplete or corrupted gzip file.")
         return None
@@ -565,7 +674,7 @@ def features_all_vs_all(binary_features,read,mismatch):
     if found==1:
         return found_guide
 
-def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_counter,features,passed_reads,ram_clearance,non_aligned_counter):
+def mismatch_search_handler(seq,mismatch,reads_stats,binary_features,features,ram_clearance,local_read_stats):
     """
     Perform an imperfect alignment search on a sequencing read and update feature counts.
 
@@ -595,15 +704,16 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
     tuple
         (features, imperfect_counter, failed_reads, passed_reads, non_aligned_counter)
         Updated data structures and counters after processing the read.
-    """
-    if seq in failed_reads:
-        non_aligned_counter += 1
-        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+    """ 
+
+    if seq in reads_stats["failed_reads"]:
+        local_read_stats["non_aligned_counter"] += 1
+        return features,reads_stats,local_read_stats
     
-    if seq in passed_reads:
-        features[passed_reads[seq]].counts += 1
-        imperfect_counter += 1
-        return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+    if seq in reads_stats["passed_reads"]:
+        features[reads_stats["passed_reads"][seq]].counts += 1
+        local_read_stats["imperfect_counter"] += 1
+        return features,reads_stats,local_read_stats
     
     read=seq2bin(seq)                         
     for miss in mismatch:
@@ -612,19 +722,19 @@ def mismatch_search_handler(seq,mismatch,failed_reads,binary_features,imperfect_
         
         if feature is not None:
             features[feature].counts += 1
-            imperfect_counter += 1
-            passed_reads[seq] = feature
-            return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+            local_read_stats["imperfect_counter"] += 1
+            reads_stats["passed_reads"][seq] = feature
+            return features,reads_stats,local_read_stats
     
         else: 
             if miss == mismatch[-1]:
                 #if function reaches here its because nothing was aligned anywhere
                 if ram_clearance:
-                    failed_reads.add(seq)
-                non_aligned_counter += 1
-                return features,imperfect_counter,failed_reads,passed_reads,non_aligned_counter
+                    reads_stats["failed_reads"].add(seq)
+                local_read_stats["non_aligned_counter"] += 1
+                return features,reads_stats,local_read_stats
 
-def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
+def aligner(raw,i,o,features,param,reads_stats):
 
     """ Runs the main read to sgRNA associating function "reads_counter".
     Creates some visual prompts to alert the user that the samples are being
@@ -634,9 +744,12 @@ def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
     
     tempo = time.perf_counter()
 
-    reads, perfect_counter, imperfect_counter, features,failed_reads,passed_reads,non_aligned_counter,quality_failed = \
-        reads_counter(i,o,raw,features,param,cpu,failed_reads,passed_reads)
-
+    packed = reads_counter(i,o,raw,features,param,reads_stats)
+    if packed is None:
+        return reads_stats
+    
+    features, reads_stats, local_read_stats = packed
+        
     master_list = []
     [master_list.append([features[guide].name] + [features[guide].counts]) for guide in features]
 
@@ -654,7 +767,7 @@ def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
          name = Path(name).stem
          path,_ = os.path.splitext(path)
 
-    stats_condition = f"#script ran in {timing} for file {name}. {perfect_counter+imperfect_counter} reads out of {reads} were aligned. {perfect_counter} were perfectly aligned. {imperfect_counter} were aligned with mismatch. {non_aligned_counter} passed quality filtering but were not aligned. {quality_failed} did not pass quality filtering."
+    stats_condition = f'#script ran in {timing} for file {name}. {local_read_stats["perfect_counter"]+local_read_stats["imperfect_counter"]} reads out of {local_read_stats["reads"]} were aligned. {local_read_stats["perfect_counter"]} were perfectly aligned. {local_read_stats["imperfect_counter"]} were aligned with mismatch. {local_read_stats["non_aligned_counter"]} passed quality filtering but were not aligned. {local_read_stats["quality_failed"]} did not pass quality filtering.'
     
     if not param['Progress bar']:
         colourful_errors("INFO",f"Sample {name} was processed in {timing}")
@@ -670,7 +783,7 @@ def aligner(raw,i,o,features,param,cpu,failed_reads,passed_reads):
     csvfile = os.path.join(param["directory"], name+"_reads.csv")
     csv_writer(csvfile, master_list)
 
-    return failed_reads,passed_reads
+    return reads_stats
 
 def csv_writer(path, outfile):
     
@@ -707,18 +820,8 @@ def inputs_handler():
             parameters['downstream'] = None
             
     except Exception:
-        colourful_errors("FATAL",f"Please confirm you have provided the correct parameters.\nOnly numeric values are accepted in the folowing fields:\n-Feature read starting place;\n-Feature length;\n-mismatch;\n-Phred score.\n")
+        colourful_errors("FATAL","Please confirm you have provided the correct parameters.\nOnly numeric values are accepted in the folowing fields:\n-Feature read starting place;\n-Feature length;\n-mismatch;\n-Phred score.\n")
         exit()
-    
-    # avoids getting -1 and actually filtering by highest phred score by mistake
-    if int(parameters["phred"]) == 0:
-        parameters["phred"] = 1
-
-    if int(parameters["qual_up"]) == 0:
-        parameters["qual_up"] = 1
-        
-    if int(parameters["qual_down"]) == 0:
-        parameters["qual_down"] = 1
     
     if parameters['delete'] == "y":
         parameters['delete'] = True
@@ -975,7 +1078,7 @@ def initializer(cmd):
     param = inputs_handler() if cmd is None else cmd
     
     if "test_mode" in param:
-        colourful_errors("WARNING",f"Running test mode!\n")
+        colourful_errors("WARNING","Running test mode!\n")
     
     if (param["upstream"] == None) or (param["downstream"] == None):
         if "Variable length feature?" in param:
@@ -989,6 +1092,16 @@ def initializer(cmd):
     base = 33 # if the phred-score base is different, place the right base value here
     for q in range(94): # all the Sanger format quality ranges by order from lowest to highest
         quality_list += chr(q+base) #Phred score in order of probabilities
+
+    # avoids getting -1 and actually filtering by highest phred score by mistake
+    if int(param["phred"]) <= 0:
+        param["phred"] = 1
+
+    if int(param["qual_up"]) <= 0:
+        param["qual_up"] = 1
+        
+    if int(param["qual_down"]) <= 0:
+        param["qual_down"] = 1
 
     param["quality_set"] = set(quality_list[:int(param['phred'])-1])
     param["quality_set_up"] = set(quality_list[:int(param['qual_up'])-1])
@@ -1036,7 +1149,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.7.8"
+    version = "2.8.0"
     
     def current_dir_path_handling(param):
         if param[0] is None:
@@ -1063,7 +1176,7 @@ def input_parser():
     parser.add_argument("--fn",nargs='?',const="compiled",help="Specify an output compiled file name (default is called compiled)")
     parser.add_argument("--pb",nargs='?',const=False,help="Adds progress bars (default is enabled)")
     parser.add_argument("--m",help="The number of allowed mismatches per feature (default = 1). When in extract + Count mode, this parameter is ignored as all different sequences are returned.")
-    parser.add_argument("--ph",help="Minimal Phred-score (default=30). The used format is Sanger ASCII 33 up to the character 94: 0x21 (lowest quality; '!' in ASCII) to 0x7e (highest quality; '~' in ASCII).")
+    parser.add_argument("--ph",help="Minimal Phred-score (default=30). Reads with nucleotides having < than the indicated Phred-score will be discarded. The used format is Sanger ASCII 33 up to the character 94: 0x21 (lowest quality; '!' in ASCII) to 0x7e (highest quality; '~' in ASCII).")
     parser.add_argument("--st",help="The start position of the feature within the read (default = 0, meaning the sequenced feature is located at the first position of the read sequence)). This parameter is ignored when using sequence searches with known delimiting sequences.")
     parser.add_argument("--l",help="The length of the feature in bp (default = 20). It is only used when not using dual sequence search.")
     parser.add_argument("--us",help="Upstream search sequence. This will return any --l X sequence downstream of the input sequence.")
@@ -1116,8 +1229,6 @@ def input_parser():
     parameters['phred']=30
     if args.ph is not None:
         parameters['phred']=int(args.ph)
-        if int(parameters["phred"]) == 0:
-            parameters["phred"] = 1
                  
     parameters['miss']=1
     if args.m is not None:
@@ -1238,7 +1349,6 @@ def run_stats(headers, param, compiled, head):
     be used for downstream user quality control aplications. Creates a simple
     bar graph with the number of reads per sample"""
     
-    ### parsing the stats from the read files
     global_stat = [["#Sample name", "Running Time", "Running Time unit", \
                     "Total number of reads in sample", \
                     "Total number of reads that were aligned", \
@@ -1389,9 +1499,9 @@ def ram_lock():
         return False
     return True
 
-def cpu_counter(cpu):
+def cpu_counter(param):
     """
-    Determine the number of available CPU cores and create a multiprocessing pool.
+    Determine the number of available CPU cores.
 
     Parameters
     ----------
@@ -1401,12 +1511,11 @@ def cpu_counter(cpu):
 
     Returns
     -------
-    tuple
-        (mp.Pool, int) - A multiprocessing pool configured with the selected number of CPUs, 
-        and the final CPU count used.
+    int
+        int - The final CPU count to be used.
     """
     available_cpu = mp.cpu_count()
-    if type(cpu) is not int:
+    if type(param["cpu"]) is not int:
         cpu = available_cpu
         if cpu >= 3:
             cpu -= 2
@@ -1416,51 +1525,49 @@ def cpu_counter(cpu):
         if cpu > available_cpu:
             cpu = available_cpu
 
-    pool = mp.Pool(processes = cpu, 
-                    initargs=(mp.RLock(),), 
-                    initializer=tqdm.set_lock)
-    
-    return pool,cpu
+    return cpu
 
-def multiprocess_merger(start,failed_reads,passed_reads,files,features,param,pool,cpu,preprocess=False):
+def multiprocess_merger(start,reads_stats,files,features,param,pool):
     
     """ runs all samples in blocks equal to the amount of cpus in the PC. 
     Before starting a new block, the hash tables for the failed and passed reads 
     are updated. This confers speed advantages for the next block. """ 
     
     result = []
-    for i, name in enumerate(files[start:start+cpu]):
+    if not param['big_file_split']:
+        for i, name in enumerate(files[start:start+param["cpu"]]):
+            result.append(pool.apply_async(aligner, args=(name,
+                                                          i+start,
+                                                          len(files),
+                                                          features,
+                                                          param,
+                                                          reads_stats)))
+        if param["miss"] != 0:
+            unpacked = [x.get() for x in result]
+            return hash_reads_parsing(unpacked,reads_stats)
+        else:
+            return reads_stats
         
-        result.append(pool.apply_async(aligner, args=(name,\
-                                                      i+start,\
-                                                      len(files),\
-                                                      features,\
-                                                      param,\
-                                                      cpu,\
-                                                      failed_reads,\
-                                                      passed_reads)))
-    
-    if param["miss"] != 0:
-        compiled = [x.get() for x in result]
-        failed_reads_compiled,passed_reads_compiled = zip(*compiled)
-        return hash_reads_parsing(failed_reads_compiled,passed_reads_compiled,failed_reads,passed_reads)
-    
-    else:
-        return failed_reads,passed_reads
+    else: 
+        for i, file in enumerate(files):
+            unpacked = aligner(file, i,len(files),features,param,reads_stats)
+            reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],unpacked["failed_reads"])
+            reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**unpacked["passed_reads"]}
+        return reads_stats
 
-def hash_reads_parsing(failed_reads_compiled,passed_reads_compiled,failed_reads,passed_reads):
+def hash_reads_parsing(unpacked,reads_stats):
     
     """ parsed the results from all the processes, merging the individual failed and
     passed reads into one master file, that will be subsquently used for the new
     samples's processing """ 
     
-    for failed,passed in zip(failed_reads_compiled,passed_reads_compiled):
-        failed_reads = set.union(failed_reads,failed)
-        passed_reads = {**passed_reads,**passed}
+    for failed,passed in zip(unpacked["failed_reads"],unpacked["passed_reads"]):
+        reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],failed)
+        reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**passed}
 
-    return failed_reads,passed_reads
+    return reads_stats
 
-def hash_preprocesser(files,features,param,pool,cpu):
+def hash_preprocesser(files,features,param,reads_stats):
     
     """ For the smallest files, we processe them for the first x amount of reads to
     initialize the failed reads and passed reads hash tables. This will confer some 
@@ -1469,39 +1576,68 @@ def hash_preprocesser(files,features,param,pool,cpu):
     
     colourful_errors("INFO","Please standby for the initialization procedure.")
     result=[]
+    reads_stats["failed_reads"],reads_stats["passed_reads"] = set(),{}
 
-    for name in files[:cpu]:
-        result.append(pool.apply_async(reads_counter, args=(0,0,name,features,param,cpu,set(),{},True)))
+    ctx = mp.get_context("spawn")
+    pool = ctx.Pool(processes=param["cpu"])
+    for name in files[:param["cpu"]]:
+        result.append(pool.apply_async(reads_counter, args=(0,0,name,features,param,reads_stats,True)))
+    pool.close()
+    pool.join()
     
     compiled = [x.get() for x in result]
-
-    _,_,_,_,failed_reads_compiled,passed_reads_compiled,_,_ = zip(*compiled)
-
-    return hash_reads_parsing(failed_reads_compiled,passed_reads_compiled,set(),{})
+    for entry in compiled:
+        _,local_reads,_ = entry
+        reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],local_reads["failed_reads"])
+        reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**local_reads["passed_reads"]}
+    return reads_stats
 
 def aligner_mp_dispenser(files,features,param):
     
-    """ starts and handles the parallel processing of all the samples by calling 
-    multiple instances of the "aligner" function (one per sample) """
+    """ starts handling the parallel processing of all the samples by forwarding
+    the program to the correct processing pipeline."""
     
     if not os.path.exists(param["directory"]):
         os.makedirs(param["directory"])
     
-    start,failed_reads,passed_reads = 0,set(),{}
-    pool,cpu = cpu_counter(param["cpu"])
-    
+    reads_stats = {}
+    reads_stats["failed_reads"],reads_stats["passed_reads"] = set(),{}
+    param["cpu"] = cpu_counter(param)
+
     if param["miss"] != 0:
-        failed_reads,passed_reads=hash_preprocesser(files,features,param,pool,cpu)
+        reads_stats=hash_preprocesser(files,features,param,reads_stats)
     
     colourful_errors("INFO",f"Processing {len(files)} files. Please hold.")
-
-    for start in range(0,len(files),cpu):
-        failed_reads,passed_reads = \
-        multiprocess_merger(start,failed_reads,passed_reads,files,\
-                            features,param,pool,cpu)
+    
+    if not param['big_file_split']:
+        pool = mp.Pool(processes = param["cpu"], initargs=(mp.RLock(),), initializer=tqdm.set_lock)
+        for start in range(0,len(files),param["cpu"]):
+            reads_stats = multiprocess_merger(start,reads_stats,files,features,param,pool)
+        pool.close()
+        pool.join()
         
-    pool.close()
-    pool.join()
+    else:
+        _ = multiprocess_merger(None,reads_stats,files,features,param,None)
+
+def file_sizer_split(pathing,param):
+    
+    """ Determines if the script will split each sample into chunks for multiprocessing,
+    or if it is more cost effective to process several samples in parallel."""
+    
+    files = [path[0] for path in sorted(pathing, key=lambda e: e[-1])]
+    median_file_size_list = [size[1] for size in pathing]
+    median_file_size = np.median(median_file_size_list)
+    
+    ext = os.path.splitext(files[0])[1]
+    size_cutoff = 300000000 #300mb uncompressed
+    if ext == ".gz":
+        size_cutoff = 50000000 #50mb compressed
+    
+    param['big_file_split'] = False
+    if (median_file_size > size_cutoff) & (param["miss"] != 0): #50mb and with mismatch search
+        param['big_file_split'] = True
+
+    return files,param
 
 def main():
     
@@ -1514,6 +1650,7 @@ def main():
     files = [param["seq_files"]]
     if os.path.splitext(param["seq_files"])[1] == '':
         files = path_parser(param["seq_files"], ["*.gz","*.fastq"])
+        files, param = file_sizer_split(files,param)
 
     ### loads the features from the input .csv file. 
     ### Creates a dictionary "feature" of class instances for each sgRNA
@@ -1523,6 +1660,7 @@ def main():
     
     ### Processes all the samples by associating sgRNAs to the reads on the fastq files.
     ### Creates one process per sample, allowing multiple samples to be processed in parallel. 
+    ### alternativally, one sample can also be split into several chunks. this happens when the samples are quite large.
     aligner_mp_dispenser(files,features,param)
     
     ### Compiles all the processed samples from multi into one file, and creates the run statistics
