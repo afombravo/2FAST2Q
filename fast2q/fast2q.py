@@ -1546,28 +1546,16 @@ def multiprocess_merger(start,reads_stats,files,features,param,pool):
                                                           reads_stats)))
         if param["miss"] != 0:
             unpacked = [x.get() for x in result]
-            return hash_reads_parsing(unpacked,reads_stats)
-        else:
-            return reads_stats
+            result = []
+            for single_file_reads_stats in unpacked:
+                reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],single_file_reads_stats["failed_reads"])
+                reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**single_file_reads_stats["passed_reads"]}
         
     else: 
         for i, file in enumerate(files):
             unpacked = aligner(file, i,len(files),features,param,reads_stats)
             reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],unpacked["failed_reads"])
             reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**unpacked["passed_reads"]}
-        return reads_stats
-
-def hash_reads_parsing(unpacked,reads_stats):
-    
-    """ parsed the results from all the processes, merging the individual failed and
-    passed reads into one master file, that will be subsquently used for the new
-    samples's processing """ 
-    
-    for failed,passed in zip(unpacked["failed_reads"],unpacked["passed_reads"]):
-        reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],failed)
-        reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**passed}
-
-    return reads_stats
 
 def hash_preprocesser(files,features,param,reads_stats):
     
@@ -1614,12 +1602,12 @@ def aligner_mp_dispenser(files,features,param):
     if not param['big_file_split']:
         pool = mp.Pool(processes = param["cpu"], initargs=(mp.RLock(),), initializer=tqdm.set_lock)
         for start in range(0,len(files),param["cpu"]):
-            reads_stats = multiprocess_merger(start,reads_stats,files,features,param,pool)
+            multiprocess_merger(start,reads_stats,files,features,param,pool)
         pool.close()
         pool.join()
         
     else:
-        _ = multiprocess_merger(None,reads_stats,files,features,param,None)
+        multiprocess_merger(None,reads_stats,files,features,param,None)
 
 def file_sizer_split(pathing,param):
     
@@ -1629,13 +1617,13 @@ def file_sizer_split(pathing,param):
     files = [path[0] for path in sorted(pathing, key=lambda e: e[-1])]
     median_file_size_list = [size[1] for size in pathing]
     median_file_size = np.median(median_file_size_list)
-    
     ext = os.path.splitext(files[0])[1]
+
     size_cutoff = 300000000 #300mb uncompressed
     if ext == ".gz":
         size_cutoff = 50000000 #50mb compressed
     
-    if (median_file_size > size_cutoff) & (param["miss"] != 0): #50mb and with mismatch search
+    if (median_file_size > size_cutoff) & (param["miss"] != 0): #file size and with mismatch search
         param['big_file_split'] = True
 
     return files,param
