@@ -1200,6 +1200,8 @@ def input_parser():
     
     parameters = {}
     parameters["cmd"] = True
+    param['big_file_split'] = False
+    
     if args.t is None:
         paths_param = [[args.s,'seq_files'],
                        [args.g,'feature'],
@@ -1633,7 +1635,6 @@ def file_sizer_split(pathing,param):
     if ext == ".gz":
         size_cutoff = 50000000 #50mb compressed
     
-    param['big_file_split'] = False
     if (median_file_size > size_cutoff) & (param["miss"] != 0): #50mb and with mismatch search
         param['big_file_split'] = True
 
