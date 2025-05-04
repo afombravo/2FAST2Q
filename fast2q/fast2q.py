@@ -1658,7 +1658,7 @@ def file_sizer_split(param):
     or if it is more cost effective to process several samples in parallel."""
 
     if  param["test_mode"]:
-        param["sequencing_files"] = {"len_files":len(param["seq_files"]),
+        param["sequencing_files"] = {"len_files":len([param["seq_files"]]),
                                     "preprocess_files":[param["seq_files"]],
                                     "files": [param["seq_files"]]}
         return param
