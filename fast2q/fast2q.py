@@ -1237,7 +1237,7 @@ def input_parser():
         paths_param = [[resources.files("fast2q").joinpath('data/example.fastq.gz'), 'seq_files'],
                         [resources.files("fast2q").joinpath('data/D39V_guides.csv'), 'feature'],
                         [os.getcwd(), 'out']]
-        param["sequencing_files"] = {"len_files":len(paths_param[0]),
+        parameters["sequencing_files"] = {"len_files":len(paths_param[0]),
                                     "preprocess_files":paths_param[0],
                                     "files": paths_param[0]}
        
