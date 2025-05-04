@@ -1685,11 +1685,7 @@ def main():
     """ Runs the program by calling all the appropriate functions"""
     
     ### parses all inputted parameters
-    param = initializer(input_parser())
-    
-    ### parses the names/paths, and orders the sequencing files
-    if os.path.splitext(param["seq_files"])[1] == '':
-        param = file_sizer_split(param)
+    param = file_sizer_split(initializer(input_parser()))
 
     ### loads the features from the input .csv file. 
     ### Creates a dictionary "feature" of class instances for each sgRNA
