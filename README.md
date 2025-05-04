@@ -123,6 +123,7 @@ Flag | Description
 `--qsd` | Minimal Phred-score (default=30) in the downstream search sequence.
 `--mo` | Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)].
 `--cp` | Number of cpus to be used (default is max(cpu)-2 for >=3 cpus, -1 for >=2 cpus, 1 if 1 cpu).
+`--fs` | File Split mode. If enabled, multiprocessing will split each file and process it (Best when using large files or when requiring heavy processing). If disabled, multiple files will be processed simultaneously (default is disabled).
 `--k` |  If passed, keeps all temporary files (default is disabled: deletes all temporary files).
 
 

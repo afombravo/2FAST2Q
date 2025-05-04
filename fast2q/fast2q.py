@@ -298,26 +298,23 @@ def getuncompressedsize(raw,lines=0):
     except EOFError:
         return lines
      
-def progress_bar(i,o,raw,cpu):
-    if o > cpu:
-        current = mp.current_process()
-        pos = current._identity[0]#-1
-    else:
-        pos = i+1
+def progress_bar(i,raw,param):
     total_file_size = getuncompressedsize(raw)
-    tqdm_text = f"Processing file {i+1} out of {o}"
-    return tqdm(total=total_file_size,desc=tqdm_text, position=pos,colour="green",leave=False,ascii=True,unit="lines")
+    tqdm_text = f"Processing file {i+1} out of {param['sequencing_files']['len_files']}"
+    return tqdm(total=int(total_file_size/4),desc=tqdm_text, position=i%param["cpu"],colour="green",leave=False,ascii=True,unit="reads")
 
 def fastq_parser(current,features,reads_stats,fixed_start,param,preprocess,pbar,raw):
 
     reading = []
     mismatch = [n+1 for n in range(param['miss'])]
-    local_read_stats = {}
-    local_read_stats["reads"] = 0
-    local_read_stats["perfect_counter"] = 0
-    local_read_stats["imperfect_counter"] = 0
-    local_read_stats["non_aligned_counter"] = 0
-    local_read_stats["quality_failed"] = 0
+    local_read_stats = {
+        "reads": 0,
+        "perfect_counter": 0,
+        "imperfect_counter": 0,
+        "non_aligned_counter": 0,
+        "quality_failed": 0
+    }
+
     ram_clearance=ram_lock()
 
     if param['miss'] != 0:
@@ -326,11 +323,11 @@ def fastq_parser(current,features,reads_stats,fixed_start,param,preprocess,pbar,
     try:
         for line in current:
             quality_failed_flag = np.zeros(param['search_iterations'])
-            if (not preprocess) & (param['Progress bar']) & (not param['big_file_split']):
-                pbar.update(1)
             reading.append(line.rstrip())
             
             if len(reading) == 4:
+                if (not preprocess) & (param['Progress bar']) & (not param['big_file_split']):
+                    pbar.update(1)
                 
                 full_feature = ""
                 for i in range(param['search_iterations']):
@@ -411,7 +408,7 @@ def fastq_parser(current,features,reads_stats,fixed_start,param,preprocess,pbar,
 
     return features,reads_stats,local_read_stats
 
-def single_file_reads_binner(current,features,reads_stats,fixed_start,param,preprocess,raw,i,o):
+def single_file_reads_binner(i,current,features,reads_stats,fixed_start,param,preprocess,raw):
     
     """
     Splits a FASTQ file into chunks and processes them in parallel to count matching reads.
@@ -446,30 +443,37 @@ def single_file_reads_binner(current,features,reads_stats,fixed_start,param,prep
             else:
                 merged[key] = Features(name=feat.name, counts=feat.counts)
         return merged
-    
+
     read_bucket=[]
-    divider = 100000 #number of lines per CPU per iteration
-    sample_read_stats = {}
-    sample_read_stats["reads"] = 0
-    sample_read_stats["perfect_counter"] = 0
-    sample_read_stats["imperfect_counter"] = 0
-    sample_read_stats["non_aligned_counter"] = 0
-    sample_read_stats["quality_failed"] = 0
+    divider = 400000 #number of lines per CPU per iteration
+    sample_read_stats = {
+        "reads": 0,
+        "perfect_counter": 0,
+        "imperfect_counter": 0,
+        "non_aligned_counter": 0,
+        "quality_failed": 0
+    }
+
     features_total = {}
     pool = mp.Pool(processes = param["cpu"], initargs=(mp.RLock(),), initializer=tqdm.set_lock)
     
     total_file_size = getuncompressedsize(raw)
     end_file = total_file_size-1
-    tqdm_text = f"Processing file {i+1} out of {o}"
-    pbar = tqdm(total=total_file_size,desc=tqdm_text, position=0,colour="green",leave=False,ascii=True,unit="lines")
     
-    for i,line in enumerate(current):
+    if param['Progress bar']:
+        tqdm_text = f"Processing file {i+1} out of {param['sequencing_files']['len_files']}"
+        pbar = tqdm(total=int(total_file_size/4),desc=tqdm_text, position=0,colour="green",leave=False,ascii=True,unit="reads")
+    
+    if divider > total_file_size:
+        divider = int(total_file_size / param["cpu"])
+    
+    for e,line in enumerate(current):
         read_bucket.append(line)
 
-        if ((len(read_bucket)>=param["cpu"]*divider) & (not param["cpu"]*divider%4)) or (i == end_file):
+        if ((len(read_bucket)>=param["cpu"]*divider) & (not param["cpu"]*divider%4)) or (e == end_file):
             chunks = [read_bucket[i * divider:(i + 1) * divider] for i in range(param["cpu"])]
             read_bucket.clear()
-
+            
             async_results = [
                 pool.apply_async(
                     fastq_parser,
@@ -477,26 +481,37 @@ def single_file_reads_binner(current,features,reads_stats,fixed_start,param,prep
                           param, preprocess, None, raw)
                 ) for chunk in chunks
             ]
-
-            for res in async_results:
-                sub_features,reads_stats_new,local_read_stats = res.get()
-                reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],reads_stats_new["failed_reads"])
-                reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**reads_stats_new["passed_reads"]}
-                sample_read_stats["reads"] += local_read_stats["reads"]
-                sample_read_stats["perfect_counter"] += local_read_stats["perfect_counter"]
-                sample_read_stats["imperfect_counter"] += local_read_stats["imperfect_counter"]
-                sample_read_stats["non_aligned_counter"] += local_read_stats["non_aligned_counter"]
-                sample_read_stats["quality_failed"] += local_read_stats["quality_failed"]
-                features_total = merge_feature_dicts(features_total, sub_features)
-                pbar.update(int(local_read_stats["reads"]*4))
+            
+            try:
+                results = [res.get() for res in async_results] #1h timeout
+                for sub_features,reads_stats_new,local_read_stats in results:
+                    reads_stats["failed_reads"].update(reads_stats_new["failed_reads"])
+                    reads_stats["passed_reads"].update(reads_stats_new["passed_reads"])
+                    sample_read_stats["reads"] += local_read_stats["reads"]
+                    sample_read_stats["perfect_counter"] += local_read_stats["perfect_counter"]
+                    sample_read_stats["imperfect_counter"] += local_read_stats["imperfect_counter"]
+                    sample_read_stats["non_aligned_counter"] += local_read_stats["non_aligned_counter"]
+                    sample_read_stats["quality_failed"] += local_read_stats["quality_failed"]
+                    features_total = merge_feature_dicts(features_total, sub_features)
+                    if param['Progress bar']:
+                        pbar.update(int(local_read_stats["reads"]))
                 
-    pbar.close()
+            except mp.TimeoutError:
+                colourful_errors("WARNING",f"Possibly stalled processing {raw}. Might be a corrupted gzip file.")
+                if param['Progress bar']:
+                    pbar.close()
+                pool.terminate()
+                pool.join()
+                return features_total,reads_stats,sample_read_stats
+    
+    if param['Progress bar']:
+        pbar.close()
     pool.close()
     pool.join()
 
     return features_total,reads_stats,sample_read_stats
 
-def reads_counter(i,o,raw,features,param,reads_stats,preprocess=False):
+def reads_counter(i,raw,features,param,reads_stats,preprocess=False):
     
     """
     Parses a FASTQ (or .gz) file and counts reads matching predefined features.
@@ -546,7 +561,7 @@ def reads_counter(i,o,raw,features,param,reads_stats,preprocess=False):
     
     pbar = None
     if (not preprocess) & (param['Progress bar']) & (not param['big_file_split']):
-        pbar = progress_bar(i,o,raw,param["cpu"])
+        pbar = progress_bar(i,raw,param)
 
     try:
         if ext == ".gz":
@@ -554,13 +569,13 @@ def reads_counter(i,o,raw,features,param,reads_stats,preprocess=False):
                 if (not param['big_file_split']) or (preprocess):
                     return fastq_parser(current,features,reads_stats,fixed_start,param,preprocess,pbar,raw)
                 else:
-                    return single_file_reads_binner(current,features,reads_stats,fixed_start,param,preprocess,raw,i,o)
+                    return single_file_reads_binner(i,current,features,reads_stats,fixed_start,param,preprocess,raw)
         else:
             with open(raw, "rb") as current:
                 if (not param['big_file_split']) or (preprocess):
                     return fastq_parser(current,features,reads_stats,fixed_start,param,preprocess,pbar,raw)
                 else:
-                    return single_file_reads_binner(current,features,reads_stats,fixed_start,param,preprocess,raw,i,o)
+                    return single_file_reads_binner(i,current,features,reads_stats,fixed_start,param,preprocess,raw)
                     
     except EOFError:
         colourful_errors("WARNING",f"{raw} is an incomplete or corrupted gzip file.")
@@ -734,7 +749,7 @@ def mismatch_search_handler(seq,mismatch,reads_stats,binary_features,features,ra
                 local_read_stats["non_aligned_counter"] += 1
                 return features,reads_stats,local_read_stats
 
-def aligner(raw,i,o,features,param,reads_stats):
+def aligner(i,raw,features,param,reads_stats):
 
     """ Runs the main read to sgRNA associating function "reads_counter".
     Creates some visual prompts to alert the user that the samples are being
@@ -744,7 +759,7 @@ def aligner(raw,i,o,features,param,reads_stats):
     
     tempo = time.perf_counter()
 
-    packed = reads_counter(i,o,raw,features,param,reads_stats)
+    packed = reads_counter(i,raw,features,param,reads_stats)
     if packed is None:
         return reads_stats
     
@@ -800,7 +815,9 @@ def inputs_handler():
     parameters=inputs_initializer()
 
     try:
-
+        parameters["seq_files"]
+        parameters["feature"]
+        parameters["out"]
         parameters["length"]=int(parameters["length"])
         parameters["miss"]=int(parameters["miss"])
         parameters["phred"]=int(parameters["phred"])
@@ -820,10 +837,10 @@ def inputs_handler():
             parameters['downstream'] = None
             
     except Exception:
-        colourful_errors("FATAL","Please confirm you have provided the correct parameters.\nOnly numeric values are accepted in the folowing fields:\n-Feature read starting place;\n-Feature length;\n-mismatch;\n-Phred score.\n")
+        colourful_errors("FATAL","Please confirm you have provided the correct parameters in the right format.\n")
         exit()
     
-    if parameters['delete'] == "y":
+    if parameters['Delete intermediary files'] == "Yes":
         parameters['delete'] = True
     else:
         parameters['delete'] = False
@@ -846,6 +863,11 @@ def inputs_handler():
         
     parameters["cmd"] = False
     parameters['cpu'] = False
+    
+    if parameters['File Split mode'] == "Yes":
+        parameters['big_file_split'] = True
+    else:
+        parameters['big_file_split'] = False
 
     return parameters
 
@@ -1027,7 +1049,8 @@ def inputs_initializer():
     dropdown_options = {
         "Running Mode": ["Counter", "Extractor + Counter", 9, 0],
         "Progress bar": ["Yes", "No", 11, 0],
-        "Delete intermediary files": ["Yes", "No", 12, 0]
+        "Delete intermediary files": ["Yes", "No", 12, 0],
+        "File Split mode": ["No", "Yes", 13, 0]
     }
     
     # Dropdown for variable length feature
@@ -1053,8 +1076,6 @@ def inputs_initializer():
     button_click(15, 1, "Reset", restart)
     
     root.mainloop()
-    
-    parameters["delete"] = parameters.pop("Delete intermediary files")
 
     return parameters
 
@@ -1065,15 +1086,15 @@ def initializer(cmd):
     for the used OS.
     Creates the output diretory and handles some parameter parsing"""
     
-    print(f"\n{Fore.RED} Welcome to:{Fore.RESET}\n")
-    print(f" {Fore.RED}██████╗{Fore.RESET} ███████╗ █████╗ ███████╗████████╗{Fore.RED}██████╗{Fore.RESET}  ██████╗ ")
-    print(f" {Fore.RED}╚════██╗{Fore.RESET}██╔════╝██╔══██╗██╔════╝╚══██╔══╝{Fore.RED}╚════██╗{Fore.RESET}██╔═══██╗")
-    print(f" {Fore.RED} █████╔╝{Fore.RESET}█████╗  ███████║███████╗   ██║    {Fore.RED}█████╔╝{Fore.RESET}██║   ██║")
-    print(f" {Fore.RED}██╔═══╝ {Fore.RESET}██╔══╝  ██╔══██║╚════██║   ██║   {Fore.RED}██╔═══╝ {Fore.RESET}██║▄▄ ██║")
-    print(f" {Fore.RED}███████╗{Fore.RESET}██║     ██║  ██║███████║   ██║   {Fore.RED}███████╗{Fore.RESET}╚██████╔╝")
-    print(f" {Fore.RED}╚══════╝{Fore.RESET}╚═╝     ╚═╝  ╚═╝╚══════╝   ╚═╝   {Fore.RED}╚══════╝{Fore.RESET} ╚══▀▀═╝ ")
+    print(f"\n {Fore.RED} Welcome to:{Fore.RESET}\n")
+    print(f"  {Fore.RED}██████╗{Fore.RESET} ███████╗ █████╗ ███████╗████████╗{Fore.RED}██████╗{Fore.RESET}  ██████╗ ")
+    print(f"  {Fore.RED}╚════██╗{Fore.RESET}██╔════╝██╔══██╗██╔════╝╚══██╔══╝{Fore.RED}╚════██╗{Fore.RESET}██╔═══██╗")
+    print(f"  {Fore.RED} █████╔╝{Fore.RESET}█████╗  ███████║███████╗   ██║    {Fore.RED}█████╔╝{Fore.RESET}██║   ██║")
+    print(f"  {Fore.RED}██╔═══╝ {Fore.RESET}██╔══╝  ██╔══██║╚════██║   ██║   {Fore.RED}██╔═══╝ {Fore.RESET}██║▄▄ ██║")
+    print(f"  {Fore.RED}███████╗{Fore.RESET}██║     ██║  ██║███████║   ██║   {Fore.RED}███████╗{Fore.RESET}╚██████╔╝")
+    print(f"  {Fore.RED}╚══════╝{Fore.RESET}╚═╝     ╚═╝  ╚═╝╚══════╝   ╚═╝   {Fore.RED}╚══════╝{Fore.RESET} ╚══▀▀═╝ ")
                                                           
-    print(f"\n{Fore.GREEN} Version: {Fore.RESET}{version}")
+    print(f"\n {Fore.GREEN} Version: {Fore.RESET}{version}")
     
     param = inputs_handler() if cmd is None else cmd
     
@@ -1118,29 +1139,32 @@ def initializer(cmd):
     if param['Running Mode']=='C':
         print(f"\n {Fore.GREEN}Mode: {Fore.RESET}Align and count")
         print(f" {Fore.GREEN}Allowed mismatches per alignement: {Fore.RESET}{param['miss']}")
-        print(f" {Fore.GREEN}Minimal Phred Score per bp >= {Fore.RESET}{param['phred']}")
-        if (param['downstream'] is None) or (param['upstream'] is None):
-            print(f" {Fore.GREEN}Feature length: {Fore.RESET}{param['length']}")
-            print(f" {Fore.GREEN}Read alignment start position: {Fore.RESET}{param['start']}\n")
+
     else:
         print(f"\n {Fore.GREEN}Mode: {Fore.RESET}Extract and count")
-        print(f" {Fore.GREEN}Minimal Phred Score per bp >= {Fore.RESET}{param['phred']}")
+    
+    print(f" {Fore.GREEN}Minimal Phred Score per bp >= {Fore.RESET}{param['phred']}")
 
-        if param['upstream'] is not None:
-            print(f" {Fore.GREEN}Upstream search sequence: {Fore.RESET}{param['upstream']}")
-            print(f" {Fore.GREEN}Mismatches allowed in the upstream search sequence: {Fore.RESET}{param['miss_search_up']}")
-            print(f" {Fore.GREEN}Minimal Phred-score in the upstream search sequence: {Fore.RESET}{param['qual_up']}")
-            
-        if param['downstream'] is not None:
-            print(f" {Fore.GREEN}Downstream search sequence: {Fore.RESET}{param['downstream']}")
-            print(f" {Fore.GREEN}Mismatches allowed in the downstream search sequence: {Fore.RESET}{param['miss_search_down']}")
-            print(f" {Fore.GREEN}Minimal Phred-score in the downstream search sequence: {Fore.RESET}{param['qual_down']}")
+    if param['upstream'] is not None:
+        print(f" {Fore.GREEN}Upstream search sequence: {Fore.RESET}{param['upstream']}")
+        print(f" {Fore.GREEN}Mismatches allowed in the upstream search sequence: {Fore.RESET}{param['miss_search_up']}")
+        print(f" {Fore.GREEN}Minimal Phred-score in the upstream search sequence: {Fore.RESET}{param['qual_up']}")
+        
+    if param['downstream'] is not None:
+        print(f" {Fore.GREEN}Downstream search sequence: {Fore.RESET}{param['downstream']}")
+        print(f" {Fore.GREEN}Mismatches allowed in the downstream search sequence: {Fore.RESET}{param['miss_search_down']}")
+        print(f" {Fore.GREEN}Minimal Phred-score in the downstream search sequence: {Fore.RESET}{param['qual_down']}")
 
-        if (param['upstream'] is None) or (param['downstream'] is None):
-            print(f" {Fore.GREEN}Finding features with the folowing length: {Fore.RESET}{param['length']}bp\n")
+    if (param['upstream'] is None) or (param['downstream'] is None):
+        print(f" {Fore.GREEN}Finding features with the folowing length: {Fore.RESET}{param['length']}bp")
+        
+    if (param['upstream'] is None) and (param['downstream'] is None):
+        print(f" {Fore.GREEN}Read alignment start position: {Fore.RESET}{param['start']}")
 
     print(f" {Fore.GREEN}All data will be saved into {Fore.RESET}{param['directory']}")
     print(f"\n{Fore.YELLOW} ---- {Fore.RESET}")
+    
+    param["cpu"] = cpu_counter(param)
     
     return param
 
@@ -1187,6 +1211,7 @@ def input_parser():
     parser.add_argument("--qsd",help="Minimal Phred-score (default=30) in the downstream search sequence")
     parser.add_argument("--mo",help="Running Mode (default=C) [Counter (C) / Extractor + Counter (EC)].")
     parser.add_argument("--cp",help="Number of cpus to be used (default is max(cpu)-2 for >=3 cpus, -1 for >=2 cpus, 1 if 1 cpu")
+    parser.add_argument("--fs",nargs='?',const=False,help="File Split mode. If enabled, multiprocessing will split each file and process it (Best when using large files or when requiring heavy processing). If disabled, multiple files will be processed simultaneously (default is disabled).")
     parser.add_argument("--k",nargs='?',const=False,help="If enabled, keeps all temporary files (default is disabled)")
     args = parser.parse_args()
     
@@ -1201,6 +1226,7 @@ def input_parser():
     parameters = {}
     parameters["cmd"] = True
     parameters['big_file_split'] = False
+    parameters['used_cmd'] = " ".join(f"--{key}" if isinstance(value, bool) and value else f"--{key} {value}" for key, value in vars(args).items() if value is not None)
 
     if args.t is None:
         paths_param = [[args.s,'seq_files'],
@@ -1273,6 +1299,10 @@ def input_parser():
     if args.cp is not None:
         parameters['cpu']=int(args.cp)
         
+    parameters['big_file_split'] = False
+    if args.fs is not None:
+        parameters['big_file_split'] = True
+        
     for param in paths_param:
         parameters = current_dir_path_handling(param)
         
@@ -1297,7 +1327,10 @@ def compiling(param):
             [f"#Mismatches in the downstream search sequence: {param['miss_search_down']}"] + \
             [f"#Minimal Phred-score in the upstream search sequence: {param['qual_up']}"] + \
             [f"#Minimal Phred-score in the downstream search sequence: {param['qual_down']}"]
-            
+    
+    if "used_cmd" in param:
+        headers.insert(1, f"#cmd used: {param['used_cmd']}") 
+    
     headers = headers[::-1]
 
     compiled = {} #dictionary with all the reads per feature
@@ -1524,40 +1557,35 @@ def cpu_counter(param):
         if cpu == 2:
             cpu -= 1
     else:
-        if cpu > available_cpu:
+        if param["cpu"] > available_cpu:
             cpu = available_cpu
+        else:
+            cpu = param["cpu"]
 
     return cpu
 
-def multiprocess_merger(start,reads_stats,files,features,param,pool):
+def multiprocess_merger(start,reads_stats,features,param,pool):
     
     """ runs all samples in blocks equal to the amount of cpus in the PC. 
     Before starting a new block, the hash tables for the failed and passed reads 
     are updated. This confers speed advantages for the next block. """ 
     
     result = []
-    if not param['big_file_split']:
-        for i, name in enumerate(files[start:start+param["cpu"]]):
-            result.append(pool.apply_async(aligner, args=(name,
-                                                          i+start,
-                                                          len(files),
-                                                          features,
-                                                          param,
-                                                          reads_stats)))
-        if param["miss"] != 0:
-            unpacked = [x.get() for x in result]
-            result = []
-            for single_file_reads_stats in unpacked:
-                reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],single_file_reads_stats["failed_reads"])
-                reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**single_file_reads_stats["passed_reads"]}
-        
-    else: 
-        for i, file in enumerate(files):
-            unpacked = aligner(file, i,len(files),features,param,reads_stats)
-            reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],unpacked["failed_reads"])
-            reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**unpacked["passed_reads"]}
+    for i,file in enumerate(param['sequencing_files']['files'][start:start+param["cpu"]]):
+        result.append(pool.apply_async(aligner, args=(i+start,
+                                                      file,
+                                                      features,
+                                                      param,
+                                                      reads_stats)))
 
-def hash_preprocesser(files,features,param,reads_stats):
+    if param["miss"] != 0:
+        unpacked = [x.get() for x in result]
+        result = []
+        for single_file_reads_stats in unpacked:
+            reads_stats["failed_reads"].update(single_file_reads_stats["failed_reads"])
+            reads_stats["passed_reads"].update(single_file_reads_stats["passed_reads"])
+
+def hash_preprocesser(features,param,reads_stats):
     
     """ For the smallest files, we processe them for the first x amount of reads to
     initialize the failed reads and passed reads hash tables. This will confer some 
@@ -1570,19 +1598,20 @@ def hash_preprocesser(files,features,param,reads_stats):
 
     ctx = mp.get_context("spawn")
     pool = ctx.Pool(processes=param["cpu"])
-    for name in files[:param["cpu"]]:
-        result.append(pool.apply_async(reads_counter, args=(0,0,name,features,param,reads_stats,True)))
+    for name in param["sequencing_files"]["preprocess_files"]:
+        result.append(pool.apply_async(reads_counter, args=(0,name,features,param,reads_stats,True)))
     pool.close()
     pool.join()
     
     compiled = [x.get() for x in result]
     for entry in compiled:
         _,local_reads,_ = entry
-        reads_stats["failed_reads"] = set.union(reads_stats["failed_reads"],local_reads["failed_reads"])
-        reads_stats["passed_reads"] = {**reads_stats["passed_reads"],**local_reads["passed_reads"]}
+        reads_stats["failed_reads"].update(local_reads["failed_reads"])
+        reads_stats["passed_reads"].update(local_reads["passed_reads"])
+        
     return reads_stats
 
-def aligner_mp_dispenser(files,features,param):
+def aligner_mp_dispenser(features,param,start=0):
     
     """ starts handling the parallel processing of all the samples by forwarding
     the program to the correct processing pipeline."""
@@ -1592,41 +1621,60 @@ def aligner_mp_dispenser(files,features,param):
     
     reads_stats = {}
     reads_stats["failed_reads"],reads_stats["passed_reads"] = set(),{}
-    param["cpu"] = cpu_counter(param)
-
+    
     if param["miss"] != 0:
-        reads_stats=hash_preprocesser(files,features,param,reads_stats)
+        reads_stats=hash_preprocesser(features,param,reads_stats)
     
-    colourful_errors("INFO",f"Processing {len(files)} files. Please hold.")
+    colourful_errors("INFO",f"Processing {param['sequencing_files']['len_files']} files. Please hold.")
     
+    if param['big_file_split']:
+        for i,file in enumerate(param['sequencing_files']['files']):
+            unpacked = aligner(i, 
+                               file, 
+                               features,
+                               param,
+                               reads_stats)
+                
+            reads_stats["failed_reads"].update(unpacked["failed_reads"])
+            reads_stats["passed_reads"].update(unpacked["passed_reads"])
+            
     if not param['big_file_split']:
         pool = mp.Pool(processes = param["cpu"], initargs=(mp.RLock(),), initializer=tqdm.set_lock)
-        for start in range(0,len(files),param["cpu"]):
-            multiprocess_merger(start,reads_stats,files,features,param,pool)
+        for start in range(0,len(param['sequencing_files']['files']),param["cpu"]):
+            multiprocess_merger(start,
+                                reads_stats,
+                                features,
+                                param,
+                                pool)
         pool.close()
         pool.join()
-        
-    else:
-        multiprocess_merger(None,reads_stats,files,features,param,None)
-
+            
 def file_sizer_split(pathing,param):
     
     """ Determines if the script will split each sample into chunks for multiprocessing,
     or if it is more cost effective to process several samples in parallel."""
     
-    files = [path[0] for path in sorted(pathing, key=lambda e: e[-1])]
-    median_file_size_list = [size[1] for size in pathing]
-    median_file_size = np.median(median_file_size_list)
-    ext = os.path.splitext(files[0])[1]
-
-    size_cutoff = 300000000 #300mb uncompressed
-    if ext == ".gz":
-        size_cutoff = 50000000 #50mb compressed
+    files = [path for path in sorted(pathing, key=lambda e: e[-1])] 
     
-    if (median_file_size > size_cutoff) & (param["miss"] != 0): #file size and with mismatch search
+    if len(files) == 1:
         param['big_file_split'] = True
+        
+    preprocess = []
+    for file in files:
+        ext = os.path.splitext(file[0])[1]
+        
+        size_cutoff = 1000000000 #1gb uncompressed
+        if ext == ".gz":
+            size_cutoff = 500000000 #500mb compressed
+        
+        preprocess.append(file[0])
+        if (file[1] > size_cutoff) & (not param['big_file_split']):
+            colourful_errors("WARNING","Large files detected. Consider running in 'File Split' mode if processing time is slow\n")
 
-    return files,param
+    param["sequencing_files"] = {"len_files":len(files),
+                                 "preprocess_files":preprocess[:param["cpu"]],
+                                 "files": preprocess}
+    return param
 
 def main():
     
@@ -1639,7 +1687,7 @@ def main():
     files = [param["seq_files"]]
     if os.path.splitext(param["seq_files"])[1] == '':
         files = path_parser(param["seq_files"], ["*.gz","*.fastq"])
-        files, param = file_sizer_split(files,param)
+        param = file_sizer_split(files,param)
 
     ### loads the features from the input .csv file. 
     ### Creates a dictionary "feature" of class instances for each sgRNA
@@ -1650,7 +1698,7 @@ def main():
     ### Processes all the samples by associating sgRNAs to the reads on the fastq files.
     ### Creates one process per sample, allowing multiple samples to be processed in parallel. 
     ### alternativally, one sample can also be split into several chunks. this happens when the samples are quite large.
-    aligner_mp_dispenser(files,features,param)
+    aligner_mp_dispenser(features,param)
     
     ### Compiles all the processed samples from multi into one file, and creates the run statistics
     compiling(param)
