@@ -1237,6 +1237,9 @@ def input_parser():
         paths_param = [[resources.files("fast2q").joinpath('data/example.fastq.gz'), 'seq_files'],
                         [resources.files("fast2q").joinpath('data/D39V_guides.csv'), 'feature'],
                         [os.getcwd(), 'out']]
+        param["sequencing_files"] = {"len_files":len(paths_param[0]),
+                                    "preprocess_files":paths_param[0],
+                                    "files": paths_param[0]}
        
     parameters['out_file_name'] = "compiled"
     if args.fn is not None:
@@ -1649,11 +1652,12 @@ def aligner_mp_dispenser(features,param,start=0):
         pool.close()
         pool.join()
             
-def file_sizer_split(pathing,param):
+def file_sizer_split(param):
     
     """ Determines if the script will split each sample into chunks for multiprocessing,
     or if it is more cost effective to process several samples in parallel."""
     
+    pathing = path_parser(param["seq_files"], ["*.gz","*.fastq"])
     files = [path for path in sorted(pathing, key=lambda e: e[-1])] 
     
     if len(files) == 1:
@@ -1684,10 +1688,8 @@ def main():
     param = initializer(input_parser())
     
     ### parses the names/paths, and orders the sequencing files
-    files = [param["seq_files"]]
     if os.path.splitext(param["seq_files"])[1] == '':
-        files = path_parser(param["seq_files"], ["*.gz","*.fastq"])
-        param = file_sizer_split(files,param)
+        param = file_sizer_split(param)
 
     ### loads the features from the input .csv file. 
     ### Creates a dictionary "feature" of class instances for each sgRNA
