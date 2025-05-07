@@ -1237,6 +1237,7 @@ def input_parser():
         paths_param = [[resources.files("fast2q").joinpath('data/example.fastq.gz'), 'seq_files'],
                         [resources.files("fast2q").joinpath('data/D39V_guides.csv'), 'feature'],
                         [os.getcwd(), 'out']]
+        #run local
         #paths_param = [[os.path.join(os.getcwd(),'data/example.fastq.gz'), 'seq_files'],
         #        [os.path.join(os.getcwd(),'data/D39V_guides.csv'), 'feature'],
         #        [os.getcwd(), 'out']]
@@ -1657,7 +1658,7 @@ def file_sizer_split(param):
     """ Determines if the script will split each sample into chunks for multiprocessing,
     or if it is more cost effective to process several samples in parallel."""
 
-    if  param["test_mode"]:
+    if "test_mode" in param:
         param["sequencing_files"] = {"len_files":len([param["seq_files"]]),
                                     "preprocess_files":[param["seq_files"]],
                                     "files": [param["seq_files"]]}
