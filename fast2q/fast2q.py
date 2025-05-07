@@ -1098,7 +1098,7 @@ def initializer(cmd):
     
     param = inputs_handler() if cmd is None else cmd
     
-    if "test_mode" in param:
+    if param["test_mode"]:
         colourful_errors("WARNING","Running test mode!\n")
     
     if (param["upstream"] == None) or (param["downstream"] == None):
@@ -1173,7 +1173,7 @@ def input_parser():
     """ Handles the cmd line interface, and all the parameter inputs"""
     
     global version
-    version = "2.8.0"
+    version = "2.8.1"
     
     def current_dir_path_handling(param):
         if param[0] is None:
@@ -1229,6 +1229,7 @@ def input_parser():
     parameters['used_cmd'] = " ".join(f"--{key}" if isinstance(value, bool) and value else f"--{key} {value}" for key, value in vars(args).items() if value is not None)
 
     if args.t is None:
+        parameters["test_mode"] = False
         paths_param = [[args.s,'seq_files'],
                        [args.g,'feature'],
                        [args.o,'out']]
@@ -1379,7 +1380,7 @@ def compiling(param):
 
     print(f"\n{Fore.GREEN} If you find 2FAST2Q useful, please consider citing:{Fore.MAGENTA}\n Bravo AM, Typas A, Veening J. 2022. \n 2FAST2Q: a general-purpose sequence search and counting program for FASTQ files. PeerJ 10:e14041\n DOI: 10.7717/peerj.14041\n{Fore.RESET}")
 
-    if "test_mode" in param:
+    if param["test_mode"]:
         colourful_errors("WARNING","Test successful. 2FAST2Q is working as intended!\n")
 
 def run_stats(headers, param, compiled, head):
@@ -1658,7 +1659,7 @@ def file_sizer_split(param):
     """ Determines if the script will split each sample into chunks for multiprocessing,
     or if it is more cost effective to process several samples in parallel."""
 
-    if "test_mode" in param:
+    if param["test_mode"]:
         param["sequencing_files"] = {"len_files":len([param["seq_files"]]),
                                     "preprocess_files":[param["seq_files"]],
                                     "files": [param["seq_files"]]}
