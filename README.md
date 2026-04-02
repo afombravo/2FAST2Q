@@ -43,6 +43,26 @@ pip install fast2q
 conda install bioconda::fast2q
 ```
 
+## Docker image
+You can build and run a local Docker image of 2FAST2Q by following the steps below. (This assumes Docker is already installed on your system.)
+
+###Download the Dockerfile, navigate to its directory, and run:
+```bash
+docker build --no-cache -t 2fast2q .
+```
+
+###After building the image, you can run a test container: 
+```bash
+docker run -it -v "./:/data" 2fast2q
+```
+Replace "./" with the path to your input files once you are ready to process real data.
+
+###To confirm that 2FAST2Q is working correctly, run: 
+```bash
+2fast2q -c -t
+```
+Note: The graphical interface is unlikely to work inside Docker. Always include the -c flag to run commands in command-line mode.
+
 ## Nextflow
 
 If you are into nextflow, 2FAST2Q also has its own [nf-core module](https://nf-co.re/modules/fast2q/)!
