@@ -175,7 +175,7 @@ A path to the .csv file (this format can be obtained using the "save as" option 
 In this case, sgRNA0001.1 corresponds to a double sequence. Only reads containing BOTH sequences will be aligned to this sgRNA. If only the first sequence of the 2 is found, it will align to sgRNA0001, if only the second sequence is found, it will fail to align anywhere. Only the combinations present in the .csv file will be considered. 
 See section 4 for instructions on how to perform multiple sequence searches per read.
 
-For extracting all possible combinations in a file, one can use the "extract and count" mode (extract all found features without alignments) (`--mo EC`). In this case, no .csv is required as input.
+For extracting all possible sequences/reads combinations from a fastq file, one can use the "extract and count" mode (extract all found features without alignments) (`--mo EC`). In this case, no .csv is required as input.
 
 
 
@@ -187,21 +187,21 @@ A path to the output folder (for safety, a subfolder will always be created on t
 
 # 4. Some further explanations
 
-For extracting all sequences at a certain position in the read select the extractor + Counter (`--mo EC`) mode. The default is Counter (`--mo C`) mode only.
+For extracting and returning all the sequences at a certain position within the read without aligning to a reference file, select the "extractor + Counter" (`--mo EC`) mode. If you want to align the reads to a reference file, select the "Counter mode" (`--mo C`). This latter is the default. 
 
-2FAST2Q mismatch feature calculates HAMMING distance ONLY 
+2FAST2Q mismatch feature only considers HAMMING distance. 
 
 If the starting position varies within the read, it is possible to search for a delimiting known sequence, and then extract the sequence before/after it.
 In this case, it is allowed to input the following: 
 
- 1) A 5' end search sequence, and the amount of bp the program should inventory after. (example: `--us XXX --l 100`)
- 2) A 3' end search sequence, and the amount of bp the program should inventory before. (example:`--ds YYY --l 100`)
- 3) A 5' and 3' end search sequence, the program will return and count everything in between these two. (example:`--ds XXX --us YYY`)
+ 1) A 5' end search sequence (`--us`), and the amount of bp the program should return after (`--l`). (example: `--us AGT --l 100`)
+ 2) A 3' end search sequence (`--ds`), and the amount of bp the program should return before (`--l`). (example:`--ds GTT --l 100`)
+ 3) A 5' and 3' end search sequence. The program will return and count everything in between the two sequences. (example:`--ds AGT --us GTT`)
  4) How many mismatches are allowed in the search sequence (example: `--msu 2`)
 
 #### When searching a read for multiple sequences, one can do so by either:
   1) confirguring different fixed positions by separating all start locations with a ",". For example: "0,20,50" - the program will search for 3 sequences per read, starting at position 0,20, and 50, with the predefided sequence length.
-  2) configuring different 5' and 3' search sequences, also separated by "," and inputted as pairs. For example: upstream (`--us ATCG,GGTGG --ds AATC,GCACAC`) will initiate, per read, searches for any features between the ATCG * AATC and GGTGG * GCACAC sequences. If found, these 2 sequences will be merged separated by ":" and either try to be aligned against any found features in the .csv file (default), or returned as they are if in "extract and count" mode (`--mo EC`). Keep in mind that when multiple feature sequences are delimited by the same search sequences, only the first instance of any sequence passing the criteria will be returned. Multiple sequences per read can only be retrieved when using different search sequences.
+  2) configuring different 5' and 3' search sequences, also separated by "," and given as pairs. For example: upstream (`--us ATCG,GGTGG --ds AATC,GCACAC`) will initiate, per read, searches for any features between the ATCG * AATC and GGTGG * GCACAC sequences. If found, these 2 sequences will be merged separated by ":" and either try to be aligned against any found features in the .csv file (default), or returned as they are if in "extract and count" mode (`--mo EC`). Keep in mind that when multiple feature sequences are delimited by the same search sequences, only the first instance of any sequence passing the criteria will be returned. Multiple sequences per read can only be retrieved when using different search sequences.
  
 
 
