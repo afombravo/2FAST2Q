@@ -211,7 +211,7 @@ In this case, it is allowed to input the following:
 2FAST2Q is coded to maximize any computer's processing power (it runs multiprocessed, so it can process various samples simultaneously). It is therefore advisable to not heavily use the computer while 2FAST2Q is running to avoid constraining the processor.
 
 2FAST2Q will be operational when its logo appears on the window.
-Depending on the used computer, 2FAST2Q might take a few minutes to run, especially with large datasets and when using mismatch finding. If no errors are shown, 2FAST2Q is still running. GIVE IT TIME! 
+Depending on the used computer, 2FAST2Q might take a few minutes to run, especially with large datasets and when using mismatch finding. If no errors are shown 2FAST2Q is still running. GIVE IT TIME! 
 
 
 ### macOS use WARNING!
@@ -238,20 +238,20 @@ Upon completion, several files should be seen in the indicated output folder (wh
 
 # Short Explanation on default filters
 
-2FAST2Q will return the read counts for all the features present in the input file. A read will be aligned to its features if the minimum quality score in each nucleotide is >= the indicated phred-score, and if there is less than the indicated allowed mismatches. Like said before, these parameters can be modified by the user.
+2FAST2Q will return the read counts for all the features present in the input file. A read will be aligned to its features if the minimum quality score in each nucleotide is >= the indicated phred-score, and if there are less than the indicated allowed mismatches. These parameters can be modified by the user.
 
 However, why these parameters?
 
-Base quality filtering using Q>=30 means there is a 0.01% chance of a given nucleotide being miss-sequenced. To assure alignment quality, the program filters out by default any reads that have nucleotides with Q < 30.
+Base quality filtering using Q>=30 means there is a 0.01% chance of any given nucleotide being miss-sequenced. To assure alignment quality, the program filters out by default any reads that have nucleotides with phred-score lower than 30.
 
 
 Why the mismatch?
 
-To avoid a too highly stringent cutoff. Allowing a mismatch allows the alignment of reads to their features when just a single nucleotide is wrongly sequenced. Even at a 0.01% chance (Q>=30 default) this event is bound to happen due to the large sample size.
+To avoid a too highly stringent cutoff. Allowing a mismatch allows the alignment of reads to their features when just a single nucleotide is wrongly sequenced. Even at a 0.01% chance (Q>=30 default) this event happens frequently due to the large sample size (normally there are milions of sequenced bp per fastq file).
 
-However, there is a safe mechanism in place to prevent 2 or more features with mismatches from being aligned to the same read (the read is discarded in this case, as there is no way of knowing to which feature the read aligns to)
+There is a safe mechanism in place to prevent 2 or more features that mismatch a read from being aligned to the same read (the read is discarded in this case, as there is no way of knowing to which feature the read corresponds to)
 
-2FAST2Q mismatch feature calculates HAMMING distance ONLY
+2FAST2Q mismatch feature only uses HAMMING distance.
 
 
 # Performing sequences searches using 2FAST2Q
